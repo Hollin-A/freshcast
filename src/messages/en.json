@@ -1,0 +1,53 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  },
+  "auth": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "email": "Email address",
+    "password": "Password",
+    "magicLink": "Send magic link",
+    "forgotPassword": "Forgot password?"
+  },
+  "onboarding": {
+    "welcome": "Welcome to BizSense",
+    "businessName": "What's your business name?",
+    "businessType": "What type of business?",
+    "addProducts": "Add your main products (3-5)",
+    "finish": "Get started"
+  },
+  "dashboard": {
+    "tomorrowForecast": "Tomorrow's Forecast",
+    "todaySummary": "Today's Sales",
+    "thisWeek": "This Week",
+    "topProducts": "Top Products",
+    "insights": "Insights",
+    "lastUpdated": "Updated {time}",
+    "noData": "Log your first sales to see insights here"
+  },
+  "sales": {
+    "inputPlaceholder": "e.g., sold 20 eggs, 30kg beef...",
+    "parse": "Parse",
+    "manualMode": "Enter manually",
+    "nlMode": "Type it out",
+    "confirmTitle": "Confirm your sales",
+    "newProduct": "New product detected",
+    "addProduct": "Add to my products",
+    "saved": "Sales saved"
+  },
+  "predictions": {
+    "title": "Demand Forecast",
+    "needMoreData": "Log at least 5 days of sales to see predictions",
+    "confidence": {
+      "low": "Low confidence",
+      "moderate": "Moderate confidence",
+      "good": "Good confidence",
+      "high": "High confidence"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth Models (Auth.js / NextAuth v5) ───
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  business Business?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Business Models ───
+
+model Business {
+  id        String       @id @default(cuid())
+  name      String
+  type      BusinessType
+  locale    String       @default("en")
+  onboarded Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  products        Product[]
+  salesEntries    SalesEntry[]
+  dailyInsights   DailyInsight[]
+  demandForecasts DemandForecast[]
+}
+
+enum BusinessType {
+  RETAIL_VENDOR
+  BUTCHER
+  PRODUCE_SELLER
+  MARKET_STALL
+  GROCERY
+  CAFE
+  TAKEAWAY
+  OTHER
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  defaultUnit String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  salesItems      SalesItem[]
+  demandForecasts DemandForecast[]
+
+  @@unique([businessId, name])
+}
+
+model SalesEntry {
+  id          String      @id @default(cuid())
+  date        DateTime    @db.Date
+  inputMethod InputMethod @default(MANUAL)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  items SalesItem[]
+
+  @@unique([businessId, date])
+}
+
+enum InputMethod {
+  NATURAL_LANGUAGE
+  MANUAL
+}
+
+model SalesItem {
+  id       String  @id @default(cuid())
+  quantity Float
+  unit     String?
+
+  salesEntryId String
+  salesEntry   SalesEntry @relation(fields: [salesEntryId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model DailyInsight {
+  id        String      @id @default(cuid())
+  date      DateTime    @db.Date
+  type      InsightType
+  content   String
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, date])
+}
+
+enum InsightType {
+  TREND
+  COMPARISON
+  TOP_PRODUCTS
+  SUMMARY
+}
+
+model DemandForecast {
+  id                String   @id @default(cuid())
+  forecastDate      DateTime @db.Date
+  predictedQuantity Float
+  confidence        Float
+  generatedAt       DateTime @default(now())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([businessId, productId, forecastDate])
+  @@index([businessId, forecastDate])
+}
