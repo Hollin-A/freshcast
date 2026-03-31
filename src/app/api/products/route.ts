@@ -1,0 +1,126 @@
+import { NextRequest, NextResponse } from "next/server";
+import * as z from "zod";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+
+export async function GET(request: NextRequest) {
+  try {
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const active = request.nextUrl.searchParams.get("active") !== "false";
+
+    const products = await prisma.product.findMany({
+      where: { businessId, ...(active ? { isActive: true } : {}) },
+      select: { id: true, name: true, defaultUnit: true, isActive: true },
+      orderBy: { name: "asc" },
+    });
+
+    return NextResponse.json({ products });
+  } catch {
+    return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
+  }
+}
+
+const addProductSchema = z.object({
+  name: z.string().min(1).max(100),
+  defaultUnit: z.string().max(20).optional(),
+});
+
+export async function POST(request: Request) {
+  try {
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const body = await request.json();
+    const result = addProductSchema.safeParse(body);
+
+    if (!result.success) {
+      return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
+        fields: result.error.flatten().fieldErrors,
+      });
+    }
+
+    const { name, defaultUnit } = result.data;
+
+    const existing = await prisma.product.findUnique({
+      where: { businessId_name: { businessId, name } },
+    });
+    if (existing) {
+      return errorResponse("CONFLICT", "Product with this name already exists", 409);
+    }
+
+    const product = await prisma.product.create({
+      data: { name, defaultUnit: defaultUnit ?? null, businessId },
+      select: { id: true, name: true, defaultUnit: true, isActive: true },
+    });
+
+    return NextResponse.json(product, { status: 201 });
+  } catch {
+    return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
+  }
+}
+
+const updateProductSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100).optional(),
+  defaultUnit: z.string().max(20).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export async function PATCH(request: Request) {
+  try {
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const body = await request.json();
+    const result = updateProductSchema.safeParse(body);
+
+    if (!result.success) {
+      return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
+        fields: result.error.flatten().fieldErrors,
+      });
+    }
+
+    const { id, name, defaultUnit, isActive } = result.data;
+
+    // Verify product belongs to this business
+    const existing = await prisma.product.findFirst({
+      where: { id, businessId },
+    });
+    if (!existing) {
+      return errorResponse("NOT_FOUND", "Product not found", 404);
+    }
+
+    // Check for duplicate name if renaming
+    if (name && name !== existing.name) {
+      const duplicate = await prisma.product.findUnique({
+        where: { businessId_name: { businessId, name } },
+      });
+      if (duplicate) {
+        return errorResponse("CONFLICT", "Product with this name already exists", 409);
+      }
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(defaultUnit !== undefined && { defaultUnit }),
+        ...(isActive !== undefined && { isActive }),
+      },
+      select: { id: true, name: true, defaultUnit: true, isActive: true },
+    });
+
+    return NextResponse.json(product);
+  } catch {
+    return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
+  }
+}
