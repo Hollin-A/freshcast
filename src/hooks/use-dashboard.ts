@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 
 export type DashboardData = {
+  hasAnySales: boolean;
+  totalEntries: number;
   todaySummary: {
     date: string;
     totalItems: number;

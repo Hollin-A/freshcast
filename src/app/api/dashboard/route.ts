@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { prisma } from "@/lib/prisma";
 import { getTodaySummary, getWeekSummary, getTopProducts } from "@/services/analytics";
 import { predictNextDay } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
@@ -11,7 +12,7 @@ export async function GET() {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
-    const [todaySummary, weekSummary, topProducts, predictions, insightsResult] =
+    const [todaySummary, weekSummary, topProducts, predictions, insightsResult, totalEntries] =
       await Promise.all([
         getTodaySummary(businessId),
         getWeekSummary(businessId),
@@ -21,12 +22,15 @@ export async function GET() {
           insights: [],
           generatedAt: new Date().toISOString(),
         })),
+        prisma.salesEntry.count({ where: { businessId } }),
       ]);
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return NextResponse.json({
+      hasAnySales: totalEntries > 0,
+      totalEntries,
       todaySummary,
       weekSummary,
       topProducts,

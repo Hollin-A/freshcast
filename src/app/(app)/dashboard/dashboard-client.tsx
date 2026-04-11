@@ -28,11 +28,8 @@ export function DashboardClient() {
 
   if (!data) return null;
 
-  const hasData =
-    data.todaySummary.totalItems > 0 ||
-    data.weekSummary.totalQuantity > 0;
-
-  if (!hasData) {
+  // State 1: Never logged any sales
+  if (!data.hasAnySales) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
@@ -48,6 +45,7 @@ export function DashboardClient() {
     );
   }
 
+  // State 2 & 3: Has historical data (may or may not have today's)
   return (
     <div className="space-y-4">
       {data.forecast && data.forecast.predictions.length > 0 && (
@@ -61,7 +59,7 @@ export function DashboardClient() {
       {data.insights.length > 0 && (
         <InsightsCard insights={data.insights} />
       )}
-      {!data.forecast && data.weekSummary.totalQuantity > 0 && (
+      {!data.forecast && data.totalEntries > 0 && (
         <Card>
           <CardContent className="py-6 text-center">
             <p className="text-sm text-muted-foreground">
@@ -92,7 +90,7 @@ function TodaySummaryCard({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No sales logged today.{" "}
+            You haven&apos;t logged today&apos;s sales yet.{" "}
             <Link href="/sales" className="text-primary underline">
               Log now
             </Link>
