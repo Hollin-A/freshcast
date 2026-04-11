@@ -1,0 +1,210 @@
+import { prisma } from "@/lib/prisma";
+import { MIN_ENTRIES_FOR_PREDICTIONS } from "@/lib/constants";
+
+export type ProductPrediction = {
+  product: string;
+  productId: string;
+  predictedQuantity: number;
+  unit: string | null;
+  confidence: number;
+};
+
+export type DayPrediction = {
+  date: string;
+  dayOfWeek: string;
+  predictedQuantity: number;
+};
+
+export type WeeklyProductPrediction = {
+  product: string;
+  productId: string;
+  unit: string | null;
+  daily: DayPrediction[];
+};
+
+function mean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function calculateConfidence(
+  sameWeekdayData: number[],
+  recentData: number[]
+): number {
+  const totalPoints = sameWeekdayData.length + recentData.length;
+
+  // Base confidence from data volume
+  let base: number;
+  if (totalPoints < 5) base = 0.3;
+  else if (totalPoints < 15) base = 0.5;
+  else if (totalPoints < 30) base = 0.7;
+  else base = 0.85;
+
+  // Adjust by coefficient of variation (high variance = lower confidence)
+  const allData = [...sameWeekdayData, ...recentData];
+  if (allData.length >= 2) {
+    const avg = mean(allData);
+    if (avg > 0) {
+      const variance =
+        allData.reduce((sum, v) => sum + (v - avg) ** 2, 0) / allData.length;
+      const cv = Math.sqrt(variance) / avg;
+      // cv > 1 means very high variance, reduce confidence
+      base *= Math.max(0.5, 1 - cv * 0.3);
+    }
+  }
+
+  return Math.round(base * 100) / 100;
+}
+
+const DAY_NAMES = [
+  "Sunday", "Monday", "Tuesday", "Wednesday",
+  "Thursday", "Friday", "Saturday",
+];
+
+async function getProductSalesHistory(
+  businessId: string,
+  productId: string,
+  days: number
+) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const entries = await prisma.salesEntry.findMany({
+    where: {
+      businessId,
+      date: { gte: since },
+    },
+    include: {
+      items: {
+        where: { productId },
+        select: { quantity: true },
+      },
+    },
+    orderBy: { date: "desc" },
+  });
+
+  return entries
+    .filter((e) => e.items.length > 0)
+    .map((e) => ({
+      date: new Date(e.date),
+      dayOfWeek: new Date(e.date).getDay(),
+      quantity: e.items.reduce((s, i) => s + i.quantity, 0),
+    }));
+}
+
+export async function predictNextDay(
+  businessId: string
+): Promise<{ predictions: ProductPrediction[]; dataPoints: number } | null> {
+  // Check minimum data
+  const entryCount = await prisma.salesEntry.count({ where: { businessId } });
+  if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
+
+  const products = await prisma.product.findMany({
+    where: { businessId, isActive: true },
+    select: { id: true, name: true, defaultUnit: true },
+  });
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const targetWeekday = tomorrow.getDay();
+
+  const predictions: ProductPrediction[] = [];
+
+  for (const product of products) {
+    const history = await getProductSalesHistory(businessId, product.id, 60);
+    if (history.length === 0) continue;
+
+    // Same weekday data (last 4 occurrences)
+    const sameWeekday = history
+      .filter((h) => h.dayOfWeek === targetWeekday)
+      .slice(0, 4)
+      .map((h) => h.quantity);
+
+    // Recent 7 days
+    const recent = history.slice(0, 7).map((h) => h.quantity);
+
+    const weekdayAvg = mean(sameWeekday);
+    const recentAvg = mean(recent);
+
+    // Weighted blend
+    let predicted: number;
+    if (sameWeekday.length === 0) {
+      predicted = recentAvg;
+    } else if (recent.length === 0) {
+      predicted = weekdayAvg;
+    } else {
+      predicted = 0.6 * weekdayAvg + 0.4 * recentAvg;
+    }
+
+    if (predicted <= 0) continue;
+
+    predictions.push({
+      product: product.name,
+      productId: product.id,
+      predictedQuantity: Math.round(predicted),
+      unit: product.defaultUnit,
+      confidence: calculateConfidence(sameWeekday, recent),
+    });
+  }
+
+  return {
+    predictions: predictions.sort((a, b) => b.predictedQuantity - a.predictedQuantity),
+    dataPoints: entryCount,
+  };
+}
+
+export async function predictNextWeek(
+  businessId: string
+): Promise<WeeklyProductPrediction[] | null> {
+  const entryCount = await prisma.salesEntry.count({ where: { businessId } });
+  if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
+
+  const products = await prisma.product.findMany({
+    where: { businessId, isActive: true },
+    select: { id: true, name: true, defaultUnit: true },
+  });
+
+  const result: WeeklyProductPrediction[] = [];
+
+  for (const product of products) {
+    const history = await getProductSalesHistory(businessId, product.id, 60);
+    if (history.length === 0) continue;
+
+    const daily: DayPrediction[] = [];
+
+    for (let i = 1; i <= 7; i++) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + i);
+      const targetWeekday = targetDate.getDay();
+
+      const sameWeekday = history
+        .filter((h) => h.dayOfWeek === targetWeekday)
+        .slice(0, 4)
+        .map((h) => h.quantity);
+
+      const recent = history.slice(0, 7).map((h) => h.quantity);
+
+      let predicted: number;
+      if (sameWeekday.length === 0) predicted = mean(recent);
+      else if (recent.length === 0) predicted = mean(sameWeekday);
+      else predicted = 0.6 * mean(sameWeekday) + 0.4 * mean(recent);
+
+      daily.push({
+        date: targetDate.toISOString().split("T")[0],
+        dayOfWeek: DAY_NAMES[targetWeekday],
+        predictedQuantity: Math.round(Math.max(predicted, 0)),
+      });
+    }
+
+    if (daily.some((d) => d.predictedQuantity > 0)) {
+      result.push({
+        product: product.name,
+        productId: product.id,
+        unit: product.defaultUnit,
+        daily,
+      });
+    }
+  }
+
+  return result;
+}
