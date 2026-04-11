@@ -96,6 +96,7 @@ export function OnboardingWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...businessInfo,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           products: validProducts.map((p) => ({
             name: p.name.trim(),
             defaultUnit: p.defaultUnit.trim() || undefined,

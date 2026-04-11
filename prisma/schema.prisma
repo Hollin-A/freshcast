@@ -67,6 +67,7 @@ model Business {
   name      String
   type      BusinessType
   locale    String       @default("en")
+  timezone  String       @default("UTC")
   onboarded Boolean      @default(false)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt

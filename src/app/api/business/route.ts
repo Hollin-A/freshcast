@@ -9,6 +9,7 @@ const createBusinessSchema = z.object({
   name: z.string().min(1).max(100),
   type: z.enum(BUSINESS_TYPES),
   locale: z.string().min(2).max(10).default("en"),
+  timezone: z.string().min(1).max(50).default("UTC"),
   products: z
     .array(
       z.object({
@@ -43,13 +44,14 @@ export async function POST(request: Request) {
       });
     }
 
-    const { name, type, locale, products } = result.data;
+    const { name, type, locale, timezone, products } = result.data;
 
     const business = await prisma.business.create({
       data: {
         name,
         type,
         locale,
+        timezone,
         onboarded: true,
         userId: session.user.id,
         products: {
