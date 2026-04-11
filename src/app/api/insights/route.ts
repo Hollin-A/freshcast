@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { getOrGenerateInsights } from "@/services/insight-generator";
+import { getLocalDateStr } from "@/lib/dates";
 
 export async function GET() {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
-    const result = await getOrGenerateInsights(businessId);
+    const result = await getOrGenerateInsights(ctx.businessId, ctx.timezone);
 
     return NextResponse.json({
-      date: new Date().toISOString().split("T")[0],
+      date: getLocalDateStr(ctx.timezone),
       ...result,
     });
   } catch {

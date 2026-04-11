@@ -37,3 +37,23 @@ export async function getBusinessId(): Promise<string | null> {
 
   return business?.id ?? null;
 }
+
+/**
+ * Get the authenticated user's business context (id + timezone).
+ * Returns null if not authenticated or no business exists.
+ */
+export async function getBusinessContext(): Promise<{
+  businessId: string;
+  timezone: string;
+} | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const business = await prisma.business.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true, timezone: true },
+  });
+
+  if (!business) return null;
+  return { businessId: business.id, timezone: business.timezone };
+}

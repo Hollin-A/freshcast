@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getUTCDayOfWeek, getLocalDateStr, toUTCDate } from "@/lib/dates";
 import { MIN_ENTRIES_FOR_PREDICTIONS } from "@/lib/constants";
 
 export type ProductPrediction = {
@@ -32,15 +33,12 @@ function calculateConfidence(
   recentData: number[]
 ): number {
   const totalPoints = sameWeekdayData.length + recentData.length;
-
-  // Base confidence from data volume
   let base: number;
   if (totalPoints < 5) base = 0.3;
   else if (totalPoints < 15) base = 0.5;
   else if (totalPoints < 30) base = 0.7;
   else base = 0.85;
 
-  // Adjust by coefficient of variation (high variance = lower confidence)
   const allData = [...sameWeekdayData, ...recentData];
   if (allData.length >= 2) {
     const avg = mean(allData);
@@ -48,11 +46,9 @@ function calculateConfidence(
       const variance =
         allData.reduce((sum, v) => sum + (v - avg) ** 2, 0) / allData.length;
       const cv = Math.sqrt(variance) / avg;
-      // cv > 1 means very high variance, reduce confidence
       base *= Math.max(0.5, 1 - cv * 0.3);
     }
   }
-
   return Math.round(base * 100) / 100;
 }
 
@@ -64,7 +60,8 @@ const DAY_NAMES = [
 async function getProductSalesHistory(
   businessId: string,
   productId: string,
-  days: number
+  days: number,
+  timezone: string
 ) {
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - days);
@@ -87,15 +84,15 @@ async function getProductSalesHistory(
     .filter((e) => e.items.length > 0)
     .map((e) => ({
       date: new Date(e.date),
-      dayOfWeek: new Date(e.date).getUTCDay(),
+      dayOfWeek: getUTCDayOfWeek(new Date(e.date)),
       quantity: e.items.reduce((s, i) => s + i.quantity, 0),
     }));
 }
 
 export async function predictNextDay(
-  businessId: string
+  businessId: string,
+  timezone: string
 ): Promise<{ predictions: ProductPrediction[]; dataPoints: number } | null> {
-  // Check minimum data
   const entryCount = await prisma.salesEntry.count({ where: { businessId } });
   if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
 
@@ -104,37 +101,30 @@ export async function predictNextDay(
     select: { id: true, name: true, defaultUnit: true },
   });
 
-  const tomorrow = new Date();
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const targetWeekday = tomorrow.getUTCDay();
+  // Tomorrow in the user's timezone
+  const todayStr = getLocalDateStr(timezone);
+  const todayDate = toUTCDate(todayStr);
+  const tomorrowDate = new Date(todayDate);
+  tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const targetWeekday = tomorrowDate.getUTCDay();
 
   const predictions: ProductPrediction[] = [];
 
   for (const product of products) {
-    const history = await getProductSalesHistory(businessId, product.id, 60);
+    const history = await getProductSalesHistory(businessId, product.id, 60, timezone);
     if (history.length === 0) continue;
 
-    // Same weekday data (last 4 occurrences)
     const sameWeekday = history
       .filter((h) => h.dayOfWeek === targetWeekday)
       .slice(0, 4)
       .map((h) => h.quantity);
 
-    // Recent 7 days
     const recent = history.slice(0, 7).map((h) => h.quantity);
 
-    const weekdayAvg = mean(sameWeekday);
-    const recentAvg = mean(recent);
-
-    // Weighted blend
     let predicted: number;
-    if (sameWeekday.length === 0) {
-      predicted = recentAvg;
-    } else if (recent.length === 0) {
-      predicted = weekdayAvg;
-    } else {
-      predicted = 0.6 * weekdayAvg + 0.4 * recentAvg;
-    }
+    if (sameWeekday.length === 0) predicted = mean(recent);
+    else if (recent.length === 0) predicted = mean(sameWeekday);
+    else predicted = 0.6 * mean(sameWeekday) + 0.4 * mean(recent);
 
     if (predicted <= 0) continue;
 
@@ -154,7 +144,8 @@ export async function predictNextDay(
 }
 
 export async function predictNextWeek(
-  businessId: string
+  businessId: string,
+  timezone: string
 ): Promise<WeeklyProductPrediction[] | null> {
   const entryCount = await prisma.salesEntry.count({ where: { businessId } });
   if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
@@ -164,16 +155,18 @@ export async function predictNextWeek(
     select: { id: true, name: true, defaultUnit: true },
   });
 
+  const todayStr = getLocalDateStr(timezone);
+  const todayDate = toUTCDate(todayStr);
   const result: WeeklyProductPrediction[] = [];
 
   for (const product of products) {
-    const history = await getProductSalesHistory(businessId, product.id, 60);
+    const history = await getProductSalesHistory(businessId, product.id, 60, timezone);
     if (history.length === 0) continue;
 
     const daily: DayPrediction[] = [];
 
     for (let i = 1; i <= 7; i++) {
-      const targetDate = new Date();
+      const targetDate = new Date(todayDate);
       targetDate.setUTCDate(targetDate.getUTCDate() + i);
       const targetWeekday = targetDate.getUTCDay();
 

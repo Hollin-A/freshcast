@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
-
-type DateRange = { from: Date; to: Date };
+import {
+  getTodayUTC,
+  getDaysAgoUTC,
+  getLocalDateStr,
+  toUTCDate,
+} from "@/lib/dates";
 
 export type ProductTotal = {
   product: string;
@@ -14,32 +18,13 @@ export type DailyBreakdown = {
   totalQuantity: number;
 };
 
-export type PeriodComparison = {
-  currentTotal: number;
-  previousTotal: number;
-  changePercent: number;
-};
-
 export type RankedProduct = ProductTotal & { rank: number };
 
-function startOfDayUTC(d: Date): Date {
-  const str = d.toISOString().split("T")[0];
-  return new Date(str + "T00:00:00.000Z");
-}
-
-function daysAgoUTC(n: number): Date {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - n);
-  return startOfDayUTC(d);
-}
-
-export async function getTodaySummary(businessId: string) {
-  // Use UTC date to match @db.Date storage
-  const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
-  const todayDate = new Date(todayStr + "T00:00:00.000Z");
+export async function getTodaySummary(businessId: string, timezone: string) {
+  const todayDate = getTodayUTC(timezone);
   const tomorrowDate = new Date(todayDate);
   tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const todayStr = getLocalDateStr(timezone);
 
   const entry = await prisma.salesEntry.findFirst({
     where: { businessId, date: { gte: todayDate, lt: tomorrowDate } },
@@ -68,15 +53,15 @@ export async function getTodaySummary(businessId: string) {
   };
 }
 
-export async function getWeekSummary(businessId: string): Promise<{
+export async function getWeekSummary(businessId: string, timezone: string): Promise<{
   totalQuantity: number;
   previousWeekQuantity: number;
   changePercent: number;
   dailyBreakdown: DailyBreakdown[];
 }> {
-  const today = startOfDayUTC(new Date());
-  const weekStart = daysAgoUTC(6); // last 7 days including today
-  const prevWeekStart = daysAgoUTC(13);
+  const today = getTodayUTC(timezone);
+  const weekStart = getDaysAgoUTC(timezone, 6);
+  const prevWeekStart = getDaysAgoUTC(timezone, 13);
 
   const [currentEntries, prevEntries] = await Promise.all([
     prisma.salesEntry.findMany({
@@ -103,7 +88,7 @@ export async function getWeekSummary(businessId: string): Promise<{
   // Build daily breakdown
   const dailyMap = new Map<string, number>();
   for (let i = 6; i >= 0; i--) {
-    const d = daysAgoUTC(i);
+    const d = getDaysAgoUTC(timezone, i);
     dailyMap.set(d.toISOString().split("T")[0], 0);
   }
   for (const entry of currentEntries) {
@@ -127,9 +112,10 @@ export async function getWeekSummary(businessId: string): Promise<{
 
 export async function getTopProducts(
   businessId: string,
+  timezone: string,
   limit = 5
 ): Promise<RankedProduct[]> {
-  const weekStart = daysAgoUTC(6);
+  const weekStart = getDaysAgoUTC(timezone, 6);
 
   const entries = await prisma.salesEntry.findMany({
     where: { businessId, date: { gte: weekStart } },

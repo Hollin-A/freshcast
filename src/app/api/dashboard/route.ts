@@ -1,32 +1,36 @@
 import { NextResponse } from "next/server";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { getTodaySummary, getWeekSummary, getTopProducts } from "@/services/analytics";
 import { predictNextDay } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
+import { getLocalDateStr, toUTCDate } from "@/lib/dates";
 
 export async function GET() {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
+    const { businessId, timezone } = ctx;
+
     const [todaySummary, weekSummary, topProducts, predictions, insightsResult, totalEntries] =
       await Promise.all([
-        getTodaySummary(businessId),
-        getWeekSummary(businessId),
-        getTopProducts(businessId),
-        predictNextDay(businessId).catch(() => null),
-        getOrGenerateInsights(businessId).catch(() => ({
+        getTodaySummary(businessId, timezone),
+        getWeekSummary(businessId, timezone),
+        getTopProducts(businessId, timezone),
+        predictNextDay(businessId, timezone).catch(() => null),
+        getOrGenerateInsights(businessId, timezone).catch(() => ({
           insights: [],
           generatedAt: new Date().toISOString(),
         })),
         prisma.salesEntry.count({ where: { businessId } }),
       ]);
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const todayStr = getLocalDateStr(timezone);
+    const tomorrowDate = toUTCDate(todayStr);
+    tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
 
     return NextResponse.json({
       hasAnySales: totalEntries > 0,
@@ -36,7 +40,7 @@ export async function GET() {
       topProducts,
       forecast: predictions
         ? {
-            forecastDate: tomorrow.toISOString().split("T")[0],
+            forecastDate: tomorrowDate.toISOString().split("T")[0],
             predictions: predictions.predictions,
             dataPoints: predictions.dataPoints,
           }

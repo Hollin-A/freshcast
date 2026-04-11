@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import type { InsightType } from "@/generated/prisma/client";
+import { getDaysAgoUTC, getTodayUTC, getUTCDayOfWeek } from "@/lib/dates";
 
 type InsightRecord = {
   type: InsightType;
@@ -8,25 +9,19 @@ type InsightRecord = {
   metadata?: Record<string, unknown>;
 };
 
-function daysAgo(n: number): Date {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - n);
-  const str = d.toISOString().split("T")[0];
-  return new Date(str + "T00:00:00.000Z");
-}
-
 const DAY_NAMES = [
   "Sunday", "Monday", "Tuesday", "Wednesday",
   "Thursday", "Friday", "Saturday",
 ];
 
 export async function generateInsights(
-  businessId: string
+  businessId: string,
+  timezone: string
 ): Promise<InsightRecord[]> {
   const insights: InsightRecord[] = [];
 
-  const thisWeekStart = daysAgo(6);
-  const prevWeekStart = daysAgo(13);
+  const thisWeekStart = getDaysAgoUTC(timezone, 6);
+  const prevWeekStart = getDaysAgoUTC(timezone, 13);
 
   const [thisWeekEntries, prevWeekEntries] = await Promise.all([
     prisma.salesEntry.findMany({
@@ -127,7 +122,7 @@ export async function generateInsights(
   // Weekday pattern: find strongest and weakest days
   const weekdayTotals = new Map<number, number>();
   for (const entry of thisWeekEntries) {
-    const day = new Date(entry.date).getUTCDay();
+    const day = getUTCDayOfWeek(new Date(entry.date));
     const qty = entry.items.reduce((s, i) => s + i.quantity, 0);
     weekdayTotals.set(day, (weekdayTotals.get(day) ?? 0) + qty);
   }
@@ -154,10 +149,8 @@ export async function generateInsights(
  * Generate and store insights if stale (> 24 hours old or none exist).
  * Returns the current insights.
  */
-export async function getOrGenerateInsights(businessId: string) {
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const todayDate = new Date(todayStr + "T00:00:00.000Z");
+export async function getOrGenerateInsights(businessId: string, timezone: string) {
+  const todayDate = getTodayUTC(timezone);
 
   // Check if we have fresh insights
   const latest = await prisma.dailyInsight.findFirst({
@@ -175,7 +168,7 @@ export async function getOrGenerateInsights(businessId: string) {
   }
 
   // Stale — regenerate
-  const generated = await generateInsights(businessId);
+  const generated = await generateInsights(businessId, timezone);
 
   if (generated.length > 0) {
     await prisma.dailyInsight.createMany({

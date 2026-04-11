@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
+import { getLocalDateStr, toUTCDate } from "@/lib/dates";
 
 export async function GET(request: NextRequest) {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
+    const { businessId, timezone } = ctx;
     const horizon = request.nextUrl.searchParams.get("horizon") || "day";
 
     if (horizon === "day") {
-      const result = await predictNextDay(businessId);
+      const result = await predictNextDay(businessId, timezone);
       if (!result) {
         return errorResponse(
           "INSUFFICIENT_DATA",
@@ -21,11 +23,12 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const todayStr = getLocalDateStr(timezone);
+      const tomorrowDate = toUTCDate(todayStr);
+      tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
 
       return NextResponse.json({
-        forecastDate: tomorrow.toISOString().split("T")[0],
+        forecastDate: tomorrowDate.toISOString().split("T")[0],
         predictions: result.predictions,
         dataPoints: result.dataPoints,
         generatedAt: new Date().toISOString(),
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (horizon === "week") {
-      const result = await predictNextWeek(businessId);
+      const result = await predictNextWeek(businessId, timezone);
       if (!result) {
         return errorResponse(
           "INSUFFICIENT_DATA",
@@ -42,10 +45,11 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() + 1);
-      const weekEnd = new Date();
-      weekEnd.setDate(weekEnd.getDate() + 7);
+      const todayStr = getLocalDateStr(timezone);
+      const weekStart = toUTCDate(todayStr);
+      weekStart.setUTCDate(weekStart.getUTCDate() + 1);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
 
       return NextResponse.json({
         weekStart: weekStart.toISOString().split("T")[0],
