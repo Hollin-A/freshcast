@@ -50,10 +50,25 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-4">
+      {data.forecast && data.forecast.predictions.length > 0 && (
+        <ForecastCard forecast={data.forecast} />
+      )}
       <TodaySummaryCard data={data.todaySummary} />
       <WeekTrendCard data={data.weekSummary} />
       {data.topProducts.length > 0 && (
         <TopProductsCard products={data.topProducts} />
+      )}
+      {data.insights.length > 0 && (
+        <InsightsCard insights={data.insights} />
+      )}
+      {!data.forecast && data.weekSummary.totalQuantity > 0 && (
+        <Card>
+          <CardContent className="py-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Log at least 5 days of sales to see demand predictions
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -218,6 +233,94 @@ function TopProductsCard({
               </div>
             );
           })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  low: "Low confidence",
+  moderate: "Moderate",
+  good: "Good",
+  high: "High confidence",
+};
+
+function getConfidenceLabel(confidence: number): { label: string; color: string } {
+  if (confidence >= 0.75) return { label: CONFIDENCE_LABELS.high, color: "text-green-600" };
+  if (confidence >= 0.6) return { label: CONFIDENCE_LABELS.good, color: "text-blue-600" };
+  if (confidence >= 0.4) return { label: CONFIDENCE_LABELS.moderate, color: "text-amber-600" };
+  return { label: CONFIDENCE_LABELS.low, color: "text-muted-foreground" };
+}
+
+function ForecastCard({
+  forecast,
+}: {
+  forecast: {
+    forecastDate: string;
+    predictions: {
+      product: string;
+      predictedQuantity: number;
+      unit: string | null;
+      confidence: number;
+    }[];
+    dataPoints: number;
+  };
+}) {
+  const dateLabel = new Date(forecast.forecastDate).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+
+  return (
+    <Card className="border-primary/20">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Tomorrow&apos;s Forecast</CardTitle>
+        <CardDescription>{dateLabel}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {forecast.predictions.slice(0, 5).map((p, i) => {
+            const conf = getConfidenceLabel(p.confidence);
+            return (
+              <div key={i} className="flex items-center justify-between text-sm">
+                <span>{p.product}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">
+                    ~{p.predictedQuantity}
+                    {p.unit ? ` ${p.unit}` : ""}
+                  </span>
+                  <span className={`text-xs ${conf.color}`}>{conf.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function InsightsCard({
+  insights,
+}: {
+  insights: { type: string; content: string }[];
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Insights</CardTitle>
+        <CardDescription>Auto-generated from your data</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {insights.map((insight, i) => (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <span className="mt-0.5 text-primary">•</span>
+              <span>{insight.content}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

@@ -22,7 +22,17 @@ export type DashboardData = {
     unit: string | null;
     rank: number;
   }[];
-  insights: { type: string; content: string }[];
+  forecast: {
+    forecastDate: string;
+    predictions: {
+      product: string;
+      predictedQuantity: number;
+      unit: string | null;
+      confidence: number;
+    }[];
+    dataPoints: number;
+  } | null;
+  insights: { id?: string; type: string; content: string }[];
   lastUpdated: string;
 };
 
