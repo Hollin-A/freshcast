@@ -67,7 +67,7 @@ async function getProductSalesHistory(
   days: number
 ) {
   const since = new Date();
-  since.setDate(since.getDate() - days);
+  since.setUTCDate(since.getUTCDate() - days);
 
   const entries = await prisma.salesEntry.findMany({
     where: {
@@ -87,7 +87,7 @@ async function getProductSalesHistory(
     .filter((e) => e.items.length > 0)
     .map((e) => ({
       date: new Date(e.date),
-      dayOfWeek: new Date(e.date).getDay(),
+      dayOfWeek: new Date(e.date).getUTCDay(),
       quantity: e.items.reduce((s, i) => s + i.quantity, 0),
     }));
 }
@@ -105,8 +105,8 @@ export async function predictNextDay(
   });
 
   const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const targetWeekday = tomorrow.getDay();
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const targetWeekday = tomorrow.getUTCDay();
 
   const predictions: ProductPrediction[] = [];
 
@@ -174,8 +174,8 @@ export async function predictNextWeek(
 
     for (let i = 1; i <= 7; i++) {
       const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + i);
-      const targetWeekday = targetDate.getDay();
+      targetDate.setUTCDate(targetDate.getUTCDate() + i);
+      const targetWeekday = targetDate.getUTCDay();
 
       const sameWeekday = history
         .filter((h) => h.dayOfWeek === targetWeekday)

@@ -10,9 +10,9 @@ type InsightRecord = {
 
 function daysAgo(n: number): Date {
   const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  d.setUTCDate(d.getUTCDate() - n);
+  const str = d.toISOString().split("T")[0];
+  return new Date(str + "T00:00:00.000Z");
 }
 
 const DAY_NAMES = [
@@ -127,7 +127,7 @@ export async function generateInsights(
   // Weekday pattern: find strongest and weakest days
   const weekdayTotals = new Map<number, number>();
   for (const entry of thisWeekEntries) {
-    const day = new Date(entry.date).getDay();
+    const day = new Date(entry.date).getUTCDay();
     const qty = entry.items.reduce((s, i) => s + i.quantity, 0);
     weekdayTotals.set(day, (weekdayTotals.get(day) ?? 0) + qty);
   }
@@ -156,18 +156,19 @@ export async function generateInsights(
  */
 export async function getOrGenerateInsights(businessId: string) {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
+  const todayDate = new Date(todayStr + "T00:00:00.000Z");
 
   // Check if we have fresh insights
   const latest = await prisma.dailyInsight.findFirst({
-    where: { businessId, date: { gte: today } },
+    where: { businessId, date: { gte: todayDate } },
     orderBy: { createdAt: "desc" },
   });
 
   if (latest) {
     // Fresh — return from DB
     const insights = await prisma.dailyInsight.findMany({
-      where: { businessId, date: { gte: today } },
+      where: { businessId, date: { gte: todayDate } },
       select: { id: true, type: true, content: true },
     });
     return { insights, generatedAt: latest.createdAt.toISOString() };
@@ -180,7 +181,7 @@ export async function getOrGenerateInsights(businessId: string) {
     await prisma.dailyInsight.createMany({
       data: generated.map((g) => ({
         businessId,
-        date: today,
+        date: todayDate,
         type: g.type,
         content: g.content,
         metadata: g.metadata
