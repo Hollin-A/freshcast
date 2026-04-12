@@ -46,35 +46,11 @@ export async function POST(request: Request) {
       return errorResponse("VALIDATION_ERROR", "Date cannot be in the future", 400);
     }
 
-    // Check if entry already exists for this date — if so, merge items
-    const existing = await prisma.salesEntry.findUnique({
-      where: { businessId_date: { businessId, date: entryDate } },
+    logger.info("sales", "Creating sales entry", {
+      date,
+      inputMethod,
+      itemCount: items.length,
     });
-
-    if (existing) {
-      // Delete old items and replace
-      await prisma.salesItem.deleteMany({ where: { salesEntryId: existing.id } });
-      const updated = await prisma.salesEntry.update({
-        where: { id: existing.id },
-        data: {
-          inputMethod,
-          rawInput: rawInput ?? null,
-          items: {
-            create: items.map((item) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              unit: item.unit ?? null,
-            })),
-          },
-        },
-        include: {
-          items: {
-            include: { product: { select: { id: true, name: true } } },
-          },
-        },
-      });
-      return NextResponse.json(updated);
-    }
 
     const entry = await prisma.salesEntry.create({
       data: {
@@ -97,6 +73,7 @@ export async function POST(request: Request) {
       },
     });
 
+    logger.info("sales", "Sales entry created", { entryId: entry.id });
     return NextResponse.json(entry, { status: 201 });
   } catch (err) {
     logger.error("sales", "POST /api/sales failed", err);
@@ -133,7 +110,7 @@ export async function GET(request: NextRequest) {
             include: { product: { select: { id: true, name: true } } },
           },
         },
-        orderBy: { date: "desc" },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
         take: limit,
         skip: offset,
       }),

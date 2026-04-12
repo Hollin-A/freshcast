@@ -120,8 +120,6 @@ model SalesEntry {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   items SalesItem[]
-
-  @@unique([businessId, date])
 }
 
 enum InputMethod {
