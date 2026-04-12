@@ -20,7 +20,9 @@ export function MobileNav() {
         {tabs.map((tab) => {
           const isActive =
             pathname === tab.href ||
-            (tab.href !== "/dashboard" && pathname.startsWith(tab.href));
+            (tab.href !== "/dashboard" &&
+              tab.href !== "/sales" &&
+              pathname.startsWith(tab.href));
 
           return (
             <Link
