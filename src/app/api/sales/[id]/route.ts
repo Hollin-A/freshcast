@@ -115,3 +115,35 @@ export async function PUT(
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  ctx: RouteContext<"/api/sales/[id]">
+) {
+  try {
+    const businessId = await getBusinessId();
+    if (!businessId) {
+      return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const { id } = await ctx.params;
+
+    const entry = await prisma.salesEntry.findFirst({
+      where: { id, businessId },
+    });
+
+    if (!entry) {
+      return errorResponse("NOT_FOUND", "Sales entry not found", 404);
+    }
+
+    await prisma.salesItem.deleteMany({ where: { salesEntryId: id } });
+    await prisma.salesEntry.delete({ where: { id } });
+
+    logger.info("sales", "Sales entry deleted", { entryId: id });
+
+    return NextResponse.json({ message: "Entry deleted" });
+  } catch (err) {
+    logger.error("sales", "DELETE /api/sales/[id] failed", err);
+    return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
+  }
+}

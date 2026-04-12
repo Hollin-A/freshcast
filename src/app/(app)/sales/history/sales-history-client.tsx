@@ -2,11 +2,24 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSalesList } from "@/hooks/use-sales";
+import { useSalesList, useDeleteSales } from "@/hooks/use-sales";
+import { toast } from "sonner";
 
 export function SalesHistoryClient() {
   const { data, isLoading } = useSalesList();
+  const deleteMutation = useDeleteSales();
+
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this sales entry?")) return;
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast.success("Entry deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -63,11 +76,22 @@ export function SalesHistoryClient() {
                             { hour: "numeric", minute: "2-digit" }
                           )}
                         </span>
-                        <Badge variant="secondary" className="text-xs">
-                          {entry.inputMethod === "NATURAL_LANGUAGE"
-                            ? "NL"
-                            : "Manual"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {entry.inputMethod === "NATURAL_LANGUAGE"
+                              ? "NL"
+                              : "Manual"}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-destructive h-6 px-2"
+                            onClick={() => handleDelete(entry.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
