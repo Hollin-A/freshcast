@@ -161,24 +161,29 @@ function WeekTrendCard({
             </Badge>
           )}
         </div>
-        <div className="flex items-end gap-1 h-16">
+        <div className="flex items-end gap-1" style={{ height: "4rem" }}>
           {data.dailyBreakdown.map((day) => {
             const maxQty = Math.max(
               ...data.dailyBreakdown.map((d) => d.totalQuantity),
               1
             );
-            const height = Math.max((day.totalQuantity / maxQty) * 100, 4);
+            const barMaxHeight = 48; // px, leaving room for label
+            const barHeight = Math.max(
+              Math.round((day.totalQuantity / maxQty) * barMaxHeight),
+              3
+            );
             const dayLabel = new Date(day.date).toLocaleDateString("en-US", {
               weekday: "narrow",
             });
             return (
               <div
                 key={day.date}
-                className="flex flex-1 flex-col items-center gap-1"
+                className="flex flex-1 flex-col items-center justify-end gap-1"
+                style={{ height: "100%" }}
               >
                 <div
-                  className="w-full rounded-sm bg-primary/20"
-                  style={{ height: `${height}%` }}
+                  className="w-full rounded-sm bg-primary/30"
+                  style={{ height: `${barHeight}px` }}
                 />
                 <span className="text-[10px] text-muted-foreground">
                   {dayLabel}
