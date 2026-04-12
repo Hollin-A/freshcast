@@ -26,7 +26,7 @@ export async function getTodaySummary(businessId: string, timezone: string) {
   tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
   const todayStr = getLocalDateStr(timezone);
 
-  const entry = await prisma.salesEntry.findFirst({
+  const entries = await prisma.salesEntry.findMany({
     where: { businessId, date: { gte: todayDate, lt: tomorrowDate } },
     include: {
       items: {
@@ -35,15 +35,32 @@ export async function getTodaySummary(businessId: string, timezone: string) {
     },
   });
 
-  if (!entry) {
+  if (entries.length === 0) {
     return { date: todayStr, totalItems: 0, totalQuantity: 0, items: [] };
   }
 
-  const items = entry.items.map((i) => ({
-    product: i.product.name,
-    quantity: i.quantity,
-    unit: i.unit ?? i.product.defaultUnit ?? null,
-  }));
+  // Aggregate items across all entries, merging same products
+  const productTotals = new Map<
+    string,
+    { product: string; quantity: number; unit: string | null }
+  >();
+
+  for (const entry of entries) {
+    for (const item of entry.items) {
+      const existing = productTotals.get(item.productId);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        productTotals.set(item.productId, {
+          product: item.product.name,
+          quantity: item.quantity,
+          unit: item.unit ?? item.product.defaultUnit ?? null,
+        });
+      }
+    }
+  }
+
+  const items = Array.from(productTotals.values());
 
   return {
     date: todayStr,
