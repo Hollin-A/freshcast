@@ -6,6 +6,7 @@ import { errorResponse, getBusinessId } from "@/lib/api-helpers";
 const createSalesSchema = z.object({
   date: z.string().date(),
   inputMethod: z.enum(["NATURAL_LANGUAGE", "MANUAL"]),
+  rawInput: z.string().max(1000).optional().nullable(),
   items: z
     .array(
       z.object({
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const { date, inputMethod, items } = result.data;
+    const { date, inputMethod, rawInput, items } = result.data;
     const entryDate = new Date(date);
 
     // Check date is not in the future
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
         where: { id: existing.id },
         data: {
           inputMethod,
+          rawInput: rawInput ?? null,
           items: {
             create: items.map((item) => ({
               productId: item.productId,
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
       data: {
         date: entryDate,
         inputMethod,
+        rawInput: rawInput ?? null,
         businessId,
         items: {
           create: items.map((item) => ({

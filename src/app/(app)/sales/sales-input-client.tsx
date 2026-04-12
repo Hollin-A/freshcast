@@ -135,6 +135,7 @@ export function SalesInputClient() {
       await saveMutation.mutateAsync({
         date: today,
         inputMethod,
+        rawInput: inputMethod === "NATURAL_LANGUAGE" ? nlText : null,
         items: parsedItems.map((p) => ({
           productId: p.productId!,
           quantity: p.quantity,

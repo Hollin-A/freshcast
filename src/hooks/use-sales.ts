@@ -7,6 +7,7 @@ type SalesEntry = {
   id: string;
   date: string;
   inputMethod: string;
+  rawInput: string | null;
   items: {
     id: string;
     quantity: number;
@@ -53,6 +54,7 @@ export function useSaveSales() {
     mutationFn: async (data: {
       date: string;
       inputMethod: "NATURAL_LANGUAGE" | "MANUAL";
+      rawInput?: string | null;
       items: { productId: string; quantity: number; unit?: string | null }[];
     }) => {
       const res = await fetch("/api/sales", {
