@@ -8,18 +8,20 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 
 ## What's Already Done
 
-- [x] Project scaffolding (Next.js 16, Tailwind, TypeScript)
-- [x] Prisma v7 schema (all models, enums, relations)
-- [x] Prisma client singleton with PrismaPg adapter
-- [x] Auth.js config (Credentials provider, JWT sessions)
+- [x] Project scaffolding (Next.js 16, Tailwind v4, TypeScript, ESM)
+- [x] Prisma v7 schema with PrismaPg adapter (all models, enums, relations)
+- [x] Auth.js v5 config (Credentials provider, JWT sessions, Prisma adapter)
 - [x] Signup API route (`POST /api/auth/signup`)
 - [x] Auth route handler (`/api/auth/[...nextauth]`)
-- [x] Proxy (route protection, replaces middleware)
-- [x] React Query provider
-- [x] Root layout with Toaster
-- [x] i18n message file (en.json)
+- [x] Proxy (`src/proxy.ts` — route protection, replaces middleware in Next.js 16)
+- [x] React Query provider with SessionProvider
+- [x] Root layout with Toaster (sonner)
+- [x] i18n message file (`src/messages/en.json`)
 - [x] Type definitions and constants
-- [x] API helper utilities (error responses, getBusinessId)
+- [x] API helpers (error responses, getBusinessId, getBusinessContext)
+- [x] Timezone-aware date utilities (`src/lib/dates.ts`)
+- [x] Structured logger (`src/lib/logger.ts`)
+- [x] Environment variable validation (`src/lib/env.ts`)
 
 ---
 
@@ -30,13 +32,13 @@ Branch: `feat/phase-1-auth`
 Users can sign up, log in, and have a working database behind it all.
 
 ### Tasks
-- [ ] 1.1 Set up Neon database and run `prisma migrate dev` to create tables
-- [ ] 1.2 Install shadcn/ui CLI and add base components (Button, Input, Card, Label, Tabs, Sheet, Select, Separator, Badge, Skeleton)
-- [ ] 1.3 Build signup page (`/signup`) with react-hook-form + zod validation
-- [ ] 1.4 Build login page (`/login`) with email/password form
-- [ ] 1.5 Add auth redirect logic: authenticated users → `/dashboard`, unauthenticated → `/login`
-- [ ] 1.6 Create placeholder dashboard page (`/dashboard`) that shows the logged-in user's email
-- [ ] 1.7 Add logout functionality
+- [x] 1.1 Set up Neon database and run `prisma migrate dev` to create tables
+- [x] 1.2 Install shadcn/ui CLI and add base components (Button, Input, Card, Label, Tabs, Sheet, Select, Separator, Badge, Skeleton)
+- [x] 1.3 Build signup page (`/signup`) with react-hook-form + zod validation
+- [x] 1.4 Build login page (`/login`) with email/password form
+- [x] 1.5 Add auth redirect logic: authenticated users → `/dashboard`, unauthenticated → `/login`
+- [x] 1.6 Create placeholder dashboard page (`/dashboard`) that shows the logged-in user's email
+- [x] 1.7 Add logout functionality
 
 ### Acceptance Criteria
 - Can create an account via `/signup` and see it in the database
@@ -57,14 +59,14 @@ New users complete a quick onboarding flow that creates their business profile a
 Phase 1 complete.
 
 ### Tasks
-- [ ] 2.1 Build `POST /api/business` route (create business + initial products, zod validation)
-- [ ] 2.2 Build `GET /api/business` route (get business profile)
-- [ ] 2.3 Build onboarding page (`/onboarding`) with multi-step wizard:
+- [x] 2.1 Build `POST /api/business` route (create business + initial products, zod validation)
+- [x] 2.2 Build `GET /api/business` route (get business profile)
+- [x] 2.3 Build onboarding page (`/onboarding`) with multi-step wizard:
   - Step 1: Business name + type
   - Step 2: Add 3–5 core products
   - Step 3: Locale preference (optional, default "en")
-- [ ] 2.4 Add onboarding guard: if user has no business or `onboarded=false`, redirect to `/onboarding`
-- [ ] 2.5 After onboarding completion, redirect to `/dashboard`
+- [x] 2.4 Add onboarding guard: if user has no business or `onboarded=false`, redirect to `/onboarding`
+- [x] 2.5 After onboarding completion, redirect to `/dashboard`
 
 ### Acceptance Criteria
 - New user signs up → lands on `/onboarding`
@@ -86,11 +88,11 @@ Users can view, add, and edit their product catalog.
 Phase 2 complete.
 
 ### Tasks
-- [ ] 3.1 Build `GET /api/products` route (list products, filter by active)
-- [ ] 3.2 Build `POST /api/products` route (add product, duplicate check)
-- [ ] 3.3 Build `PATCH /api/products` route (update product name/unit, deactivate)
-- [ ] 3.4 Build products page (`/products`) with product list, add form, edit inline
-- [ ] 3.5 Create `useProducts` React Query hook
+- [x] 3.1 Build `GET /api/products` route (list products, filter by active)
+- [x] 3.2 Build `POST /api/products` route (add product, duplicate check)
+- [x] 3.3 Build `PATCH /api/products` route (update product name/unit, deactivate)
+- [x] 3.4 Build products page (`/products`) with product list, add form, edit inline
+- [x] 3.5 Create `useProducts` React Query hook
 
 ### Acceptance Criteria
 - Products page lists all active products from onboarding
@@ -112,20 +114,20 @@ Users can log daily sales via natural language or manual form, with a confirmati
 Phase 3 complete.
 
 ### Tasks
-- [ ] 4.1 Build the sales parser service (`services/sales-parser.ts`) — rule-based NL parsing
-- [ ] 4.2 Build the product matcher service (`services/product-matcher.ts`) — fuzzy matching
-- [ ] 4.3 Build `POST /api/sales/parse` route (parse NL text, return structured items)
-- [ ] 4.4 Build `POST /api/sales` route (save sales entry with items)
-- [ ] 4.5 Build `GET /api/sales` route (list entries with pagination and date range)
-- [ ] 4.6 Build `GET /api/sales/[id]` route (single entry)
-- [ ] 4.7 Build `PUT /api/sales/[id]` route (edit today's entry)
-- [ ] 4.8 Build sales input page (`/sales`) with dual-mode UI:
+- [x] 4.1 Build the sales parser service (`services/sales-parser.ts`) — rule-based NL parsing
+- [x] 4.2 Build the product matcher service (`services/product-matcher.ts`) — fuzzy matching
+- [x] 4.3 Build `POST /api/sales/parse` route (parse NL text, return structured items)
+- [x] 4.4 Build `POST /api/sales` route (save sales entry with items)
+- [x] 4.5 Build `GET /api/sales` route (list entries with pagination and date range)
+- [x] 4.6 Build `GET /api/sales/[id]` route (single entry)
+- [x] 4.7 Build `PUT /api/sales/[id]` route (edit today's entry)
+- [x] 4.8 Build sales input page (`/sales`) with dual-mode UI:
   - NL mode: textarea + parse button
   - Manual mode: product list with quantity steppers
   - Tab/toggle to switch modes
-- [ ] 4.9 Build confirmation sheet (editable parsed results, unmatched product prompts, save button)
-- [ ] 4.10 Build sales history page (`/sales/history`) with scrollable date-grouped list
-- [ ] 4.11 Create `useSales` React Query hook
+- [x] 4.9 Build confirmation sheet (editable parsed results, unmatched product prompts, save button)
+- [x] 4.10 Build sales history page (`/sales/history`) with scrollable date-grouped list
+- [x] 4.11 Create `useSales` React Query hook
 
 ### Acceptance Criteria
 - NL input: "sold 20 eggs, 30kg beef" parses into structured items correctly
@@ -151,15 +153,15 @@ Users see a meaningful home screen with today's summary, weekly trends, and top 
 Phase 4 complete (needs sales data to display).
 
 ### Tasks
-- [ ] 5.1 Build analytics service (`services/analytics.ts`) — trend calculations, period comparisons, product rankings
-- [ ] 5.2 Build `GET /api/dashboard` route (aggregated single-call response)
-- [ ] 5.3 Build dashboard page (`/dashboard`) with card-based layout:
+- [x] 5.1 Build analytics service (`services/analytics.ts`) — trend calculations, period comparisons, product rankings
+- [x] 5.2 Build `GET /api/dashboard` route (aggregated single-call response)
+- [x] 5.3 Build dashboard page (`/dashboard`) with card-based layout:
   - Today's Summary card
   - This Week card (with week-over-week comparison)
   - Top Products card
-- [ ] 5.4 Build empty state for dashboard (no sales data yet — guide user to log first sale)
-- [ ] 5.5 Create `useDashboard` React Query hook
-- [ ] 5.6 Build mobile bottom navigation bar (Dashboard / Log Sales / History tabs)
+- [x] 5.4 Build empty state for dashboard (no sales data yet — guide user to log first sale)
+- [x] 5.5 Create `useDashboard` React Query hook
+- [x] 5.6 Build mobile bottom navigation bar (Dashboard / Log Sales / History tabs)
 
 ### Acceptance Criteria
 - Dashboard shows today's sales summary after logging entries
@@ -182,16 +184,16 @@ Users see demand predictions and auto-generated business insights on the dashboa
 Phase 5 complete. Requires 5+ days of sales data for predictions.
 
 ### Tasks
-- [ ] 6.1 Build prediction engine (`services/prediction-engine.ts`) — moving averages + weekday patterns
-- [ ] 6.2 Build insight generator (`services/insight-generator.ts`) — template-based NL insights
-- [ ] 6.3 Build `GET /api/predictions` route (next-day and weekly forecasts)
-- [ ] 6.4 Build `GET /api/insights` route (daily generated insights)
-- [ ] 6.5 Implement on-demand batch processing in dashboard API (generate if stale > 24h)
-- [ ] 6.6 Add Tomorrow's Forecast card to dashboard
-- [ ] 6.7 Add Insights card to dashboard
-- [ ] 6.8 Show confidence levels on predictions (low/moderate/good/high)
-- [ ] 6.9 Show "need more data" message when < 5 entries exist
-- [ ] 6.10 Create `usePredictions` React Query hook
+- [x] 6.1 Build prediction engine (`services/prediction-engine.ts`) — moving averages + weekday patterns
+- [x] 6.2 Build insight generator (`services/insight-generator.ts`) — template-based NL insights
+- [x] 6.3 Build `GET /api/predictions` route (next-day and weekly forecasts)
+- [x] 6.4 Build `GET /api/insights` route (daily generated insights)
+- [x] 6.5 Implement on-demand batch processing in dashboard API (generate if stale > 24h)
+- [x] 6.6 Add Tomorrow's Forecast card to dashboard
+- [x] 6.7 Add Insights card to dashboard
+- [x] 6.8 Show confidence levels on predictions (low/moderate/good/high)
+- [x] 6.9 Show "need more data" message when < 5 entries exist
+- [x] 6.10 Create `usePredictions` React Query hook
 
 ### Acceptance Criteria
 - After 5+ sales entries, predictions appear on dashboard
@@ -214,14 +216,14 @@ Refine the UI, handle edge cases, add seed data, and prepare for deployment.
 Phase 6 complete.
 
 ### Tasks
-- [ ] 7.1 Mobile UI refinement — touch targets, spacing, responsive tweaks
-- [ ] 7.2 Loading states (skeletons) for all pages
-- [ ] 7.3 Error boundaries and fallback UI
-- [ ] 7.4 Empty states for all sections (no products, no sales, no insights)
-- [ ] 7.5 Create seed script (`prisma/seed.ts`) with demo business, products, and 14 days of sales data
-- [ ] 7.6 Add privacy messaging ("Your data is private. BizSense works only for your business.")
-- [ ] 7.7 Update metadata (title, description, OG tags)
-- [ ] 7.8 Environment variable validation on startup
+- [x] 7.1 Mobile UI refinement — touch targets, spacing, responsive tweaks
+- [x] 7.2 Loading states (skeletons) for all pages
+- [x] 7.3 Error boundaries and fallback UI
+- [x] 7.4 Empty states for all sections (no products, no sales, no insights)
+- [x] 7.5 Create seed script (`prisma/seed.ts`) with demo business, products, and 14 days of sales data
+- [x] 7.6 Add privacy messaging ("Your data is private. BizSense works only for your business.")
+- [x] 7.7 Update metadata (title, description, OG tags)
+- [x] 7.8 Environment variable validation on startup
 - [ ] 7.9 Deployment to Vercel + Neon production database
 - [ ] 7.10 Smoke test the deployed app end-to-end
 
@@ -246,6 +248,34 @@ Phase 6 complete.
 | 5 | Dashboard & Analytics | Home screen with summaries and trends |
 | 6 | Predictions & Insights | Demand forecasts and auto-generated insights |
 | 7 | Polish & Launch | Mobile refinement, seed data, deployment |
+
+---
+
+## Post-Phase Fixes & Enhancements
+
+These were implemented after the main phases, addressing bugs and feature gaps discovered during testing.
+
+### Bug Fixes
+- [x] Fix dashboard empty state logic — distinguish "never logged" vs "not logged today" (`fix/dashboard-empty-state`)
+- [x] Fix timezone mismatch — all date calculations now use business timezone instead of UTC (`fix/timezone-aware-dates`)
+- [x] Fix NL parser unit extraction — prevent unit regex matching inside product names like "eggs" (`fix/nl-parser-unit-handling`)
+- [x] Fix NL parser unit handling for unmatched products — operator precedence bug in ternary (`fix/nl-parser-unit-handling`)
+- [x] Pass parsed unit when adding unmatched products from confirmation screen (`fix/nl-parser-unit-handling`)
+- [x] Fix mobile nav — prevent "Log Sales" tab highlighting on history page (`fix/nav-active-state`)
+- [x] Fix today's summary to aggregate across multiple daily entries (`feat/multiple-daily-entries`)
+
+### Features Added
+- [x] Business timezone field — auto-detected from browser during onboarding (`fix/timezone-aware-dates`)
+- [x] Timezone-aware date utility (`src/lib/dates.ts`) used by all services (`fix/timezone-aware-dates`)
+- [x] Save original NL text with sales entries for audit trail (`feat/save-raw-nl-input`)
+- [x] Display original NL input in sales history (`feat/save-raw-nl-input`)
+- [x] Multiple sales entries per day — removed unique constraint, simplified POST API (`feat/multiple-daily-entries`)
+- [x] Sales history grouped by date with time display for each entry (`feat/multiple-daily-entries`)
+- [x] Warm teal color theme with modern styling (`feat/ui-refresh`)
+- [x] Geist Sans font properly connected (`feat/ui-refresh`)
+- [x] Cards with subtle shadows, warm off-white background (`feat/ui-refresh`)
+- [x] Structured logging across all API routes (`feat/logging`)
+- [x] Color-coded log levels with timestamps and context tags (`feat/logging`)
 
 ---
 
