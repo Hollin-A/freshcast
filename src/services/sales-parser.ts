@@ -76,14 +76,22 @@ function parseToken(
   // Match against known products
   const match = matchProduct(productName, products);
 
+  // Determine unit:
+  // 1. If user explicitly typed a unit, always use it
+  // 2. If no explicit unit and product matched, fall back to product's default unit
+  // 3. If no explicit unit and unmatched, null
+  let resolvedUnit = unit;
+  if (!resolvedUnit && match) {
+    const matchedProduct = products.find((p) => p.id === match.productId);
+    resolvedUnit = matchedProduct?.defaultUnit ?? null;
+  }
+
   return {
     rawText: raw.trim(),
     product: match?.productName ?? productName,
     productId: match?.productId ?? null,
     quantity,
-    unit: unit ?? match?.productId
-      ? products.find((p) => p.id === match?.productId)?.defaultUnit ?? null
-      : null,
+    unit: resolvedUnit,
     matched: match !== null,
   };
 }
