@@ -94,7 +94,10 @@ export function SalesInputClient() {
 
   async function handleAddUnmatched(item: ParsedItem) {
     try {
-      const newProduct = await addProduct.mutateAsync({ name: item.product });
+      const newProduct = await addProduct.mutateAsync({
+        name: item.product,
+        defaultUnit: item.unit || undefined,
+      });
       setParsedItems((prev) =>
         prev?.map((p) =>
           p.product === item.product
