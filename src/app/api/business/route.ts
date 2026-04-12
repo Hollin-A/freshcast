@@ -69,7 +69,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(business, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("POST /api/business error:", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
