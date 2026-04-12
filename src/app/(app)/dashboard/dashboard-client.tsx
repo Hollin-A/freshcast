@@ -51,6 +51,9 @@ export function DashboardClient() {
       {data.forecast && data.forecast.predictions.length > 0 && (
         <ForecastCard forecast={data.forecast} />
       )}
+      {data.weeklyForecast && data.weeklyForecast.length > 0 && (
+        <WeeklyForecastCard predictions={data.weeklyForecast} />
+      )}
       <TodaySummaryCard data={data.todaySummary} />
       <WeekTrendCard data={data.weekSummary} />
       {data.topProducts.length > 0 && (
@@ -322,6 +325,95 @@ function InsightsCard({
             <div key={i} className="flex items-start gap-2 text-sm">
               <span className="mt-0.5 text-primary">•</span>
               <span>{insight.content}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function WeeklyForecastCard({
+  predictions,
+}: {
+  predictions: {
+    product: string;
+    unit: string | null;
+    daily: { date: string; dayOfWeek: string; predictedQuantity: number }[];
+  }[];
+}) {
+  // Find the strongest day across all products
+  const dayTotals = new Map<string, number>();
+  for (const p of predictions) {
+    for (const d of p.daily) {
+      dayTotals.set(d.dayOfWeek, (dayTotals.get(d.dayOfWeek) ?? 0) + d.predictedQuantity);
+    }
+  }
+  let strongestDay = "";
+  let strongestQty = 0;
+  for (const [day, qty] of dayTotals) {
+    if (qty > strongestQty) {
+      strongestDay = day;
+      strongestQty = qty;
+    }
+  }
+
+  // Show top 3 products
+  const topProducts = predictions
+    .map((p) => ({
+      ...p,
+      weekTotal: p.daily.reduce((s, d) => s + d.predictedQuantity, 0),
+    }))
+    .sort((a, b) => b.weekTotal - a.weekTotal)
+    .slice(0, 3);
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Next Week</CardTitle>
+        <CardDescription>
+          {strongestDay && `${strongestDay} looks like your strongest day`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {topProducts.map((product) => (
+            <div key={product.product}>
+              <p className="text-sm font-medium mb-1">
+                {product.product}
+                {product.unit && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    ({product.unit})
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-1">
+                {product.daily.map((day) => {
+                  const maxQty = Math.max(...product.daily.map((d) => d.predictedQuantity), 1);
+                  const barHeight = Math.max(
+                    Math.round((day.predictedQuantity / maxQty) * 32),
+                    3
+                  );
+                  return (
+                    <div
+                      key={day.date}
+                      className="flex flex-1 flex-col items-center justify-end gap-0.5"
+                      style={{ height: "44px" }}
+                    >
+                      <span className="text-[9px] text-muted-foreground">
+                        {day.predictedQuantity}
+                      </span>
+                      <div
+                        className="w-full rounded-sm bg-primary/25"
+                        style={{ height: `${barHeight}px` }}
+                      />
+                      <span className="text-[9px] text-muted-foreground">
+                        {day.dayOfWeek.slice(0, 2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </div>

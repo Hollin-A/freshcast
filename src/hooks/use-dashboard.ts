@@ -34,6 +34,16 @@ export type DashboardData = {
     }[];
     dataPoints: number;
   } | null;
+  weeklyForecast: {
+    product: string;
+    productId: string;
+    unit: string | null;
+    daily: {
+      date: string;
+      dayOfWeek: string;
+      predictedQuantity: number;
+    }[];
+  }[] | null;
   insights: { id?: string; type: string; content: string }[];
   lastUpdated: string;
 };

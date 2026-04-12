@@ -3,7 +3,7 @@ import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { getTodaySummary, getWeekSummary, getTopProducts } from "@/services/analytics";
-import { predictNextDay } from "@/services/prediction-engine";
+import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
 
@@ -16,12 +16,13 @@ export async function GET() {
 
     const { businessId, timezone } = ctx;
 
-    const [todaySummary, weekSummary, topProducts, predictions, insightsResult, totalEntries] =
+    const [todaySummary, weekSummary, topProducts, predictions, weeklyPredictions, insightsResult, totalEntries] =
       await Promise.all([
         getTodaySummary(businessId, timezone),
         getWeekSummary(businessId, timezone),
         getTopProducts(businessId, timezone),
         predictNextDay(businessId, timezone).catch(() => null),
+        predictNextWeek(businessId, timezone).catch(() => null),
         getOrGenerateInsights(businessId, timezone).catch(() => ({
           insights: [],
           generatedAt: new Date().toISOString(),
@@ -46,6 +47,7 @@ export async function GET() {
             dataPoints: predictions.dataPoints,
           }
         : null,
+      weeklyForecast: weeklyPredictions || null,
       insights: insightsResult.insights,
       lastUpdated: insightsResult.generatedAt,
     });
