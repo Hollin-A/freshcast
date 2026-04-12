@@ -8,6 +8,7 @@ type SalesEntry = {
   date: string;
   inputMethod: string;
   rawInput: string | null;
+  createdAt: string;
   items: {
     id: string;
     quantity: number;
