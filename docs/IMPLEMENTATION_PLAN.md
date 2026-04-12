@@ -237,6 +237,53 @@ Phase 6 complete.
 
 ---
 
+## Phase 8: MVP Completion
+Branch: `feat/phase-8-mvp-completion`
+
+### Goal
+Close the remaining gaps identified during MVP evaluation: password reset, weekly predictions UI, sales entry management, and i18n string externalization.
+
+### Dependencies
+Phase 7 complete.
+
+### Tasks
+
+#### 8.1 Password Reset Flow
+- [ ] 8.1.1 Build `POST /api/auth/forgot-password` route — accepts email, generates a time-limited reset token, stores it in `VerificationToken` table
+- [ ] 8.1.2 Build `POST /api/auth/reset-password` route — accepts token + new password, validates token expiry, updates password hash
+- [ ] 8.1.3 Build forgot password page (`/forgot-password`) — email input form, sends reset request
+- [ ] 8.1.4 Build reset password page (`/reset-password`) — new password form, validates token from URL
+- [ ] 8.1.5 Add "Forgot password?" link to login page
+- [ ] 8.1.6 For MVP, log the reset link to console (no email provider needed yet). Document where to plug in an email service later.
+
+#### 8.2 Weekly Predictions Dashboard Card
+- [ ] 8.2.1 Add "Next Week" card to dashboard — shows weekday-level breakdown per product
+- [ ] 8.2.2 Fetch weekly predictions from existing `GET /api/predictions?horizon=week` endpoint
+- [ ] 8.2.3 Display as a compact table or list: day name, predicted quantity per top product
+- [ ] 8.2.4 Show strongest/weakest day callout (e.g., "Friday is your strongest day for Eggs")
+
+#### 8.3 Sales Entry Deletion
+- [ ] 8.3.1 Build `DELETE /api/sales/[id]` route — deletes entry and its items, scoped to business
+- [ ] 8.3.2 Add delete button to each entry in sales history page
+- [ ] 8.3.3 Add confirmation prompt before deletion ("Delete this entry?")
+- [ ] 8.3.4 Invalidate dashboard and sales query caches after deletion
+
+#### 8.4 i18n String Externalization
+- [ ] 8.4.1 Audit all components for hardcoded English strings
+- [ ] 8.4.2 Replace hardcoded strings with translation keys from `src/messages/en.json`
+- [ ] 8.4.3 Set up `next-intl` provider in the app layout
+- [ ] 8.4.4 Update `en.json` with all new keys (dashboard cards, sales input, history, products, onboarding, auth, errors)
+- [ ] 8.4.5 Verify all pages render correctly with the i18n provider
+
+### Acceptance Criteria
+- User can request a password reset from the login page and set a new password
+- Dashboard shows a "Next Week" card with weekday-level predictions when 5+ entries exist
+- User can delete any sales entry from the history page
+- All user-facing strings come from the i18n message file, not hardcoded in components
+- Adding a new language requires only a new JSON file, no component changes
+
+---
+
 ## Phase Summary
 
 | Phase | Focus | Key Deliverable |
@@ -248,6 +295,7 @@ Phase 6 complete.
 | 5 | Dashboard & Analytics | Home screen with summaries and trends |
 | 6 | Predictions & Insights | Demand forecasts and auto-generated insights |
 | 7 | Polish & Launch | Mobile refinement, seed data, deployment |
+| 8 | MVP Completion | Password reset, weekly predictions, entry deletion, i18n |
 
 ---
 
