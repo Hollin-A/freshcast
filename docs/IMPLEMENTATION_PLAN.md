@@ -249,24 +249,24 @@ Phase 7 complete.
 ### Tasks
 
 #### 8.1 Password Reset Flow
-- [ ] 8.1.1 Build `POST /api/auth/forgot-password` route — accepts email, generates a time-limited reset token, stores it in `VerificationToken` table
-- [ ] 8.1.2 Build `POST /api/auth/reset-password` route — accepts token + new password, validates token expiry, updates password hash
-- [ ] 8.1.3 Build forgot password page (`/forgot-password`) — email input form, sends reset request
-- [ ] 8.1.4 Build reset password page (`/reset-password`) — new password form, validates token from URL
-- [ ] 8.1.5 Add "Forgot password?" link to login page
-- [ ] 8.1.6 For MVP, log the reset link to console (no email provider needed yet). Document where to plug in an email service later.
+- [x] 8.1.1 Build `POST /api/auth/forgot-password` route — accepts email, generates a time-limited reset token, stores it in `VerificationToken` table
+- [x] 8.1.2 Build `POST /api/auth/reset-password` route — accepts token + new password, validates token expiry, updates password hash
+- [x] 8.1.3 Build forgot password page (`/forgot-password`) — email input form, sends reset request
+- [x] 8.1.4 Build reset password page (`/reset-password`) — new password form, validates token from URL
+- [x] 8.1.5 Add "Forgot password?" link to login page
+- [x] 8.1.6 For MVP, log the reset link to console (no email provider needed yet). Document where to plug in an email service later.
 
 #### 8.2 Weekly Predictions Dashboard Card
-- [ ] 8.2.1 Add "Next Week" card to dashboard — shows weekday-level breakdown per product
-- [ ] 8.2.2 Fetch weekly predictions from existing `GET /api/predictions?horizon=week` endpoint
-- [ ] 8.2.3 Display as a compact table or list: day name, predicted quantity per top product
-- [ ] 8.2.4 Show strongest/weakest day callout (e.g., "Friday is your strongest day for Eggs")
+- [x] 8.2.1 Add "Next Week" card to dashboard — shows weekday-level breakdown per product
+- [x] 8.2.2 Fetch weekly predictions from existing `GET /api/predictions?horizon=week` endpoint
+- [x] 8.2.3 Display as a compact table or list: day name, predicted quantity per top product
+- [x] 8.2.4 Show strongest/weakest day callout (e.g., "Friday is your strongest day for Eggs")
 
 #### 8.3 Sales Entry Deletion
-- [ ] 8.3.1 Build `DELETE /api/sales/[id]` route — deletes entry and its items, scoped to business
-- [ ] 8.3.2 Add delete button to each entry in sales history page
-- [ ] 8.3.3 Add confirmation prompt before deletion ("Delete this entry?")
-- [ ] 8.3.4 Invalidate dashboard and sales query caches after deletion
+- [x] 8.3.1 Build `DELETE /api/sales/[id]` route — deletes entry and its items, scoped to business
+- [x] 8.3.2 Add delete button to each entry in sales history page
+- [x] 8.3.3 Add confirmation prompt before deletion ("Delete this entry?")
+- [x] 8.3.4 Invalidate dashboard and sales query caches after deletion
 
 #### 8.4 i18n String Externalization
 - [ ] 8.4.1 Audit all components for hardcoded English strings
