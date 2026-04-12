@@ -47,6 +47,11 @@ export function SalesHistoryClient() {
                 </div>
               </CardHeader>
               <CardContent>
+                {entry.rawInput && (
+                  <p className="text-xs text-muted-foreground italic mb-2 pb-2 border-b">
+                    &ldquo;{entry.rawInput}&rdquo;
+                  </p>
+                )}
                 <div className="space-y-1">
                   {entry.items.map((item) => (
                     <div
