@@ -15,7 +15,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
       <div className="mx-auto flex max-w-md">
         {tabs.map((tab) => {
           const isActive =

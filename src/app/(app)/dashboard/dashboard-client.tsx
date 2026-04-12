@@ -272,7 +272,7 @@ function ForecastCard({
   });
 
   return (
-    <Card className="border-primary/20">
+    <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Tomorrow&apos;s Forecast</CardTitle>
         <CardDescription>{dateLabel}</CardDescription>
