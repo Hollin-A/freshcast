@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 
 const createSalesSchema = z.object({
   date: z.string().date(),
@@ -97,7 +98,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(entry, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error("sales", "POST /api/sales failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
@@ -144,7 +146,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({ entries, total, limit, offset });
-  } catch {
+  } catch (err) {
+    logger.error("sales", "GET /api/sales failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

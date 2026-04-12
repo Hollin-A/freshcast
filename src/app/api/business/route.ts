@@ -3,6 +3,7 @@ import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 import { BUSINESS_TYPES } from "@/lib/constants";
 
 const createBusinessSchema = z.object({
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
 
     const { name, type, locale, timezone, products } = result.data;
 
+    logger.info("business", "Creating business", { name, type, timezone, productCount: products.length });
+
     const business = await prisma.business.create({
       data: {
         name,
@@ -68,9 +71,10 @@ export async function POST(request: Request) {
       },
     });
 
+    logger.info("business", "Business created", { businessId: business.id });
     return NextResponse.json(business, { status: 201 });
   } catch (err) {
-    console.error("POST /api/business error:", err);
+    logger.error("business", "POST /api/business failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
@@ -99,7 +103,8 @@ export async function GET() {
     }
 
     return NextResponse.json(business);
-  } catch {
+  } catch (err) {
+    logger.error("business", "GET /api/business failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

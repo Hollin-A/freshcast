@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 
 const signupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -39,11 +40,14 @@ export async function POST(request: Request) {
       data: { name, email, passwordHash },
     });
 
+    logger.info("auth", "User signed up", { email });
+
     return NextResponse.json(
       { message: "Account created successfully" },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
+    logger.error("auth", "POST /api/auth/signup failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

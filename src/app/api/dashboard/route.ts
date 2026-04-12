@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 import { getTodaySummary, getWeekSummary, getTopProducts } from "@/services/analytics";
 import { predictNextDay } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
@@ -48,7 +49,8 @@ export async function GET() {
       insights: insightsResult.insights,
       lastUpdated: insightsResult.generatedAt,
     });
-  } catch {
+  } catch (err) {
+    logger.error("dashboard", "GET /api/dashboard failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

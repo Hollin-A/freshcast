@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   _req: NextRequest,
@@ -30,7 +31,8 @@ export async function GET(
     }
 
     return NextResponse.json(entry);
-  } catch {
+  } catch (err) {
+    logger.error("sales", "GET /api/sales/[id] failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
@@ -108,7 +110,8 @@ export async function PUT(
     });
 
     return NextResponse.json(updated);
-  } catch {
+  } catch (err) {
+    logger.error("sales", "PUT /api/sales/[id] failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

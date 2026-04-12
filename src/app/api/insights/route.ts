@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 import { getOrGenerateInsights } from "@/services/insight-generator";
 import { getLocalDateStr } from "@/lib/dates";
 
@@ -16,7 +17,8 @@ export async function GET() {
       date: getLocalDateStr(ctx.timezone),
       ...result,
     });
-  } catch {
+  } catch (err) {
+    logger.error("insights", "GET /api/insights failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

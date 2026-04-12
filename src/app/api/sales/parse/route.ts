@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 import { parseSalesInput } from "@/services/sales-parser";
 
 const parseSchema = z.object({
@@ -30,7 +31,8 @@ export async function POST(request: Request) {
     const parsed = parseSalesInput(result.data.text, products);
 
     return NextResponse.json(parsed);
-  } catch {
+  } catch (err) {
+    logger.error("sales-parse", "POST /api/sales/parse failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

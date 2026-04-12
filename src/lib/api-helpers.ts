@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "./auth";
 import { prisma } from "./prisma";
+import { logger } from "./logger";
 
 export type ApiError = {
   error: {
@@ -16,6 +17,11 @@ export function errorResponse(
   status: number,
   details?: Record<string, unknown>
 ): NextResponse<ApiError> {
+  if (status >= 500) {
+    logger.error("api", `${code}: ${message}`, details);
+  } else if (status >= 400) {
+    logger.warn("api", `${code}: ${message}`, details);
+  }
   return NextResponse.json(
     { error: { code, message, details } },
     { status }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
 
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
     }
 
     return errorResponse("VALIDATION_ERROR", "Invalid horizon. Use 'day' or 'week'", 400);
-  } catch {
+  } catch (err) {
+    logger.error("predictions", "GET /api/predictions failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }

@@ -3,6 +3,7 @@ import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ products });
-  } catch {
+  } catch (err) {
+    logger.error("products", "GET /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
@@ -60,8 +62,10 @@ export async function POST(request: Request) {
       select: { id: true, name: true, defaultUnit: true, isActive: true },
     });
 
+    logger.info("products", "Product created", { productId: product.id, name });
     return NextResponse.json(product, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error("products", "POST /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
@@ -120,7 +124,8 @@ export async function PATCH(request: Request) {
     });
 
     return NextResponse.json(product);
-  } catch {
+  } catch (err) {
+    logger.error("products", "PATCH /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
