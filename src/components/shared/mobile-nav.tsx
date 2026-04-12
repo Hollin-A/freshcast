@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/dashboard", label: "Home", icon: "⌂" },
-  { href: "/sales", label: "Log Sales", icon: "+" },
-  { href: "/sales/history", label: "History", icon: "☰" },
-  { href: "/products", label: "Products", icon: "▤" },
+  { href: "/dashboard", labelKey: "home" as const, icon: "⌂" },
+  { href: "/sales", labelKey: "logSales" as const, icon: "+" },
+  { href: "/sales/history", labelKey: "history" as const, icon: "☰" },
+  { href: "/products", labelKey: "products" as const, icon: "▤" },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
@@ -36,7 +38,7 @@ export function MobileNav() {
               )}
             >
               <span className="text-lg">{tab.icon}</span>
-              <span>{tab.label}</span>
+              <span>{t(tab.labelKey)}</span>
             </Link>
           );
         })}
