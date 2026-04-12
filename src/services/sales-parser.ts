@@ -17,10 +17,15 @@ export type ParsedItem = {
 };
 
 const FILLER_WORDS = /\b(i|sold|today|about|around|approximately|roughly|some|of)\b/gi;
+
+// Unit pattern uses word boundaries to avoid matching inside words (e.g., "g" in "eggs")
+// Single-char units (g, l) must be standalone words or glued to a number (handled separately)
 const UNIT_PATTERN = new RegExp(
-  `(${KNOWN_UNITS.join("|")})`,
+  `\\b(${KNOWN_UNITS.filter((u) => u.length > 1).join("|")})\\b`,
   "i"
 );
+// Single-char units only match at the start of the token (right after number extraction)
+const SHORT_UNIT_PATTERN = /^(g|l)\b/i;
 
 function parseToken(
   raw: string,
@@ -56,14 +61,20 @@ function parseToken(
 
   if (quantity === null || quantity <= 0) return null;
 
-  // Extract unit if adjacent to number or standalone
-  const unitMatch = token.match(UNIT_PATTERN);
-  if (unitMatch) {
-    unit = unitMatch[1].toLowerCase();
-    // Normalize common abbreviations
+  // Extract unit: try short units first (g, l — only at start of remaining token)
+  // then multi-char units with word boundaries
+  const shortUnitMatch = token.match(SHORT_UNIT_PATTERN);
+  if (shortUnitMatch) {
+    unit = shortUnitMatch[1].toLowerCase();
     if (unit === "l") unit = "liters";
-    if (unit === "pcs") unit = "pieces";
-    token = token.replace(UNIT_PATTERN, "").trim();
+    token = token.replace(SHORT_UNIT_PATTERN, "").trim();
+  } else {
+    const unitMatch = token.match(UNIT_PATTERN);
+    if (unitMatch) {
+      unit = unitMatch[1].toLowerCase();
+      if (unit === "pcs") unit = "pieces";
+      token = token.replace(UNIT_PATTERN, "").trim();
+    }
   }
 
   // Remaining text is the product name
