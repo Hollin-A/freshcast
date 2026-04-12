@@ -269,11 +269,11 @@ Phase 7 complete.
 - [x] 8.3.4 Invalidate dashboard and sales query caches after deletion
 
 #### 8.4 i18n String Externalization
-- [ ] 8.4.1 Audit all components for hardcoded English strings
-- [ ] 8.4.2 Replace hardcoded strings with translation keys from `src/messages/en.json`
-- [ ] 8.4.3 Set up `next-intl` provider in the app layout
-- [ ] 8.4.4 Update `en.json` with all new keys (dashboard cards, sales input, history, products, onboarding, auth, errors)
-- [ ] 8.4.5 Verify all pages render correctly with the i18n provider
+- [x] 8.4.1 Audit all components for hardcoded English strings
+- [x] 8.4.2 Replace hardcoded strings with translation keys from `src/messages/en.json`
+- [x] 8.4.3 Set up `next-intl` provider in the app layout
+- [x] 8.4.4 Update `en.json` with all new keys (dashboard cards, sales input, history, products, onboarding, auth, errors)
+- [x] 8.4.5 Verify all pages render correctly with the i18n provider
 
 ### Acceptance Criteria
 - User can request a password reset from the login page and set a new password
