@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 
 const schema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -41,11 +42,20 @@ export async function POST(request: Request) {
       data: { identifier: email, token, expires },
     });
 
-    // In MVP, log the reset link to console
-    // TODO: Replace with email service (e.g., Resend, SendGrid)
+    // Send password reset email
     const resetUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
-    logger.info("auth", "Password reset link generated", { email, resetUrl });
-    console.log(`\n🔑 Password reset link for ${email}:\n${resetUrl}\n`);
+
+    const sent = await sendEmail(
+      email,
+      "Reset your BizSense password",
+      buildPasswordResetEmail(resetUrl)
+    );
+
+    if (!sent) {
+      // Log the link as fallback if email fails
+      logger.warn("auth", "Email delivery failed, logging reset link", { email, resetUrl });
+      console.log(`\n🔑 Password reset link for ${email}:\n${resetUrl}\n`);
+    }
 
     return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
   } catch (err) {
