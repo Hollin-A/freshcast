@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { logger } from "./logger";
 
-const MODEL = "claude-3-5-haiku-latest";
+const MODEL = "claude-haiku-4-20250414";
 
 let client: Anthropic | null = null;
 
