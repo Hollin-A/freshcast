@@ -296,6 +296,76 @@ Phase 7 complete.
 | 6 | Predictions & Insights | Demand forecasts and auto-generated insights |
 | 7 | Polish & Launch | Mobile refinement, seed data, deployment |
 | 8 | MVP Completion | Password reset, weekly predictions, entry deletion, i18n |
+| 9 | Security & Correctness | Critical bug fixes, data integrity, validation |
+| 10 | UX Polish | Manual mode improvements, demo data, product list refresh |
+
+---
+
+## Phase 9: Security & Correctness Fixes
+Branch: `fix/phase-9-security`
+
+### Goal
+Fix all critical and high-priority bugs identified in the code review. Focus on data integrity, security, and correctness.
+
+### Reference
+[Bugs & Improvements](./BUGS_AND_IMPROVEMENTS.md) — Section 1
+
+### Tasks
+- [ ] 9.1 Wrap sales entry update (PUT) in a `$transaction` to prevent data loss (BUG-01)
+- [ ] 9.2 Verify product ownership before inserting SalesItems in POST /api/sales (BUG-02)
+- [ ] 9.3 Parse weekday from date string directly instead of relying on JS Date UTC methods (BUG-03)
+- [ ] 9.4 Use business timezone in the "edit today only" guard in PUT /api/sales/[id] (BUG-04)
+- [ ] 9.5 Add `@@unique([businessId, date, type])` constraint on DailyInsight to prevent duplicates (BUG-05)
+- [ ] 9.6 Fix token race condition in reset-password — delete token before updating password (BUG-06)
+- [ ] 9.7 Filter out zero-quantity items before saving in the confirmation screen (BUG-09)
+- [ ] 9.8 Validate IANA timezone string server-side in POST /api/business (BUG-12)
+- [ ] 9.9 Rename `tomorrowDate` to `todayUpperBound` in analytics for clarity (IMPROVE-02)
+- [ ] 9.10 Extract confidence threshold magic numbers to named constants (IMPROVE-04)
+
+### Acceptance Criteria
+- Sales entry updates are atomic — partial failures cannot leave entries without items
+- Product IDs are verified against the business before any SalesItem is created
+- Weekday patterns in predictions are correct regardless of user timezone
+- Users in UTC+ timezones can edit today's entries in the morning
+- Concurrent dashboard loads do not create duplicate insights
+- Zero-quantity items cannot be saved
+- Invalid timezone strings are rejected during onboarding
+
+---
+
+## Phase 10: UX Polish & Missing Features
+Branch: `feat/phase-10-ux-polish`
+
+### Goal
+Close remaining UX gaps and add small features that improve the new-user experience.
+
+### Reference
+[Bugs & Improvements](./BUGS_AND_IMPROVEMENTS.md) — Sections 2 & 3
+
+### Tasks
+- [ ] 10.1 Fix manual tab product list to refresh when products change during the session (BUG-08)
+- [ ] 10.2 Add inline "Add new product" button in manual entry mode (MISSING-01)
+- [ ] 10.3 Add "Load demo data" button on empty dashboard for new users (MISSING-03)
+
+### Acceptance Criteria
+- Adding a product via NL mode is immediately reflected in the manual tab
+- Manual entry mode has an inline "Add product" option without navigating away
+- New users can load demo data to see the full dashboard experience before logging real sales
+
+---
+
+## Deferred Items
+
+These were identified in the review but deferred from the MVP scope:
+
+| Item | Reason |
+|------|--------|
+| BUG-07: Rate limiting on auth endpoints | Requires external dependency (Upstash); implement before public launch |
+| BUG-10: Forecast status field for error states | Nice-to-have; current silent fallback is acceptable |
+| BUG-11: Placeholder insight IDs | No user impact; fix when insight IDs are referenced |
+| IMPROVE-01: Email delivery for password reset | Blocking for production users but not for MVP testing |
+| IMPROVE-03: Levenshtein optimization | Premature; product lists are small |
+| MISSING-02: Locale step in onboarding | No value with single language; architecture is ready |
 
 ---
 
