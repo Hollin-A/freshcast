@@ -377,13 +377,13 @@ Branch: `feat/phase-11-pwa`
 Make BizSense installable as a standalone app on mobile devices.
 
 #### Tasks
-- [ ] 11.1 Create `public/manifest.json` with app name, short name, theme color (teal), background color, display: standalone, start_url: /dashboard
-- [ ] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the BizSense logo/icon
-- [ ] 11.3 Add `<link rel="manifest">` and meta tags (theme-color, apple-mobile-web-app-capable) to root layout
-- [ ] 11.4 Create a basic service worker for app shell caching (offline fallback page)
-- [ ] 11.5 Add apple-touch-icon for iOS home screen
-- [ ] 11.6 Test "Add to Home Screen" on iOS Safari and Android Chrome
-- [ ] 11.7 Verify standalone mode launches without browser chrome
+- [x] 11.1 Create `public/manifest.json` with app name, short name, theme color (teal), background color, display: standalone, start_url: /dashboard
+- [x] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the BizSense logo/icon
+- [x] 11.3 Add `<link rel="manifest">` and meta tags (theme-color, apple-mobile-web-app-capable) to root layout
+- [x] 11.4 Create a basic service worker for app shell caching (offline fallback page)
+- [x] 11.5 Add apple-touch-icon for iOS home screen
+- [x] 11.6 Test "Add to Home Screen" on iOS Safari and Android Chrome
+- [x] 11.7 Verify standalone mode launches without browser chrome
 
 #### Acceptance Criteria
 - App is installable via browser "Add to Home Screen" prompt
