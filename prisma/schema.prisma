@@ -140,12 +140,13 @@ model SalesItem {
 }
 
 model DailyInsight {
-  id        String      @id @default(cuid())
-  date      DateTime    @db.Date
-  type      InsightType
-  content   String
-  metadata  Json?
-  createdAt DateTime    @default(now())
+  id               String      @id @default(cuid())
+  date             DateTime    @db.Date
+  type             InsightType
+  content          String
+  metadata         Json?
+  generationMethod String      @default("template")
+  createdAt        DateTime    @default(now())
 
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
