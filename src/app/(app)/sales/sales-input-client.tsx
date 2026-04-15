@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,21 +40,34 @@ export function SalesInputClient() {
   const [inputMethod, setInputMethod] = useState<"NATURAL_LANGUAGE" | "MANUAL">(
     "NATURAL_LANGUAGE"
   );
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductUnit, setNewProductUnit] = useState("");
 
   const products = productsData?.products ?? [];
 
+  // Track product list version to reset manual items when products change
+  const productVersionRef = useRef(0);
+  const currentProductVersion = products.map((p) => p.id).join(",");
+
+  useEffect(() => {
+    // Reset manual items whenever the product list changes
+    if (currentProductVersion && currentProductVersion !== productVersionRef.current.toString()) {
+      setManualItems([]);
+    }
+  }, [currentProductVersion]);
+
   // Initialize manual items from products
   function initManualItems() {
-    if (manualItems.length === 0 && products.length > 0) {
-      setManualItems(
-        products.map((p) => ({
-          productId: p.id,
-          productName: p.name,
-          quantity: "",
-          unit: p.defaultUnit,
-        }))
-      );
-    }
+    productVersionRef.current += 1;
+    setManualItems(
+      products.map((p) => ({
+        productId: p.id,
+        productName: p.name,
+        quantity: "",
+        unit: p.defaultUnit,
+      }))
+    );
   }
 
   async function handleParse() {
@@ -332,8 +345,58 @@ export function SalesInputClient() {
             ))}
             {manualItems.length === 0 && (
               <p className="text-center text-sm text-muted-foreground py-4">
-                No products yet. Add products first.
+                No products yet. Add your first one below.
               </p>
+            )}
+            {showAddProduct ? (
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <Input
+                  placeholder="Product name"
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="Unit"
+                  value={newProductUnit}
+                  onChange={(e) => setNewProductUnit(e.target.value)}
+                  className="w-20"
+                />
+                <Button
+                  size="sm"
+                  disabled={addProduct.isPending || !newProductName.trim()}
+                  onClick={async () => {
+                    try {
+                      await addProduct.mutateAsync({
+                        name: newProductName.trim(),
+                        defaultUnit: newProductUnit.trim() || undefined,
+                      });
+                      setNewProductName("");
+                      setNewProductUnit("");
+                      setShowAddProduct(false);
+                      // Reset manual items so they refresh with the new product
+                      setManualItems([]);
+                      toast.success("Product added");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Failed to add");
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowAddProduct(false)}>
+                  ✕
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => setShowAddProduct(true)}
+              >
+                + Add new product
+              </Button>
             )}
             <Button
               className="w-full mt-2"
