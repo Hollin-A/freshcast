@@ -369,24 +369,137 @@ These were identified in the code review but deferred from the current MVP scope
 
 ---
 
-## Backlog — Post-MVP Features
+## Post-MVP Roadmap
 
-These are feature ideas identified during development and code review. They are not planned for any phase yet but are tracked here for future prioritization. Ordered by suggested priority.
+### Phase 11: PWA Support
+Branch: `feat/phase-11-pwa`
 
-### High Value / Low Effort
-- [ ] PWA support (manifest.json, service worker, app icons) — enables "Add to Home Screen" for daily-use habit
-- [ ] CSV export of sales history — `GET /api/sales/export?from=&to=`, download button on history page
-- [ ] Demand spike alert card — highlight when tomorrow's forecast is >30% above recent average
-- [ ] Unit selector override per sale entry in manual mode — let users change unit per sale, not just per product
+Make BizSense installable as a standalone app on mobile devices.
 
-### Medium Value / Medium Effort
-- [ ] Account and data deletion — `DELETE /api/account` with cascade, settings page UI
-- [ ] Weekly summary email — cron job on Sunday, queries analytics/predictions, sends email per business (requires email infrastructure)
+#### Tasks
+- [ ] 11.1 Create `public/manifest.json` with app name, short name, theme color (teal), background color, display: standalone, start_url: /dashboard
+- [ ] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the BizSense logo/icon
+- [ ] 11.3 Add `<link rel="manifest">` and meta tags (theme-color, apple-mobile-web-app-capable) to root layout
+- [ ] 11.4 Create a basic service worker for app shell caching (offline fallback page)
+- [ ] 11.5 Add apple-touch-icon for iOS home screen
+- [ ] 11.6 Test "Add to Home Screen" on iOS Safari and Android Chrome
+- [ ] 11.7 Verify standalone mode launches without browser chrome
 
-### Infrastructure
-- [ ] Email delivery service integration (Resend/Postmark/SendGrid) — needed for password reset in production and weekly emails
-- [ ] Rate limiting on auth endpoints (Upstash Ratelimit or in-memory) — needed before public launch
-- [ ] Scheduled cron for batch insight/prediction generation — replace on-demand generation when user base grows
+#### Acceptance Criteria
+- App is installable via browser "Add to Home Screen" prompt
+- Launches in standalone mode (no URL bar)
+- Has proper app icon and splash screen
+- Shows an offline fallback page when network is unavailable
+
+---
+
+### Phase 12: Email Infrastructure
+Branch: `feat/phase-12-email`
+
+Wire up real email delivery. Required before LLM integration (for weekly summaries later).
+
+#### Tasks
+- [ ] 12.1 Set up Resend account and get API key
+- [ ] 12.2 Create `src/lib/email.ts` utility with `sendEmail(to, subject, html)` function
+- [ ] 12.3 Replace console.log in forgot-password route with actual email delivery
+- [ ] 12.4 Create a simple HTML email template for password reset
+- [ ] 12.5 Add `RESEND_API_KEY` to environment variables
+- [ ] 12.6 Test full password reset flow end-to-end with real email
+
+#### Acceptance Criteria
+- Password reset emails are delivered to real inboxes
+- Email has clean HTML template with reset link
+- Works in production (Vercel)
+
+---
+
+### Phase 13: LLM-Powered Insights
+Branch: `feat/phase-13-llm-insights`
+
+Upgrade the template-based insight generator to use an LLM for more natural, varied, and contextual insights.
+
+#### Tasks
+- [ ] 13.1 Create `src/lib/openai.ts` utility with a `generateCompletion(prompt, systemMessage)` function
+- [ ] 13.2 Design the insight generation prompt — feed it the analytics data (weekly totals, trends, top products, weekday patterns) and ask for 3-5 natural language insights
+- [ ] 13.3 Add a `generationMethod` field to DailyInsight model: `"template" | "llm"`
+- [ ] 13.4 Update insight generator to try LLM first, fall back to templates if API fails or is unavailable
+- [ ] 13.5 Add `OPENAI_API_KEY` to environment variables
+- [ ] 13.6 Implement response caching — store LLM-generated insights in DB, don't re-call for the same day
+- [ ] 13.7 Add cost guard — limit LLM calls to once per business per day maximum
+- [ ] 13.8 Test with real data: compare LLM insights vs template insights for quality
+
+#### Acceptance Criteria
+- Dashboard insights are more natural and varied than templates ("Your egg sales have been climbing steadily — up 23% from last week" vs "Egg sales increased 23% this week")
+- LLM failures fall back gracefully to template-based insights
+- No more than 1 API call per business per day
+- Insights are cached in DB and served from cache on subsequent loads
+
+---
+
+### Phase 14: AI Chat Interface
+Branch: `feat/phase-14-ai-chat`
+
+Let users ask business questions in natural language and get answers based on their own data.
+
+#### Tasks
+- [ ] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to LLM with context
+- [ ] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as LLM context
+- [ ] 14.3 Design the system prompt — constrain the LLM to only answer based on the user's data, no external assumptions
+- [ ] 14.4 Build chat UI page (`/chat`) with message list and input field
+- [ ] 14.5 Add chat to the mobile navigation bar
+- [ ] 14.6 Implement conversation history (store last N messages in session/state, not DB for MVP)
+- [ ] 14.7 Add suggested questions on empty chat ("What sold best this week?", "When should I prepare more chicken?", "How did eggs perform this month?")
+- [ ] 14.8 Add streaming response support for better UX (show tokens as they arrive)
+
+#### Acceptance Criteria
+- User can ask "What sold best this week?" and get an accurate answer from their data
+- User can ask "When should I prepare more chicken?" and get a prediction-based answer
+- Responses are constrained to the user's own data (no hallucinated external info)
+- Suggested questions help new users discover the feature
+- Chat feels responsive (streaming or fast response)
+
+---
+
+### Phase 15: Production Hardening
+Branch: `feat/phase-15-production`
+
+Security and reliability improvements for real-world usage.
+
+#### Tasks
+- [ ] 15.1 Add rate limiting on auth endpoints (Upstash Ratelimit)
+- [ ] 15.2 Add account and data deletion (`DELETE /api/account` with cascade)
+- [ ] 15.3 Add settings/profile page with logout, delete account, timezone change
+- [ ] 15.4 Add CSV export of sales history (`GET /api/sales/export`)
+- [ ] 15.5 Add demand spike alert card on dashboard (>30% above average)
+- [ ] 15.6 Add unit selector override per sale entry in manual mode
+
+#### Acceptance Criteria
+- Auth endpoints are rate-limited (3 forgot-password per email per hour, 10 signups per IP per hour)
+- Users can delete their account and all associated data
+- Users can export their sales data as CSV
+- Dashboard highlights unusual demand spikes proactively
+
+---
+
+### Phase Summary (Full Roadmap)
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1 | Database & Auth UI | ✅ Complete |
+| 2 | Onboarding | ✅ Complete |
+| 3 | Product Management | ✅ Complete |
+| 4 | Sales Input | ✅ Complete |
+| 5 | Dashboard & Analytics | ✅ Complete |
+| 6 | Predictions & Insights | ✅ Complete |
+| 7 | Polish & Launch | ✅ Complete |
+| 8 | MVP Completion | ✅ Complete |
+| 9 | Security & Correctness | ✅ Complete |
+| 10 | UX Polish | ✅ Complete |
+| 11 | PWA Support | Planned |
+| 12 | Email Infrastructure | Planned |
+| 13 | LLM-Powered Insights | Planned |
+| 14 | AI Chat Interface | Planned |
+| 15 | Production Hardening | Planned |
 
 ---
 
