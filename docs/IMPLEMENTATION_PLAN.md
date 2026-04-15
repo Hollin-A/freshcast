@@ -413,41 +413,57 @@ Wire up real email delivery. Required before LLM integration (for weekly summari
 
 ---
 
-### Phase 13: LLM-Powered Insights
-Branch: `feat/phase-13-llm-insights`
+### Phase 13: LLM Integration (Claude Haiku)
+Branch: `feat/phase-13-llm`
 
-Upgrade the template-based insight generator to use an LLM for more natural, varied, and contextual insights.
+Integrate Claude 3.5 Haiku for two upgrades: smarter NL sales parsing and more natural dashboard insights. Both use the same Claude client with graceful fallback to existing rule-based/template logic.
+
+Model: `claude-3-5-haiku-latest` (~$0.80/M input, $3.20/M output — pennies per month for a single-user app)
 
 #### Tasks
-- [ ] 13.1 Create `src/lib/openai.ts` utility with a `generateCompletion(prompt, systemMessage)` function
-- [ ] 13.2 Design the insight generation prompt — feed it the analytics data (weekly totals, trends, top products, weekday patterns) and ask for 3-5 natural language insights
-- [ ] 13.3 Add a `generationMethod` field to DailyInsight model: `"template" | "llm"`
-- [ ] 13.4 Update insight generator to try LLM first, fall back to templates if API fails or is unavailable
-- [ ] 13.5 Add `OPENAI_API_KEY` to environment variables
-- [ ] 13.6 Implement response caching — store LLM-generated insights in DB, don't re-call for the same day
-- [ ] 13.7 Add cost guard — limit LLM calls to once per business per day maximum
-- [ ] 13.8 Test with real data: compare LLM insights vs template insights for quality
+
+##### 13A — Claude Client Setup
+- [ ] 13.1 Install `@anthropic-ai/sdk`
+- [ ] 13.2 Create `src/lib/claude.ts` utility with `generateText(systemPrompt, userMessage)` function
+- [ ] 13.3 Add `ANTHROPIC_API_KEY` to environment variables (local + Vercel)
+
+##### 13B — LLM-Powered Insights
+- [ ] 13.4 Design the insight generation prompt — feed analytics data (weekly totals, trends, top products, weekday patterns) and ask for 3-5 natural language insights as JSON
+- [ ] 13.5 Add `generationMethod` field to DailyInsight model: `"template" | "llm"`
+- [ ] 13.6 Update insight generator: try Claude first, fall back to templates if API fails or key is missing
+- [ ] 13.7 Cache LLM insights in DB — don't re-call for the same day (existing dedup logic handles this)
+- [ ] 13.8 Cost guard — max 1 LLM insight call per business per day
+
+##### 13C — LLM-Powered NL Sales Parser
+- [ ] 13.9 Design the sales parsing prompt — given raw text + product list, return structured JSON with product name, quantity, unit, and matched/unmatched status
+- [ ] 13.10 Create `src/services/llm-sales-parser.ts` that calls Claude and returns the same `ParsedItem[]` format as the rule-based parser
+- [ ] 13.11 Update `POST /api/sales/parse` to try LLM parser first, fall back to rule-based if API fails or key is missing
+- [ ] 13.12 Add `parseMethod` field to the parse response: `"rule-based" | "llm"` so the UI can indicate which method was used
+- [ ] 13.13 Test with edge cases the rule-based parser struggles with: "about two dozen eggs", "sold some beef maybe 30 kilos", "10 of each chicken and lamb"
 
 #### Acceptance Criteria
-- Dashboard insights are more natural and varied than templates ("Your egg sales have been climbing steadily — up 23% from last week" vs "Egg sales increased 23% this week")
-- LLM failures fall back gracefully to template-based insights
-- No more than 1 API call per business per day
-- Insights are cached in DB and served from cache on subsequent loads
+- Dashboard insights are more natural and varied when Claude is available
+- NL parser handles ambiguous/conversational input that the rule-based parser misses
+- Both features fall back gracefully when the API key is missing or the API is down
+- Rule-based parser still works perfectly as the fallback
+- No more than 1 insight generation call per business per day
+- Parse calls use Claude when available (each parse is a separate call — acceptable at Haiku pricing)
+- The parse response indicates which method was used
 
 ---
 
 ### Phase 14: AI Chat Interface
 Branch: `feat/phase-14-ai-chat`
 
-Let users ask business questions in natural language and get answers based on their own data.
+Let users ask business questions in natural language and get answers based on their own data. Uses the same Claude client from Phase 13.
 
 #### Tasks
-- [ ] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to LLM with context
-- [ ] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as LLM context
-- [ ] 14.3 Design the system prompt — constrain the LLM to only answer based on the user's data, no external assumptions
+- [ ] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to Claude with context
+- [ ] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as Claude context
+- [ ] 14.3 Design the system prompt — constrain Claude to only answer based on the user's data, no external assumptions
 - [ ] 14.4 Build chat UI page (`/chat`) with message list and input field
 - [ ] 14.5 Add chat to the mobile navigation bar
-- [ ] 14.6 Implement conversation history (store last N messages in session/state, not DB for MVP)
+- [ ] 14.6 Implement conversation history (store last N messages in session/state, not DB for now)
 - [ ] 14.7 Add suggested questions on empty chat ("What sold best this week?", "When should I prepare more chicken?", "How did eggs perform this month?")
 - [ ] 14.8 Add streaming response support for better UX (show tokens as they arrive)
 
@@ -497,7 +513,7 @@ Security and reliability improvements for real-world usage.
 | 10 | UX Polish | ✅ Complete |
 | 11 | PWA Support | Planned |
 | 12 | Email Infrastructure | Planned |
-| 13 | LLM-Powered Insights | Planned |
+| 13 | LLM Integration (Claude) | LLM-powered insights + NL parsing with fallback |
 | 14 | AI Chat Interface | Planned |
 | 15 | Production Hardening | Planned |
 

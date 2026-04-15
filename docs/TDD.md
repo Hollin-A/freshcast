@@ -54,8 +54,8 @@ This document describes the technical architecture, data model, API contracts, c
 └──────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────┐
-│         OpenAI API (Insight Generation)           │
-│         Called via batch job, not per-request      │
+│         Claude API (Insight Generation + NL Parsing)  │
+│         Haiku model, called via batch + per-parse     │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -882,7 +882,7 @@ Batch job that generates natural language insights daily.
   "Your top {n} products account for {percent}% of total sales"
   "{weekday} is your {strongest|slowest} day"
   ```
-- OpenAI API reserved for future enhancement (more natural phrasing, anomaly explanations)
+- Claude API (Haiku) reserved for LLM-powered insights and NL parsing upgrade
 
 **Batch execution:**
 - Triggered daily via cron job or on-demand when dashboard data is stale (> 24 hours old)
@@ -1228,7 +1228,7 @@ For MVP, batch processing is triggered on-demand rather than via a scheduled cro
   - `DATABASE_URL` — Neon connection string
   - `NEXTAUTH_SECRET` — Auth.js session encryption key
   - `NEXTAUTH_URL` — Application URL
-  - `OPENAI_API_KEY` — For future AI insight enhancement
+  - `ANTHROPIC_API_KEY` — For Claude-powered insights and NL parsing
 
 ### 14.2 CI/CD
 - GitHub Actions (or Vercel Git integration)
