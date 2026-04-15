@@ -311,16 +311,16 @@ Fix all critical and high-priority bugs identified in the code review. Focus on 
 [Bugs & Improvements](./BUGS_AND_IMPROVEMENTS.md) — Section 1
 
 ### Tasks
-- [ ] 9.1 Wrap sales entry update (PUT) in a `$transaction` to prevent data loss (BUG-01)
-- [ ] 9.2 Verify product ownership before inserting SalesItems in POST /api/sales (BUG-02)
-- [ ] 9.3 Parse weekday from date string directly instead of relying on JS Date UTC methods (BUG-03)
-- [ ] 9.4 Use business timezone in the "edit today only" guard in PUT /api/sales/[id] (BUG-04)
-- [ ] 9.5 Add `@@unique([businessId, date, type])` constraint on DailyInsight to prevent duplicates (BUG-05)
-- [ ] 9.6 Fix token race condition in reset-password — delete token before updating password (BUG-06)
-- [ ] 9.7 Filter out zero-quantity items before saving in the confirmation screen (BUG-09)
-- [ ] 9.8 Validate IANA timezone string server-side in POST /api/business (BUG-12)
-- [ ] 9.9 Rename `tomorrowDate` to `todayUpperBound` in analytics for clarity (IMPROVE-02)
-- [ ] 9.10 Extract confidence threshold magic numbers to named constants (IMPROVE-04)
+- [x] 9.1 Wrap sales entry update (PUT) in a `$transaction` to prevent data loss (BUG-01)
+- [x] 9.2 Verify product ownership before inserting SalesItems in POST /api/sales (BUG-02)
+- [x] 9.3 Parse weekday from date string directly instead of relying on JS Date UTC methods (BUG-03)
+- [x] 9.4 Use business timezone in the "edit today only" guard in PUT /api/sales/[id] (BUG-04)
+- [x] 9.5 Add `@@unique([businessId, date, type])` constraint on DailyInsight to prevent duplicates (BUG-05)
+- [x] 9.6 Fix token race condition in reset-password — delete token before updating password (BUG-06)
+- [x] 9.7 Filter out zero-quantity items before saving in the confirmation screen (BUG-09)
+- [x] 9.8 Validate IANA timezone string server-side in POST /api/business (BUG-12)
+- [x] 9.9 Rename `tomorrowDate` to `todayUpperBound` in analytics for clarity (IMPROVE-02)
+- [x] 9.10 Extract confidence threshold magic numbers to named constants (IMPROVE-04)
 
 ### Acceptance Criteria
 - Sales entry updates are atomic — partial failures cannot leave entries without items
