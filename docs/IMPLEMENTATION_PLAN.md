@@ -399,12 +399,12 @@ Branch: `feat/phase-12-email`
 Wire up real email delivery. Required before LLM integration (for weekly summaries later).
 
 #### Tasks
-- [ ] 12.1 Set up Resend account and get API key
-- [ ] 12.2 Create `src/lib/email.ts` utility with `sendEmail(to, subject, html)` function
-- [ ] 12.3 Replace console.log in forgot-password route with actual email delivery
-- [ ] 12.4 Create a simple HTML email template for password reset
-- [ ] 12.5 Add `RESEND_API_KEY` to environment variables
-- [ ] 12.6 Test full password reset flow end-to-end with real email
+- [x] 12.1 Set up Resend account and get API key
+- [x] 12.2 Create `src/lib/email.ts` utility with `sendEmail(to, subject, html)` function
+- [x] 12.3 Replace console.log in forgot-password route with actual email delivery
+- [x] 12.4 Create a simple HTML email template for password reset
+- [x] 12.5 Add `RESEND_API_KEY` to environment variables
+- [x] 12.6 Test full password reset flow end-to-end with real email
 
 #### Acceptance Criteria
 - Password reset emails are delivered to real inboxes
