@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { getLocalDateStr, toUTCDate } from "@/lib/dates";
 
 export async function GET(
   _req: NextRequest,
@@ -70,12 +71,12 @@ export async function PUT(
       return errorResponse("NOT_FOUND", "Sales entry not found", 404);
     }
 
-    // Only allow editing today's entry
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const entryDate = new Date(entry.date);
-    entryDate.setHours(0, 0, 0, 0);
-    if (entryDate.getTime() !== today.getTime()) {
+    // Only allow editing today's entry (using business timezone)
+    const ctx2 = await getBusinessContext();
+    const todayStr = getLocalDateStr(ctx2?.timezone ?? "UTC");
+    const todayDate = toUTCDate(todayStr);
+    const entryDateStr = new Date(entry.date).toISOString().split("T")[0];
+    if (entryDateStr !== todayStr) {
       return errorResponse("VALIDATION_ERROR", "Can only edit today's entry", 400);
     }
 
@@ -88,25 +89,26 @@ export async function PUT(
       });
     }
 
-    // Replace all items
-    await prisma.salesItem.deleteMany({ where: { salesEntryId: id } });
-
-    const updated = await prisma.salesEntry.update({
-      where: { id },
-      data: {
-        items: {
-          create: result.data.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unit: item.unit ?? null,
-          })),
+    // Atomic: delete old items and create new ones in a single transaction
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.salesItem.deleteMany({ where: { salesEntryId: id } });
+      return tx.salesEntry.update({
+        where: { id },
+        data: {
+          items: {
+            create: result.data.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unit: item.unit ?? null,
+            })),
+          },
         },
-      },
-      include: {
-        items: {
-          include: { product: { select: { id: true, name: true } } },
+        include: {
+          items: {
+            include: { product: { select: { id: true, name: true } } },
+          },
         },
-      },
+      });
     });
 
     return NextResponse.json(updated);

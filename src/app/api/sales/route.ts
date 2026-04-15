@@ -46,6 +46,18 @@ export async function POST(request: Request) {
       return errorResponse("VALIDATION_ERROR", "Date cannot be in the future", 400);
     }
 
+    // Verify all product IDs belong to this business
+    const productIds = items.map((i) => i.productId);
+    const ownedProducts = await prisma.product.findMany({
+      where: { id: { in: productIds }, businessId },
+      select: { id: true },
+    });
+    const ownedIds = new Set(ownedProducts.map((p) => p.id));
+    const invalidIds = productIds.filter((id) => !ownedIds.has(id));
+    if (invalidIds.length > 0) {
+      return errorResponse("VALIDATION_ERROR", "One or more products do not belong to your business", 400);
+    }
+
     logger.info("sales", "Creating sales entry", {
       date,
       inputMethod,
