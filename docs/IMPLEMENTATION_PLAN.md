@@ -343,9 +343,9 @@ Close remaining UX gaps and add small features that improve the new-user experie
 [Bugs & Improvements](./BUGS_AND_IMPROVEMENTS.md) — Sections 2 & 3
 
 ### Tasks
-- [ ] 10.1 Fix manual tab product list to refresh when products change during the session (BUG-08)
-- [ ] 10.2 Add inline "Add new product" button in manual entry mode (MISSING-01)
-- [ ] 10.3 Add "Load demo data" button on empty dashboard for new users (MISSING-03)
+- [x] 10.1 Fix manual tab product list to refresh when products change during the session (BUG-08)
+- [x] 10.2 Add inline "Add new product" button in manual entry mode (MISSING-01)
+- [x] 10.3 Add "Load demo data" button on empty dashboard for new users (MISSING-03)
 
 ### Acceptance Criteria
 - Adding a product via NL mode is immediately reflected in the manual tab
