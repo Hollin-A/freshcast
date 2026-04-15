@@ -356,16 +356,37 @@ Close remaining UX gaps and add small features that improve the new-user experie
 
 ## Deferred Items
 
-These were identified in the review but deferred from the MVP scope:
+These were identified in the code review but deferred from the current MVP scope:
 
-| Item | Reason |
-|------|--------|
-| BUG-07: Rate limiting on auth endpoints | Requires external dependency (Upstash); implement before public launch |
-| BUG-10: Forecast status field for error states | Nice-to-have; current silent fallback is acceptable |
-| BUG-11: Placeholder insight IDs | No user impact; fix when insight IDs are referenced |
-| IMPROVE-01: Email delivery for password reset | Blocking for production users but not for MVP testing |
-| IMPROVE-03: Levenshtein optimization | Premature; product lists are small |
-| MISSING-02: Locale step in onboarding | No value with single language; architecture is ready |
+| Item | Reason | When to revisit |
+|------|--------|-----------------|
+| BUG-07: Rate limiting on auth endpoints | Requires external dependency (Upstash) | Before public launch |
+| BUG-10: Forecast status field for error states | Nice-to-have; silent fallback is acceptable | Post-launch polish |
+| BUG-11: Placeholder insight IDs | No user impact currently | When insight IDs are referenced in code |
+| IMPROVE-01: Email delivery for password reset | Blocking for real users but not for MVP testing | Before first real user onboards |
+| IMPROVE-03: Levenshtein optimization (two-row) | Premature; product lists are small (<50 items) | If product catalogs grow significantly |
+| MISSING-02: Locale step in onboarding | No value with single language; i18n architecture is ready | When second language is added |
+
+---
+
+## Backlog — Post-MVP Features
+
+These are feature ideas identified during development and code review. They are not planned for any phase yet but are tracked here for future prioritization. Ordered by suggested priority.
+
+### High Value / Low Effort
+- [ ] PWA support (manifest.json, service worker, app icons) — enables "Add to Home Screen" for daily-use habit
+- [ ] CSV export of sales history — `GET /api/sales/export?from=&to=`, download button on history page
+- [ ] Demand spike alert card — highlight when tomorrow's forecast is >30% above recent average
+- [ ] Unit selector override per sale entry in manual mode — let users change unit per sale, not just per product
+
+### Medium Value / Medium Effort
+- [ ] Account and data deletion — `DELETE /api/account` with cascade, settings page UI
+- [ ] Weekly summary email — cron job on Sunday, queries analytics/predictions, sends email per business (requires email infrastructure)
+
+### Infrastructure
+- [ ] Email delivery service integration (Resend/Postmark/SendGrid) — needed for password reset in production and weekly emails
+- [ ] Rate limiting on auth endpoints (Upstash Ratelimit or in-memory) — needed before public launch
+- [ ] Scheduled cron for batch insight/prediction generation — replace on-demand generation when user base grows
 
 ---
 
