@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,9 +14,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function DashboardClient() {
   const { data, isLoading } = useDashboard();
+  const queryClient = useQueryClient();
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   if (isLoading) {
     return (
@@ -37,9 +42,40 @@ export function DashboardClient() {
           <p className="text-sm text-muted-foreground mb-4">
             Log your first sales to see insights here
           </p>
-          <Link href="/sales">
-            <Button>Log your first sale</Button>
-          </Link>
+          <div className="flex flex-col gap-3 items-center">
+            <Link href="/sales">
+              <Button>Log your first sale</Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={loadingDemo}
+              onClick={async () => {
+                setLoadingDemo(true);
+                try {
+                  const res = await fetch("/api/demo", { method: "POST" });
+                  if (!res.ok) {
+                    const body = await res.json();
+                    toast.error(body.error?.message || "Failed to load demo data");
+                    return;
+                  }
+                  toast.success("Demo data loaded!");
+                  queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                  queryClient.invalidateQueries({ queryKey: ["sales"] });
+                  queryClient.invalidateQueries({ queryKey: ["products"] });
+                } catch {
+                  toast.error("Something went wrong");
+                } finally {
+                  setLoadingDemo(false);
+                }
+              }}
+            >
+              {loadingDemo ? "Loading demo..." : "Try with demo data"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Sample data to preview the full dashboard experience
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
