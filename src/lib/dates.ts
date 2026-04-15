@@ -32,8 +32,13 @@ export function getDaysAgoUTC(timezone: string, n: number): Date {
 
 /**
  * Get the day of week (0=Sun, 6=Sat) for a date stored as @db.Date.
- * Uses UTC since we store dates as UTC midnight.
+ * Parses the calendar date directly from the ISO string to avoid
+ * any timezone conversion issues with JavaScript Date objects.
  */
-export function getUTCDayOfWeek(date: Date): number {
-  return new Date(date).getUTCDay();
+export function getDayOfWeekFromDate(date: Date): number {
+  // Extract YYYY-MM-DD from the date and construct at UTC midnight
+  const isoStr = date.toISOString().split("T")[0];
+  const [year, month, day] = isoStr.split("-").map(Number);
+  // new Date(Date.UTC(...)) guarantees UTC interpretation
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }

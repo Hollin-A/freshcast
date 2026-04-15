@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getUTCDayOfWeek, getLocalDateStr, toUTCDate } from "@/lib/dates";
+import { getDayOfWeekFromDate, getLocalDateStr, toUTCDate } from "@/lib/dates";
 import { MIN_ENTRIES_FOR_PREDICTIONS } from "@/lib/constants";
 
 export type ProductPrediction = {
@@ -28,15 +28,22 @@ function mean(values: number[]): number {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
+// Confidence thresholds based on data volume
+// More data points = higher base confidence in predictions
+const CONFIDENCE_LOW_MAX = 5;       // < 5 entries: low confidence (0.3)
+const CONFIDENCE_MODERATE_MAX = 15; // 5-14 entries: moderate (0.5)
+const CONFIDENCE_GOOD_MAX = 30;     // 15-29 entries: good (0.7)
+// 30+ entries: high confidence (0.85)
+
 function calculateConfidence(
   sameWeekdayData: number[],
   recentData: number[]
 ): number {
   const totalPoints = sameWeekdayData.length + recentData.length;
   let base: number;
-  if (totalPoints < 5) base = 0.3;
-  else if (totalPoints < 15) base = 0.5;
-  else if (totalPoints < 30) base = 0.7;
+  if (totalPoints < CONFIDENCE_LOW_MAX) base = 0.3;
+  else if (totalPoints < CONFIDENCE_MODERATE_MAX) base = 0.5;
+  else if (totalPoints < CONFIDENCE_GOOD_MAX) base = 0.7;
   else base = 0.85;
 
   const allData = [...sameWeekdayData, ...recentData];
@@ -84,7 +91,7 @@ async function getProductSalesHistory(
     .filter((e) => e.items.length > 0)
     .map((e) => ({
       date: new Date(e.date),
-      dayOfWeek: getUTCDayOfWeek(new Date(e.date)),
+      dayOfWeek: getDayOfWeekFromDate(new Date(e.date)),
       quantity: e.items.reduce((s, i) => s + i.quantity, 0),
     }));
 }

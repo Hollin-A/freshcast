@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import type { InsightType } from "@/generated/prisma/client";
-import { getDaysAgoUTC, getTodayUTC, getUTCDayOfWeek } from "@/lib/dates";
+import { getDaysAgoUTC, getTodayUTC, getDayOfWeekFromDate } from "@/lib/dates";
 
 type InsightRecord = {
   type: InsightType;
@@ -122,7 +122,7 @@ export async function generateInsights(
   // Weekday pattern: find strongest and weakest days
   const weekdayTotals = new Map<number, number>();
   for (const entry of thisWeekEntries) {
-    const day = getUTCDayOfWeek(new Date(entry.date));
+    const day = getDayOfWeekFromDate(new Date(entry.date));
     const qty = entry.items.reduce((s, i) => s + i.quantity, 0);
     weekdayTotals.set(day, (weekdayTotals.get(day) ?? 0) + qty);
   }
@@ -171,6 +171,7 @@ export async function getOrGenerateInsights(businessId: string, timezone: string
   const generated = await generateInsights(businessId, timezone);
 
   if (generated.length > 0) {
+    // Use skipDuplicates to handle concurrent requests gracefully
     await prisma.dailyInsight.createMany({
       data: generated.map((g) => ({
         businessId,
@@ -181,14 +182,15 @@ export async function getOrGenerateInsights(businessId: string, timezone: string
           ? (g.metadata as Prisma.InputJsonValue)
           : Prisma.JsonNull,
       })),
+      skipDuplicates: true,
     });
   }
 
-  const insights = generated.map((g, i) => ({
-    id: `generated-${i}`,
-    type: g.type,
-    content: g.content,
-  }));
+  // Re-query from DB to get real IDs
+  const storedInsights = await prisma.dailyInsight.findMany({
+    where: { businessId, date: { gte: todayDate } },
+    select: { id: true, type: true, content: true },
+  });
 
-  return { insights, generatedAt: new Date().toISOString() };
+  return { insights: storedInsights, generatedAt: new Date().toISOString() };
 }

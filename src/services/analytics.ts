@@ -22,12 +22,12 @@ export type RankedProduct = ProductTotal & { rank: number };
 
 export async function getTodaySummary(businessId: string, timezone: string) {
   const todayDate = getTodayUTC(timezone);
-  const tomorrowDate = new Date(todayDate);
-  tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+  const todayUpperBound = new Date(todayDate);
+  todayUpperBound.setUTCDate(todayUpperBound.getUTCDate() + 1);
   const todayStr = getLocalDateStr(timezone);
 
   const entries = await prisma.salesEntry.findMany({
-    where: { businessId, date: { gte: todayDate, lt: tomorrowDate } },
+    where: { businessId, date: { gte: todayDate, lt: todayUpperBound } },
     include: {
       items: {
         include: { product: { select: { id: true, name: true, defaultUnit: true } } },
