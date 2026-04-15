@@ -423,23 +423,23 @@ Model: `claude-3-5-haiku-latest` (~$0.80/M input, $3.20/M output — pennies per
 #### Tasks
 
 ##### 13A — Claude Client Setup
-- [ ] 13.1 Install `@anthropic-ai/sdk`
-- [ ] 13.2 Create `src/lib/claude.ts` utility with `generateText(systemPrompt, userMessage)` function
-- [ ] 13.3 Add `ANTHROPIC_API_KEY` to environment variables (local + Vercel)
+- [x] 13.1 Install `@anthropic-ai/sdk`
+- [x] 13.2 Create `src/lib/claude.ts` utility with `generateText(systemPrompt, userMessage)` function
+- [x] 13.3 Add `ANTHROPIC_API_KEY` to environment variables (local + Vercel)
 
 ##### 13B — LLM-Powered Insights
-- [ ] 13.4 Design the insight generation prompt — feed analytics data (weekly totals, trends, top products, weekday patterns) and ask for 3-5 natural language insights as JSON
-- [ ] 13.5 Add `generationMethod` field to DailyInsight model: `"template" | "llm"`
-- [ ] 13.6 Update insight generator: try Claude first, fall back to templates if API fails or key is missing
-- [ ] 13.7 Cache LLM insights in DB — don't re-call for the same day (existing dedup logic handles this)
-- [ ] 13.8 Cost guard — max 1 LLM insight call per business per day
+- [x] 13.4 Design the insight generation prompt — feed analytics data (weekly totals, trends, top products, weekday patterns) and ask for 3-5 natural language insights as JSON
+- [x] 13.5 Add `generationMethod` field to DailyInsight model: `"template" | "llm"`
+- [x] 13.6 Update insight generator: try Claude first, fall back to templates if API fails or key is missing
+- [x] 13.7 Cache LLM insights in DB — don't re-call for the same day (existing dedup logic handles this)
+- [x] 13.8 Cost guard — max 1 LLM insight call per business per day
 
 ##### 13C — LLM-Powered NL Sales Parser
-- [ ] 13.9 Design the sales parsing prompt — given raw text + product list, return structured JSON with product name, quantity, unit, and matched/unmatched status
-- [ ] 13.10 Create `src/services/llm-sales-parser.ts` that calls Claude and returns the same `ParsedItem[]` format as the rule-based parser
-- [ ] 13.11 Update `POST /api/sales/parse` to try LLM parser first, fall back to rule-based if API fails or key is missing
-- [ ] 13.12 Add `parseMethod` field to the parse response: `"rule-based" | "llm"` so the UI can indicate which method was used
-- [ ] 13.13 Test with edge cases the rule-based parser struggles with: "about two dozen eggs", "sold some beef maybe 30 kilos", "10 of each chicken and lamb"
+- [x] 13.9 Design the sales parsing prompt — given raw text + product list, return structured JSON with product name, quantity, unit, and matched/unmatched status
+- [x] 13.10 Create `src/services/llm-sales-parser.ts` that calls Claude and returns the same `ParsedItem[]` format as the rule-based parser
+- [x] 13.11 Update `POST /api/sales/parse` to try LLM parser first, fall back to rule-based if API fails or key is missing
+- [x] 13.12 Add `parseMethod` field to the parse response: `"rule-based" | "llm"` so the UI can indicate which method was used
+- [x] 13.13 Test with edge cases the rule-based parser struggles with: "about two dozen eggs", "sold some beef maybe 30 kilos", "10 of each chicken and lamb"
 
 #### Acceptance Criteria
 - Dashboard insights are more natural and varied when Claude is available
