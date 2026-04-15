@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { getMessages, getLocale } from "next-intl/server";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
+import { ServiceWorkerRegister } from "@/components/shared/sw-register";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,12 +20,24 @@ export const metadata: Metadata = {
   title: "BizSense",
   description:
     "AI-powered sales tracking and demand prediction for small businesses",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BizSense",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#2a9d8f",
 };
 
 export default async function RootLayout({
@@ -45,6 +58,7 @@ export default async function RootLayout({
           {children}
           <Toaster position="top-center" richColors />
         </Providers>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
