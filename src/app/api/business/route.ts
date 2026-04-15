@@ -47,6 +47,13 @@ export async function POST(request: Request) {
 
     const { name, type, locale, timezone, products } = result.data;
 
+    // Validate timezone is a real IANA identifier
+    try {
+      Intl.DateTimeFormat("en", { timeZone: timezone });
+    } catch {
+      return errorResponse("VALIDATION_ERROR", "Invalid timezone", 400);
+    }
+
     logger.info("business", "Creating business", { name, type, timezone, productCount: products.length });
 
     const business = await prisma.business.create({

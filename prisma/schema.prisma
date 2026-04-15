@@ -150,6 +150,7 @@ model DailyInsight {
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
+  @@unique([businessId, date, type])
   @@index([businessId, date])
 }
 
@@ -176,3 +177,4 @@ model DemandForecast {
   @@unique([businessId, productId, forecastDate])
   @@index([businessId, forecastDate])
 }
+

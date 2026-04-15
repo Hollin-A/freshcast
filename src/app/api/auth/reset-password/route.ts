@@ -24,37 +24,35 @@ export async function POST(request: Request) {
 
     const { email, token, password } = result.data;
 
-    // Find and validate token
-    const stored = await prisma.verificationToken.findFirst({
-      where: { identifier: email, token },
+    // Use a transaction: find token, validate, delete, update password — atomically
+    const success = await prisma.$transaction(async (tx) => {
+      // Delete the token immediately to prevent reuse in a race
+      const deleted = await tx.verificationToken.deleteMany({
+        where: { identifier: email, token },
+      });
+
+      if (deleted.count === 0) return false;
+
+      // Clean up any other tokens for this email
+      await tx.verificationToken.deleteMany({
+        where: { identifier: email },
+      });
+
+      // Update password
+      const passwordHash = await bcrypt.hash(password, 12);
+      await tx.user.update({
+        where: { email },
+        data: { passwordHash },
+      });
+
+      return true;
     });
 
-    if (!stored) {
+    if (!success) {
       return errorResponse("VALIDATION_ERROR", "Invalid or expired reset link", 400);
     }
 
-    if (stored.expires < new Date()) {
-      // Clean up expired token
-      await prisma.verificationToken.delete({
-        where: { identifier_token: { identifier: email, token } },
-      });
-      return errorResponse("VALIDATION_ERROR", "Reset link has expired. Please request a new one.", 400);
-    }
-
-    // Update password
-    const passwordHash = await bcrypt.hash(password, 12);
-    await prisma.user.update({
-      where: { email },
-      data: { passwordHash },
-    });
-
-    // Delete used token
-    await prisma.verificationToken.delete({
-      where: { identifier_token: { identifier: email, token } },
-    });
-
     logger.info("auth", "Password reset successful", { email });
-
     return NextResponse.json({ message: "Password reset successfully. You can now log in." });
   } catch (err) {
     logger.error("auth", "POST /api/auth/reset-password failed", err);

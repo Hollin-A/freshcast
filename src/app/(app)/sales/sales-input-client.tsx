@@ -130,13 +130,20 @@ export function SalesInputClient() {
       return;
     }
 
+    // Filter out zero or negative quantities
+    const validItems = parsedItems.filter((p) => p.quantity > 0);
+    if (validItems.length === 0) {
+      toast.error("All items have zero quantity. Please enter valid quantities.");
+      return;
+    }
+
     const today = new Date().toLocaleDateString("en-CA");
     try {
       await saveMutation.mutateAsync({
         date: today,
         inputMethod,
         rawInput: inputMethod === "NATURAL_LANGUAGE" ? nlText : null,
-        items: parsedItems.map((p) => ({
+        items: validItems.map((p) => ({
           productId: p.productId!,
           quantity: p.quantity,
           unit: p.unit,
