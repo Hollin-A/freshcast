@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { parseSalesInput } from "@/services/sales-parser";
+import { llmParseSalesInput } from "@/services/llm-sales-parser";
 
 const parseSchema = z.object({
   text: z.string().min(1).max(1000),
@@ -28,9 +29,19 @@ export async function POST(request: Request) {
       select: { id: true, name: true, defaultUnit: true },
     });
 
-    const parsed = parseSalesInput(result.data.text, products);
+    // Try LLM parser first, fall back to rule-based
+    const llmResult = await llmParseSalesInput(result.data.text, products);
 
-    return NextResponse.json(parsed);
+    if (llmResult) {
+      logger.info("sales-parse", "Used LLM parser", { itemCount: llmResult.parsed.length });
+      return NextResponse.json(llmResult);
+    }
+
+    // Fallback to rule-based parser
+    const parsed = parseSalesInput(result.data.text, products);
+    logger.info("sales-parse", "Used rule-based parser", { itemCount: parsed.parsed.length });
+
+    return NextResponse.json({ ...parsed, parseMethod: "rule-based" });
   } catch (err) {
     logger.error("sales-parse", "POST /api/sales/parse failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
