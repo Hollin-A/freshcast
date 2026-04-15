@@ -138,7 +138,6 @@ export async function DELETE(
       return errorResponse("NOT_FOUND", "Sales entry not found", 404);
     }
 
-    await prisma.salesItem.deleteMany({ where: { salesEntryId: id } });
     await prisma.salesEntry.delete({ where: { id } });
 
     logger.info("sales", "Sales entry deleted", { entryId: id });
