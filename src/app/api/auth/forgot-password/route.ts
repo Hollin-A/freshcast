@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -20,6 +21,13 @@ export async function POST(request: Request) {
     }
 
     const { email } = result.data;
+
+    // Rate limit: 3 reset requests per email per hour
+    const { success } = rateLimit(`forgot:${email}`, 3, 60 * 60 * 1000);
+    if (!success) {
+      // Still return success message to prevent email enumeration
+      return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
+    }
 
     // Always return success to prevent email enumeration
     const user = await prisma.user.findUnique({ where: { email } });

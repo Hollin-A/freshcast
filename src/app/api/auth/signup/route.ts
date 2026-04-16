@@ -4,6 +4,7 @@ import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 const signupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -15,6 +16,13 @@ const signupSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 10 signups per IP per hour
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
+    const { success } = rateLimit(`signup:${ip}`, 10, 60 * 60 * 1000);
+    if (!success) {
+      return errorResponse("RATE_LIMITED", "Too many requests. Please try again later.", 429);
+    }
+
     const body = await request.json();
     const result = signupSchema.safeParse(body);
 
