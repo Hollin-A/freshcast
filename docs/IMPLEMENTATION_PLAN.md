@@ -458,13 +458,13 @@ Branch: `feat/phase-14-ai-chat`
 Let users ask business questions in natural language and get answers based on their own data. Uses the same Claude client from Phase 13.
 
 #### Tasks
-- [ ] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to Claude with context
-- [ ] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as Claude context
-- [ ] 14.3 Design the system prompt — constrain Claude to only answer based on the user's data, no external assumptions
-- [ ] 14.4 Build chat UI page (`/chat`) with message list and input field
-- [ ] 14.5 Add chat to the mobile navigation bar
-- [ ] 14.6 Implement conversation history (store last N messages in session/state, not DB for now)
-- [ ] 14.7 Add suggested questions on empty chat ("What sold best this week?", "When should I prepare more chicken?", "How did eggs perform this month?")
+- [x] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to Claude with context
+- [x] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as Claude context
+- [x] 14.3 Design the system prompt — constrain Claude to only answer based on the user's data, no external assumptions
+- [x] 14.4 Build chat UI page (`/chat`) with message list and input field
+- [x] 14.5 Add chat to the mobile navigation bar
+- [x] 14.6 Implement conversation history (store last N messages in session/state, not DB for now)
+- [x] 14.7 Add suggested questions on empty chat ("What sold best this week?", "When should I prepare more chicken?", "How did eggs perform this month?")
 - [ ] 14.8 Add streaming response support for better UX (show tokens as they arrive)
 
 #### Acceptance Criteria
