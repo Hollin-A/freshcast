@@ -43,7 +43,20 @@ export function SalesHistoryClient() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold mb-4">{t("history")}</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-semibold">{t("history")}</h1>
+        {entries.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              window.open("/api/sales/export", "_blank");
+            }}
+          >
+            Export CSV
+          </Button>
+        )}
+      </div>
       {entries.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-12">{t("noHistory")}</p>
       ) : (
