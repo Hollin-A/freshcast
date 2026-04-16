@@ -148,6 +148,7 @@
   "nav": {
     "home": "Home",
     "logSales": "Log Sales",
+    "chat": "Ask AI",
     "history": "History",
     "products": "Products"
   }
