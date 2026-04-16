@@ -14,7 +14,7 @@ export default async function SalesPage() {
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
-    <div className="mx-auto max-w-md px-4 py-8 overflow-hidden">
+    <div className="mx-auto max-w-md px-4 py-8">
       <SalesInputClient />
     </div>
   );

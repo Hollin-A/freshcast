@@ -15,7 +15,7 @@ export default async function AppLayout({
 
   return (
     <>
-      <main className="pb-20">{children}</main>
+      <main className="pb-20 overflow-x-hidden">{children}</main>
       <MobileNav />
     </>
   );

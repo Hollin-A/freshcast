@@ -272,14 +272,14 @@ export function SalesInputClient() {
   // Input screen
   return (
     <>
-      <div className="mb-4">
+      <div className="mb-4 min-w-0">
         <Label className="text-sm text-muted-foreground mb-1 block">Date</Label>
         <Input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           max={new Date().toLocaleDateString("en-CA")}
-          className="max-w-full"
+          style={{ minWidth: 0 }}
         />
       </div>
       <Tabs
