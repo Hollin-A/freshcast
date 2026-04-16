@@ -207,6 +207,7 @@ A structured form listing the user's existing products.
 
 **Requirements:**
 - Multiple sales entries per day supported (morning + afternoon logging)
+- Date picker to log sales for past dates (defaults to today, max is today)
 - Ability to edit today's sales entries
 - Ability to delete any sales entry
 - View historical sales log (list view, grouped by date with timestamps)

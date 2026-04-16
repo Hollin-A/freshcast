@@ -308,6 +308,11 @@ Two parsers with automatic fallback:
 - Handles conversational input ("about two dozen eggs", "maybe 30 kilos of beef")
 - Returns `ParsedItem[]` with `parseMethod: "llm"`
 
+**Date Selection**
+- Date picker above the NL/manual tabs, defaults to today, max is today
+- Users can log sales for any past date they missed
+- Selected date shown on the confirmation screen before saving
+
 **Rule-Based Parser** (`services/sales-parser.ts`) — Fallback
 - Tokenizes by commas and "and"
 - Extracts quantity (number), unit (word-boundary regex), product name (remainder)
