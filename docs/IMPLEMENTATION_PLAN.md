@@ -482,12 +482,12 @@ Branch: `feat/phase-15-production`
 Security and reliability improvements for real-world usage.
 
 #### Tasks
-- [ ] 15.1 Add rate limiting on auth endpoints (Upstash Ratelimit)
-- [ ] 15.2 Add account and data deletion (`DELETE /api/account` with cascade)
-- [ ] 15.3 Add settings/profile page with logout, delete account, timezone change
-- [ ] 15.4 Add CSV export of sales history (`GET /api/sales/export`)
-- [ ] 15.5 Add demand spike alert card on dashboard (>30% above average)
-- [ ] 15.6 Add unit selector override per sale entry in manual mode
+- [x] 15.1 Add rate limiting on auth endpoints (Upstash Ratelimit)
+- [x] 15.2 Add account and data deletion (`DELETE /api/account` with cascade)
+- [x] 15.3 Add settings/profile page with logout, delete account, timezone change
+- [x] 15.4 Add CSV export of sales history (`GET /api/sales/export`)
+- [x] 15.5 Add demand spike alert card on dashboard (>30% above average)
+- [x] 15.6 Add unit selector override per sale entry in manual mode
 
 #### Acceptance Criteria
 - Auth endpoints are rate-limited (3 forgot-password per email per hour, 10 signups per IP per hour)
