@@ -81,7 +81,6 @@ BizSense will NOT:
 - Require full product catalog setup
 - Provide cross-business comparisons or competitor insights
 - Track pricing or revenue (quantity-only in MVP)
-- Include an AI chat/conversational interface (deferred to future phase)
 
 ---
 
@@ -102,18 +101,18 @@ BizSense will NOT:
 
 **Description:** Simple account creation and login, one account per business.
 
-**Approach:** Email/password authentication with optional magic link (passwordless) for convenience.
+**Approach:** Email/password authentication with password reset (token-based, email delivery via Resend).
 
 **Requirements:**
 - Sign up with email and password
-- Login with email/password or magic link
-- Password reset flow
+- Login with email/password
+- Password reset flow (email with reset link)
 - Session persistence (stay logged in on device)
 - One account = one business (no multi-user support in MVP)
 
 **Constraints:**
+- No magic link in MVP
 - No social login in MVP
-- No phone/OTP in MVP
 - No multi-user or role-based access in MVP
 
 ---
@@ -151,7 +150,7 @@ A large text input field where users type sales in plain language.
 
 **Functional Requirements:**
 - Large, prominent text input field
-- Rule-based parser (MVP) to extract structured data
+- LLM-powered parser (Claude Haiku) with rule-based fallback to extract structured data
 - Match input against existing product list
 - Detect new/unknown products and prompt user to confirm addition
 - Confirmation screen before saving (editable parsed results)
@@ -207,9 +206,12 @@ A structured form listing the user's existing products.
 - Input method used (NL or manual)
 
 **Requirements:**
-- One sales entry per day (or append to existing day's entry)
-- Ability to edit today's sales entry
-- View historical sales log (list view, scrollable)
+- Multiple sales entries per day supported (morning + afternoon logging)
+- Ability to edit today's sales entries
+- Ability to delete any sales entry
+- View historical sales log (list view, grouped by date with timestamps)
+- Original NL text saved for audit trail
+- CSV export of sales history
 
 ---
 
@@ -225,7 +227,8 @@ A structured form listing the user's existing products.
 | Today's Summary | Products sold today with quantities |
 | This Week | Trend overview, comparison with previous week |
 | Top Products | Most sold items (by quantity) |
-| AI Insights | Auto-generated natural language summaries |
+| AI Insights | Auto-generated natural language summaries (LLM-powered with template fallback) |
+| Demand Spike Alert | Highlighted when tomorrow's forecast is >30% above average |
 
 **Requirements:**
 - Insights generated via daily batch processing (not real-time)
@@ -272,10 +275,28 @@ A structured form listing the user's existing products.
 - "Wednesday is your slowest day"
 
 **Requirements:**
-- Generated via daily batch processing
+- Generated via daily batch processing (LLM-powered with template fallback)
 - Based solely on user's own data
 - Natural language format, easy to scan
 - Refreshed daily
+- Cached in database to avoid redundant LLM calls
+
+---
+
+### 6.9 AI Chat
+
+**Description:** Users can ask business-related questions in natural language and get answers based on their own data.
+
+**Example Queries:**
+- "What sold best this week?"
+- "When should I prepare more chicken?"
+- "How are my sales trending?"
+
+**Requirements:**
+- Responses constrained to user's own data (no external assumptions)
+- Suggested questions for discoverability
+- Conversation history within session
+- Graceful fallback when AI is unavailable
 
 ---
 
@@ -357,7 +378,7 @@ Mobile-first responsive web application.
 - Prisma ORM
 
 ### AI Layer
-- OpenAI API (or equivalent) — used for insight generation and future NL parsing upgrade
+- Claude API (Anthropic Haiku) — used for insight generation, NL sales parsing, and AI chat
 
 ### Localization
 - next-intl or equivalent i18n library
@@ -373,6 +394,7 @@ Business
 ├── name
 ├── type
 ├── locale
+├── timezone
 ├── createdAt
 
 Product
@@ -385,6 +407,8 @@ SalesEntry
 ├── id
 ├── businessId → Business
 ├── date
+├── inputMethod
+├── rawInput (original NL text, nullable)
 
 SalesItem
 ├── id
@@ -397,8 +421,9 @@ DailyInsight
 ├── id
 ├── businessId → Business
 ├── date
-├── type (trend | prediction | summary)
+├── type (trend | comparison | top_products | summary)
 ├── content (natural language text)
+├── generationMethod (template | llm)
 
 DemandForecast
 ├── id
@@ -474,37 +499,29 @@ DemandForecast
 ## 15. Future Phases (Post-MVP)
 
 ### Phase 2 — Enhanced Input
-- AI-powered natural language parsing (upgrade from rule-based)
 - Voice input for hands-free logging
 - Receipt/photo parsing via OCR
 
-### Phase 3 — Conversational AI
-- AI Chat interface for business questions
-  - "What sold best this week?"
-  - "When should I prepare more chicken?"
-  - "How did eggs perform this month?"
-- Pre-built query suggestions + free-form input
-- Responses based solely on user's own data
-
-### Phase 4 — Advanced Intelligence
+### Phase 3 — Advanced Intelligence
 - Advanced forecasting models (ML-based)
 - Seasonal pattern detection
 - Event/holiday impact analysis
 - Anomaly detection (unusual sales spikes/drops)
 
-### Phase 5 — Platform Expansion
-- PWA support with offline capability
+### Phase 4 — Platform Expansion
 - Native mobile apps (iOS/Android)
 - Multi-user support per business (owner + employees)
 - Role-based access control
+- Weekly summary email notifications
 
-### Phase 6 — Ecosystem
+### Phase 5 — Ecosystem
 - POS system integrations
 - Supplier/purchase order management
 - Multi-branch business support
 - Aggregated anonymous insights (opt-in benchmarking)
 
 ### Authentication Upgrades (Future)
+- Magic link (passwordless) authentication
 - Social login (Google, Apple)
 - Phone number / OTP authentication
 - Multi-factor authentication

@@ -356,16 +356,15 @@ Close remaining UX gaps and add small features that improve the new-user experie
 
 ## Deferred Items
 
-These were identified in the code review but deferred from the current MVP scope:
+These were identified in the code review but deferred from the current scope:
 
 | Item | Reason | When to revisit |
 |------|--------|-----------------|
-| BUG-07: Rate limiting on auth endpoints | Requires external dependency (Upstash) | Before public launch |
 | BUG-10: Forecast status field for error states | Nice-to-have; silent fallback is acceptable | Post-launch polish |
-| BUG-11: Placeholder insight IDs | No user impact currently | When insight IDs are referenced in code |
-| IMPROVE-01: Email delivery for password reset | Blocking for real users but not for MVP testing | Before first real user onboards |
-| IMPROVE-03: Levenshtein optimization (two-row) | Premature; product lists are small (<50 items) | If product catalogs grow significantly |
 | MISSING-02: Locale step in onboarding | No value with single language; i18n architecture is ready | When second language is added |
+| Streaming chat responses | Current non-streaming approach is acceptable for Haiku speed | When chat usage grows |
+
+Items previously deferred but now implemented: rate limiting (Phase 15), email delivery (Phase 12), placeholder insight IDs (fixed in Phase 9), Levenshtein optimization (deferred — still acceptable).
 
 ---
 
@@ -511,11 +510,11 @@ Security and reliability improvements for real-world usage.
 | 8 | MVP Completion | ✅ Complete |
 | 9 | Security & Correctness | ✅ Complete |
 | 10 | UX Polish | ✅ Complete |
-| 11 | PWA Support | Planned |
-| 12 | Email Infrastructure | Planned |
-| 13 | LLM Integration (Claude) | LLM-powered insights + NL parsing with fallback |
-| 14 | AI Chat Interface | Planned |
-| 15 | Production Hardening | Planned |
+| 11 | PWA Support | ✅ Complete |
+| 12 | Email Infrastructure | ✅ Complete |
+| 13 | LLM Integration (Claude) | ✅ Complete |
+| 14 | AI Chat Interface | ✅ Complete |
+| 15 | Production Hardening | ✅ Complete |
 
 ---
 

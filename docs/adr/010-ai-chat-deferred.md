@@ -1,7 +1,7 @@
 # ADR-010: AI Chat Feature Deferred to Future Phase
 
 ## Status
-Accepted
+Superseded by [ADR-012](012-ai-chat-implemented.md) — AI chat implemented in Phase 14
 
 ## Date
 2026-03-29

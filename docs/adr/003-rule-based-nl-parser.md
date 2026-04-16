@@ -1,7 +1,7 @@
 # ADR-003: Rule-Based Natural Language Parser for MVP
 
 ## Status
-Accepted
+Superseded by [ADR-011](011-llm-integration-claude.md) — LLM parsing now primary, rule-based as fallback
 
 ## Date
 2026-03-29

@@ -142,32 +142,41 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## What I Built vs What I Deferred
 
-### Implemented (MVP)
+### Implemented (MVP + Post-MVP)
 
-- Email/password auth with password reset (token-based)
+- Email/password auth with password reset (token-based, email via Resend)
 - 2-step onboarding with timezone auto-detection
-- Dual-mode sales input (NL parser + manual form)
+- Dual-mode sales input (LLM parser with rule-based fallback + manual form)
 - Fuzzy product matching with inline product creation
 - Multiple entries per day with original NL text saved
-- Dashboard with 6 card types (today, week trend, top products, next-day forecast, weekly forecast, insights)
+- Dashboard with 7 card types (today, week trend, top products, next-day forecast, weekly forecast, insights, demand spike alerts)
 - Prediction engine with confidence scoring
-- Template-based insight generation with dedup
+- LLM-powered insight generation (Claude Haiku) with template fallback
+- AI chat interface — ask business questions, get data-driven answers
 - Atomic database operations (transactions)
 - Product ownership verification (business isolation)
 - Timezone-aware date handling throughout
 - Structured logging, error boundaries, loading skeletons
 - i18n architecture (externalized strings, next-intl)
 - Demo data loading for new users
+- PWA support (installable, offline fallback)
+- Email delivery via Resend
+- Rate limiting on auth endpoints
+- CSV export of sales history
+- Account and data deletion
+- Settings page
+- Unit override per sale entry in manual mode
 - Warm teal color theme, mobile-first responsive design
 
 ### Deferred (Post-MVP)
 
-- PWA support (manifest, service worker)
-- Email delivery for password reset (currently console-logged)
-- Rate limiting on auth endpoints
-- CSV export, weekly summary emails
-- AI-powered NL parsing, voice input
-- Account deletion (GDPR)
+- Magic link (passwordless) authentication
+- Voice input, receipt/photo parsing
+- ML-based advanced forecasting
+- Native mobile apps (iOS/Android)
+- Multi-user per business with role-based access
+- Weekly summary email notifications
+- POS integrations, supplier management
 
 ## License
 
