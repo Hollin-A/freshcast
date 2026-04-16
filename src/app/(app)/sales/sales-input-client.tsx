@@ -37,6 +37,9 @@ export function SalesInputClient() {
   const [parsedItems, setParsedItems] = useState<ParsedItem[] | null>(null);
   const [manualItems, setManualItems] = useState<ManualItem[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toLocaleDateString("en-CA")
+  );
   const [inputMethod, setInputMethod] = useState<"NATURAL_LANGUAGE" | "MANUAL">(
     "NATURAL_LANGUAGE"
   );
@@ -150,7 +153,7 @@ export function SalesInputClient() {
       return;
     }
 
-    const today = new Date().toLocaleDateString("en-CA");
+    const today = selectedDate;
     try {
       await saveMutation.mutateAsync({
         date: today,
@@ -181,7 +184,7 @@ export function SalesInputClient() {
         <CardHeader>
           <CardTitle>Confirm your sales</CardTitle>
           <CardDescription>
-            Review and edit before saving. Today&apos;s date will be used.
+            Review and edit before saving. Date: {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -268,7 +271,18 @@ export function SalesInputClient() {
 
   // Input screen
   return (
-    <Tabs
+    <>
+      <div className="mb-4">
+        <Label className="text-sm text-muted-foreground mb-1 block">Date</Label>
+        <Input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          max={new Date().toLocaleDateString("en-CA")}
+          className="w-full"
+        />
+      </div>
+      <Tabs
       defaultValue="nl"
       onValueChange={(v) => {
         if (v === "manual") initManualItems();
@@ -416,5 +430,6 @@ export function SalesInputClient() {
         </Card>
       </TabsContent>
     </Tabs>
+    </>
   );
 }
