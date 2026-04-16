@@ -515,6 +515,140 @@ Security and reliability improvements for real-world usage.
 | 13 | LLM Integration (Claude) | ✅ Complete |
 | 14 | AI Chat Interface | ✅ Complete |
 | 15 | Production Hardening | ✅ Complete |
+| 16 | Auth UX Polish | Planned |
+| 17 | Loading & Splash States | Planned |
+| 18 | Prediction Data Progress | Planned |
+| 19 | NL Parser Improvements | Planned |
+| 20 | Holiday-Aware Predictions | Planned |
+
+---
+
+## Phase 16: Auth UX Polish
+Branch: `feat/phase-16-auth-ux`
+
+### Goal
+Fix visual issues on auth pages and add email verification for a complete auth lifecycle.
+
+### Tasks
+- [ ] 16.1 Fix padding on login/signup/reset password cards — bottom of card clips after last input field
+- [ ] 16.2 Add show/hide password toggle (eye icon) on all password input fields (login, signup, reset password)
+- [ ] 16.3 Build email verification flow:
+  - On signup, send a verification email with a unique link via Resend
+  - `POST /api/auth/verify-email` endpoint — validates token, sets `emailVerified` on User
+  - Verification page (`/verify-email`) that handles the link click
+- [ ] 16.4 Create teal-themed verification email template (consistent with password reset email)
+- [ ] 16.5 Show verification status in settings page ("Email verified ✓" or "Not verified — Send verification email")
+- [ ] 16.6 Email verification is optional — users can use the app without verifying
+
+### Acceptance Criteria
+- Auth page cards have proper bottom padding, no clipping
+- Password fields have a toggle to show/hide the password
+- New users receive a verification email on signup
+- Clicking the verification link marks the email as verified
+- Settings page shows verification status with option to resend
+
+---
+
+## Phase 17: Loading & Splash States
+Branch: `feat/phase-17-loading`
+
+### Goal
+Add a branded splash screen for initial app load and ensure all pages have proper loading states.
+
+### Tasks
+- [ ] 17.1 Create root-level `loading.tsx` splash screen — app icon centered on teal background, references `public/icons/` so icon changes propagate
+- [ ] 17.2 Audit and add missing loading skeletons:
+  - Chat page (currently no skeleton)
+  - Settings page (currently no loading state)
+  - Sales input page (while products load)
+- [ ] 17.3 Ensure auth pages don't show splash (they're static, no loading needed)
+
+### Acceptance Criteria
+- First app load shows branded splash with app icon (not blank white screen)
+- Changing the icon file in `public/icons/` updates the splash automatically
+- All dynamic pages show skeletons while data loads
+- No blank screens during navigation
+
+---
+
+## Phase 18: Prediction Data Progress Bar
+Branch: `feat/phase-18-prediction-progress`
+
+### Goal
+Show users how close they are to unlocking and improving predictions, motivating continued data entry.
+
+### Tasks
+- [ ] 18.1 Build multi-tier progress indicator component with 4 levels:
+  - 🔴 0–4 entries: "Log 5 days to unlock predictions"
+  - 🟡 5–14 entries: "Basic predictions active"
+  - 🟢 15–29 entries: "Predictions improving"
+  - 🔵 30+ entries: "Predictions are reliable"
+- [ ] 18.2 Place at top of dashboard (below business name, above forecast card)
+- [ ] 18.3 Auto-hide when user reaches 30+ entries (reliable tier)
+- [ ] 18.4 Use `totalEntries` from existing dashboard API response (no backend changes)
+
+### Acceptance Criteria
+- New users see the progress bar guiding them to log 5 days
+- Progress bar updates as entries are added
+- Each tier has a distinct color and label
+- Bar disappears once predictions are fully reliable (30+ entries)
+- Frontend-only — no API changes needed
+
+---
+
+## Phase 19: NL Parser Improvements
+Branch: `feat/phase-19-parser-improvements`
+
+### Goal
+Improve LLM parsing accuracy with unit normalization and ambiguous quantity detection.
+
+### Tasks
+- [ ] 19.1 Unit normalization:
+  - Update LLM prompt to specify exact accepted unit strings from `KNOWN_UNITS`
+  - Add post-processing normalizer on LLM response (e.g., "Litre" → "liters", "L" → "liters", "Kg" → "kg")
+  - Ensure consistent units stored in database regardless of how user types them
+- [ ] 19.2 Ambiguous quantity detection:
+  - Update LLM prompt to return `status: "ok" | "ambiguous"` per item
+  - Add optional `clarification` field (e.g., "You said 'few' — how many exactly?")
+  - Update `ParsedItem` type with `status` and `clarification` fields
+- [ ] 19.3 Update confirmation screen UI:
+  - Ambiguous items shown with yellow/amber highlight
+  - Clarification message displayed below the item
+  - Quantity field auto-focused for user to fill in
+  - Cannot save until all ambiguous items have a valid quantity
+- [ ] 19.4 Update rule-based fallback parser to also normalize units (for consistency when LLM is unavailable)
+
+### Acceptance Criteria
+- "2L milk" and "2 litres milk" both normalize to unit "liters" in the database
+- "12 kg beef and few eggs" → beef parsed normally, eggs flagged as ambiguous with clarification
+- User must resolve ambiguous quantities before saving
+- Unit normalization works for both LLM and rule-based parsers
+
+---
+
+## Phase 20: Holiday-Aware Predictions
+Branch: `feat/phase-20-holiday-predictions`
+
+### Goal
+Adjust demand predictions based on public holidays for the business's region.
+
+### Tasks
+- [ ] 20.1 Add `region` field to Business model (default: `"AU-VIC"`, set during onboarding)
+- [ ] 20.2 Create `src/data/holidays.ts` — Victoria public holidays for 2026–2027 with type classification:
+  - `closed`: most retail closed (Christmas, Good Friday) → multiplier 0.3
+  - `low`: reduced traffic (Anzac Day morning, Boxing Day) → multiplier 0.6
+  - `pre-holiday`: day before a holiday → multiplier 1.2
+  - `post-holiday`: day after long weekend → multiplier 1.1
+- [ ] 20.3 Update prediction engine: check if forecast date is a holiday, apply multiplier to base prediction
+- [ ] 20.4 Show holiday indicator on forecast card (e.g., "📅 Public holiday tomorrow — expect lower sales")
+- [ ] 20.5 Auto-detect region during onboarding (default AU-VIC, stored as variable for future expansion)
+
+### Acceptance Criteria
+- Predictions for Christmas Day are ~70% lower than normal
+- Day before Easter shows ~20% higher prediction
+- Forecast card shows a holiday label when applicable
+- Region is configurable per business (defaults to AU-VIC)
+- Holiday data is a simple data file, easy to add new regions
 
 ---
 
