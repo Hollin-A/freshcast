@@ -1,20 +1,18 @@
 "use client";
 
-import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton() {
-  const t = useTranslations("auth");
-
+export function SettingsLink() {
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="text-xs text-muted-foreground"
-      onClick={() => signOut({ callbackUrl: "/login" })}
-    >
-      {t("logOut")}
-    </Button>
+    <Link href="/settings">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs text-muted-foreground"
+      >
+        ⚙ Settings
+      </Button>
+    </Link>
   );
 }

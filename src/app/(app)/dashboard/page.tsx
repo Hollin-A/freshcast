@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./dashboard-client";
-import { LogoutButton } from "./logout-button";
+import { SettingsLink } from "./logout-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -24,7 +24,7 @@ export default async function DashboardPage() {
             Welcome back, {session.user.name || "there"}
           </p>
         </div>
-        <LogoutButton />
+        <SettingsLink />
       </div>
       <DashboardClient />
       <p className="text-center text-xs text-muted-foreground mt-8 mb-4">
