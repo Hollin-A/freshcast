@@ -87,6 +87,7 @@ export function DashboardClient() {
       {data.forecast && data.forecast.predictions.length > 0 && (
         <ForecastCard forecast={data.forecast} />
       )}
+      {data.forecast && <SpikeAlertCard forecast={data.forecast} weekProducts={data.topProducts} />}
       {data.weeklyForecast && data.weeklyForecast.length > 0 && (
         <WeeklyForecastCard predictions={data.weeklyForecast} />
       )}
@@ -451,6 +452,55 @@ function WeeklyForecastCard({
                 })}
               </div>
             </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SpikeAlertCard({
+  forecast,
+  weekProducts,
+}: {
+  forecast: {
+    predictions: {
+      product: string;
+      predictedQuantity: number;
+      unit: string | null;
+    }[];
+  };
+  weekProducts: { product: string; totalQuantity: number }[];
+}) {
+  // Find products where tomorrow's prediction is >30% above weekly daily average
+  const spikes: { product: string; predicted: number; average: number; unit: string | null }[] = [];
+
+  for (const pred of forecast.predictions) {
+    const weekData = weekProducts.find((w) => w.product === pred.product);
+    if (!weekData) continue;
+    const dailyAvg = weekData.totalQuantity / 7;
+    if (dailyAvg > 0 && pred.predictedQuantity > dailyAvg * 1.3) {
+      spikes.push({
+        product: pred.product,
+        predicted: pred.predictedQuantity,
+        average: Math.round(dailyAvg),
+        unit: pred.unit,
+      });
+    }
+  }
+
+  if (spikes.length === 0) return null;
+
+  return (
+    <Card className="border-amber-300/50 bg-amber-50/30">
+      <CardContent className="py-3">
+        <div className="space-y-1">
+          {spikes.map((spike, i) => (
+            <p key={i} className="text-sm">
+              📈 Looks like tomorrow could be a strong day for{" "}
+              <span className="font-medium">{spike.product}</span> — predicted{" "}
+              ~{spike.predicted}{spike.unit ? ` ${spike.unit}` : ""} vs your daily average of ~{spike.average}
+            </p>
           ))}
         </div>
       </CardContent>

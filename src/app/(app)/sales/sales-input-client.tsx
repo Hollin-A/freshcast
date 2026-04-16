@@ -319,13 +319,8 @@ export function SalesInputClient() {
           </CardHeader>
           <CardContent className="space-y-3">
             {manualItems.map((item, index) => (
-              <div key={item.productId} className="flex items-center gap-3">
+              <div key={item.productId} className="flex items-center gap-2">
                 <Label className="flex-1 text-sm">{item.productName}</Label>
-                {item.unit && (
-                  <span className="text-xs text-muted-foreground w-10">
-                    {item.unit}
-                  </span>
-                )}
                 <Input
                   type="number"
                   placeholder="0"
@@ -337,9 +332,21 @@ export function SalesInputClient() {
                       )
                     )
                   }
-                  className="w-24 text-center"
+                  className="w-20 text-center"
                   min={0}
                   step="any"
+                />
+                <Input
+                  value={item.unit || ""}
+                  onChange={(e) =>
+                    setManualItems((prev) =>
+                      prev.map((p, i) =>
+                        i === index ? { ...p, unit: e.target.value || null } : p
+                      )
+                    )
+                  }
+                  placeholder="unit"
+                  className="w-16 text-center text-xs"
                 />
               </div>
             ))}
