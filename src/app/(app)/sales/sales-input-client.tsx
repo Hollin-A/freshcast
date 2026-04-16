@@ -279,7 +279,8 @@ export function SalesInputClient() {
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           max={new Date().toLocaleDateString("en-CA")}
-          style={{ minWidth: 0 }}
+          className="w-full"
+          style={{ minWidth: 0, width: "100%", boxSizing: "border-box", WebkitAppearance: "none" }}
         />
       </div>
       <Tabs
