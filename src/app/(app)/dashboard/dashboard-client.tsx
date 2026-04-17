@@ -354,8 +354,10 @@ function ForecastCard({
       predictedQuantity: number;
       unit: string | null;
       confidence: number;
+      holidayAdjusted?: boolean;
     }[];
     dataPoints: number;
+    holiday?: { name: string; type: string } | null;
   };
 }) {
   const dateLabel = new Date(forecast.forecastDate).toLocaleDateString("en-US", {
@@ -368,7 +370,18 @@ function ForecastCard({
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Tomorrow&apos;s Forecast</CardTitle>
-        <CardDescription>{dateLabel}</CardDescription>
+        <CardDescription>
+          {dateLabel}
+          {forecast.holiday && (
+            <span className="block text-amber-600 mt-1">
+              📅 {forecast.holiday.name}
+              {forecast.holiday.type === "closed" && " — expect significantly lower sales"}
+              {forecast.holiday.type === "low" && " — expect reduced traffic"}
+              {forecast.holiday.type === "pre-holiday" && " — customers may stock up"}
+              {forecast.holiday.type === "post-holiday" && " — returning to normal"}
+            </span>
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">

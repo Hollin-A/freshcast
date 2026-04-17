@@ -11,11 +11,11 @@ export async function GET(request: NextRequest) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
-    const { businessId, timezone } = ctx;
+    const { businessId, timezone, region } = ctx;
     const horizon = request.nextUrl.searchParams.get("horizon") || "day";
 
     if (horizon === "day") {
-      const result = await predictNextDay(businessId, timezone);
+      const result = await predictNextDay(businessId, timezone, region);
       if (!result) {
         return errorResponse(
           "INSUFFICIENT_DATA",
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (horizon === "week") {
-      const result = await predictNextWeek(businessId, timezone);
+      const result = await predictNextWeek(businessId, timezone, region);
       if (!result) {
         return errorResponse(
           "INSUFFICIENT_DATA",

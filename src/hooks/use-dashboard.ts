@@ -31,8 +31,10 @@ export type DashboardData = {
       predictedQuantity: number;
       unit: string | null;
       confidence: number;
+      holidayAdjusted?: boolean;
     }[];
     dataPoints: number;
+    holiday: { name: string; type: string } | null;
   } | null;
   weeklyForecast: {
     product: string;

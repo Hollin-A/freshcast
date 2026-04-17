@@ -14,15 +14,15 @@ export async function GET() {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
-    const { businessId, timezone } = ctx;
+    const { businessId, timezone, region } = ctx;
 
     const [todaySummary, weekSummary, topProducts, predictions, weeklyPredictions, insightsResult, totalEntries] =
       await Promise.all([
         getTodaySummary(businessId, timezone),
         getWeekSummary(businessId, timezone),
         getTopProducts(businessId, timezone),
-        predictNextDay(businessId, timezone).catch(() => null),
-        predictNextWeek(businessId, timezone).catch(() => null),
+        predictNextDay(businessId, timezone, region).catch(() => null),
+        predictNextWeek(businessId, timezone, region).catch(() => null),
         getOrGenerateInsights(businessId, timezone).catch(() => ({
           insights: [],
           generatedAt: new Date().toISOString(),
@@ -45,6 +45,9 @@ export async function GET() {
             forecastDate: tomorrowDate.toISOString().split("T")[0],
             predictions: predictions.predictions,
             dataPoints: predictions.dataPoints,
+            holiday: predictions.holiday
+              ? { name: predictions.holiday.name, type: predictions.holiday.type }
+              : null,
           }
         : null,
       weeklyForecast: weeklyPredictions || null,
