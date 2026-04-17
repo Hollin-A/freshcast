@@ -516,7 +516,7 @@ Security and reliability improvements for real-world usage.
 | 14 | AI Chat Interface | ✅ Complete |
 | 15 | Production Hardening | ✅ Complete |
 | 16 | Auth UX Polish | ✅ Complete |
-| 17 | Loading & Splash States | Planned |
+| 17 | Loading & Splash States | ✅ Complete |
 | 18 | Prediction Data Progress | Planned |
 | 19 | NL Parser Improvements | Planned |
 | 20 | Holiday-Aware Predictions | Planned |
@@ -556,12 +556,12 @@ Branch: `feat/phase-17-loading`
 Add a branded splash screen for initial app load and ensure all pages have proper loading states.
 
 ### Tasks
-- [ ] 17.1 Create root-level `loading.tsx` splash screen — app icon centered on teal background, references `public/icons/` so icon changes propagate
-- [ ] 17.2 Audit and add missing loading skeletons:
+- [x] 17.1 Create root-level `loading.tsx` splash screen — app icon centered on teal background, references `public/icons/` so icon changes propagate
+- [x] 17.2 Audit and add missing loading skeletons:
   - Chat page (currently no skeleton)
   - Settings page (currently no loading state)
   - Sales input page (while products load)
-- [ ] 17.3 Ensure auth pages don't show splash (they're static, no loading needed)
+- [x] 17.3 Ensure auth pages don't show splash (they're static, no loading needed)
 
 ### Acceptance Criteria
 - First app load shows branded splash with app icon (not blank white screen)
