@@ -153,6 +153,15 @@ export function SalesInputClient() {
       return;
     }
 
+    // Check for unresolved ambiguous items
+    const unresolvedAmbiguous = parsedItems.filter(
+      (p) => p.status === "ambiguous" && (!p.quantity || p.quantity <= 0)
+    );
+    if (unresolvedAmbiguous.length > 0) {
+      toast.error("Please enter quantities for all highlighted items.");
+      return;
+    }
+
     const today = selectedDate;
     try {
       await saveMutation.mutateAsync({
@@ -191,49 +200,61 @@ export function SalesInputClient() {
           {parsedItems.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-2 rounded-lg border p-3"
+              className={`flex flex-col gap-1 rounded-lg border p-3 ${item.status === "ambiguous" ? "border-amber-300 bg-amber-50/30" : ""}`}
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{item.product}</span>
-                  {!item.matched && (
-                    <Badge variant="outline" className="text-amber-600">
-                      New
-                    </Badge>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{item.product}</span>
+                    {!item.matched && (
+                      <Badge variant="outline" className="text-amber-600">
+                        New
+                      </Badge>
+                    )}
+                    {item.status === "ambiguous" && (
+                      <Badge variant="outline" className="text-amber-600">
+                        ?
+                      </Badge>
+                    )}
+                  </div>
+                  {item.unit && (
+                    <span className="text-xs text-muted-foreground">
+                      {item.unit}
+                    </span>
                   )}
                 </div>
-                {item.unit && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.unit}
-                  </span>
+                <Input
+                  type="number"
+                  value={item.quantity || ""}
+                  onChange={(e) =>
+                    updateParsedQuantity(index, parseFloat(e.target.value) || 0)
+                  }
+                  className={`w-20 text-center ${item.status === "ambiguous" ? "border-amber-400 ring-amber-200" : ""}`}
+                  min={0}
+                  step="any"
+                  autoFocus={item.status === "ambiguous"}
+                  placeholder={item.status === "ambiguous" ? "qty" : "0"}
+                />
+                {!item.matched && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleAddUnmatched(item)}
+                  >
+                    Add
+                  </Button>
                 )}
-              </div>
-              <Input
-                type="number"
-                value={item.quantity}
-                onChange={(e) =>
-                  updateParsedQuantity(index, parseFloat(e.target.value) || 0)
-                }
-                className="w-20 text-center"
-                min={0}
-                step="any"
-              />
-              {!item.matched && (
                 <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleAddUnmatched(item)}
-                >
-                  Add
-                </Button>
-              )}
-              <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => removeParsedItem(index)}
               >
                 ✕
               </Button>
+              </div>
+              {item.clarification && (
+                <p className="text-xs text-amber-600 pl-1">{item.clarification}</p>
+              )}
             </div>
           ))}
           {parsedItems.length === 0 && (
