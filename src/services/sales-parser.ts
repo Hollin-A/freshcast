@@ -1,5 +1,6 @@
 import { matchProduct } from "./product-matcher";
 import { KNOWN_UNITS } from "@/lib/constants";
+import { normalizeUnit } from "@/lib/unit-normalizer";
 
 type ProductRecord = {
   id: string;
@@ -14,6 +15,8 @@ export type ParsedItem = {
   quantity: number;
   unit: string | null;
   matched: boolean;
+  status?: "ok" | "ambiguous";
+  clarification?: string;
 };
 
 const FILLER_WORDS = /\b(i|sold|today|about|around|approximately|roughly|some|of)\b/gi;
@@ -102,7 +105,7 @@ function parseToken(
     product: match?.productName ?? productName,
     productId: match?.productId ?? null,
     quantity,
-    unit: resolvedUnit,
+    unit: normalizeUnit(resolvedUnit),
     matched: match !== null,
   };
 }
