@@ -136,7 +136,7 @@ src/
 │   ├── page.tsx                    # Redirect to /dashboard
 │   └── globals.css                 # Tailwind + theme variables
 ├── components/
-│   ├── ui/                         # shadcn/ui (button, card, input, etc.)
+│   ├── ui/                         # shadcn/ui (button, card, input, password-input, etc.)
 │   ├── shared/
 │   │   ├── mobile-nav.tsx          # Bottom tab bar (5 tabs)
 │   │   └── sw-register.tsx         # Service worker registration
@@ -150,18 +150,21 @@ src/
 │   ├── dates.ts                    # Timezone-aware date utilities
 │   ├── logger.ts                   # Structured logging (color-coded, timestamped)
 │   ├── rate-limit.ts               # In-memory rate limiter
+│   ├── unit-normalizer.ts          # Unit string normalization (50+ variations)
 │   ├── constants.ts                # Business types, known units, thresholds
 │   ├── env.ts                      # Environment variable validation
 │   ├── query-client.ts             # React Query defaults
 │   └── utils.ts                    # cn() utility (tailwind-merge)
 ├── services/
 │   ├── sales-parser.ts             # Rule-based NL parser (fallback)
-│   ├── llm-sales-parser.ts         # Claude-powered NL parser (primary)
+│   ├── llm-sales-parser.ts         # Claude-powered NL parser (primary, with ambiguous detection)
 │   ├── product-matcher.ts          # Fuzzy matching (Levenshtein, substring)
-│   ├── prediction-engine.ts        # Demand prediction (moving avg + weekday)
+│   ├── prediction-engine.ts        # Demand prediction (moving avg + weekday + holidays)
 │   ├── insight-generator.ts        # LLM insights with template fallback
 │   ├── analytics.ts                # Trend calculations, period comparisons
 │   └── chat-context.ts             # Business data context builder for AI chat
+├── data/
+│   └── holidays.ts                 # Public holiday data by region (AU-VIC default)
 ├── hooks/
 │   ├── use-sales.ts
 │   ├── use-products.ts
@@ -195,6 +198,7 @@ The complete Prisma schema is in `prisma/schema.prisma`. Key design decisions:
 | Model | Field | Purpose |
 |-------|-------|---------|
 | Business | `timezone` | IANA timezone for date calculations (auto-detected from browser) |
+| Business | `region` | Region code for holiday-aware predictions (default: AU-VIC) |
 | SalesEntry | `rawInput` | Original NL text for audit trail (nullable, only for NL entries) |
 | DailyInsight | `generationMethod` | `"template"` or `"llm"` — tracks which method produced the insight |
 
@@ -306,9 +310,15 @@ Two parsers with automatic fallback:
 
 **LLM Parser** (`services/llm-sales-parser.ts`) — Primary
 - Sends raw text + product list to Claude Haiku
-- System prompt instructs structured JSON extraction
+- System prompt instructs structured JSON extraction with exact unit strings
 - Handles conversational input ("about two dozen eggs", "maybe 30 kilos of beef")
-- Returns `ParsedItem[]` with `parseMethod: "llm"`
+- Detects ambiguous quantities ("few", "some", "a couple") with clarification messages
+- Returns `ParsedItem[]` with `parseMethod: "llm"`, `status: "ok" | "ambiguous"`, optional `clarification`
+
+**Unit Normalization** (`lib/unit-normalizer.ts`)
+- Maps 50+ unit variations to consistent values (e.g., "Litre", "L", "liter" → "liters")
+- Applied to both LLM and rule-based parser output
+- Ensures consistent units stored in database regardless of input format
 
 **Date Selection**
 - Date picker above the NL/manual tabs, defaults to today, max is today
@@ -325,16 +335,18 @@ Two parsers with automatic fallback:
 **Product Matcher** (`services/product-matcher.ts`)
 - Priority: exact → normalized (strip plural) → substring → Levenshtein (≤2) → unmatched
 
-### 6.2 Prediction Engine (ADR-006)
+### 6.2 Prediction Engine (ADR-006, ADR-015)
 
-`services/prediction-engine.ts` — Statistical demand prediction.
+`services/prediction-engine.ts` — Statistical demand prediction with holiday awareness.
 
-**Algorithm:** Weighted blend of weekday pattern (60%) + recent trend (40%)
+**Algorithm:** Weighted blend of weekday pattern (60%) + recent trend (40%), then holiday multiplier applied.
 - Weekday signal: average of last 4 same-weekday occurrences
 - Recent signal: average of last 7 days
+- Holiday multiplier: closed (0.3), low (0.6), pre-holiday (1.2), post-holiday (1.1)
 - Confidence: based on data volume (5/15/30 thresholds) adjusted by coefficient of variation
 - Minimum: 5 sales entries before predictions activate
 - Time horizons: next day + next 7 days
+- Region-based holiday data from `src/data/holidays.ts`
 
 ### 6.3 Insight Generator (ADR-005, ADR-011)
 
@@ -399,7 +411,22 @@ Bottom tab bar with 5 tabs:
 
 Settings accessible from dashboard header (⚙ Settings link).
 
-### 7.3 i18n
+### 7.3 Dashboard Components
+
+- Prediction progress bar (4 tiers: 0–4 / 5–14 / 15–29 / 30+, auto-hides at 30+)
+- Tomorrow's forecast card with holiday indicator
+- Demand spike alert card (>30% above average)
+- Today's summary, week trend with bar chart, top products, insights
+- Weekly forecast with per-day breakdown
+
+### 7.4 Auth Pages
+
+- Show/hide password toggle (`PasswordInput` component)
+- Email verification status in settings with resend option
+- Branded splash screen on initial load (app icon, teal background)
+- Per-page loading skeletons (dashboard, chat, settings, sales, products)
+
+### 7.5 i18n
 
 - Library: `next-intl` with Next.js 16 plugin
 - ~150 translation keys in `src/messages/en.json`
@@ -471,3 +498,4 @@ Settings accessible from dashboard header (⚙ Settings link).
 | AI chat | Implemented with Claude + data context | 012 |
 | Timezones | Business timezone stored, all dates TZ-aware | 013 |
 | Daily entries | Multiple per day, no unique constraint | 014 |
+| Holidays | Region-based holiday multipliers on predictions | 015 |

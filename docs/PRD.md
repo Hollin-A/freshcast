@@ -101,18 +101,21 @@ BizSense will NOT:
 
 **Description:** Simple account creation and login, one account per business.
 
-**Approach:** Email/password authentication with password reset (token-based, email delivery via Resend).
+**Approach:** Email/password authentication with password reset (token-based, email delivery via Resend). Optional email verification on signup.
 
 **Requirements:**
 - Sign up with email and password
 - Login with email/password
 - Password reset flow (email with reset link)
+- Email verification (optional, sent on signup, status shown in settings)
+- Show/hide password toggle on all password fields
 - Session persistence (stay logged in on device)
 - One account = one business (no multi-user support in MVP)
 
 **Constraints:**
 - No magic link in MVP
 - No social login in MVP
+- Email verification is non-compulsory
 - No multi-user or role-based access in MVP
 
 ---
@@ -151,6 +154,8 @@ A large text input field where users type sales in plain language.
 **Functional Requirements:**
 - Large, prominent text input field
 - LLM-powered parser (Claude Haiku) with rule-based fallback to extract structured data
+- Unit normalization across both parsers (e.g., "Litre", "L", "liter" all become "liters")
+- Ambiguous quantity detection ("few eggs" → flagged with clarification prompt)
 - Match input against existing product list
 - Detect new/unknown products and prompt user to confirm addition
 - Confirmation screen before saving (editable parsed results)
@@ -224,12 +229,13 @@ A structured form listing the user's existing products.
 
 | Section | Content |
 |---|---|
-| Tomorrow's Forecast | Predicted quantities for top products (proactive, always visible) |
+| Tomorrow's Forecast | Predicted quantities for top products (proactive, always visible, holiday-adjusted) |
 | Today's Summary | Products sold today with quantities |
 | This Week | Trend overview, comparison with previous week |
 | Top Products | Most sold items (by quantity) |
 | AI Insights | Auto-generated natural language summaries (LLM-powered with template fallback) |
 | Demand Spike Alert | Highlighted when tomorrow's forecast is >30% above average |
+| Prediction Progress | Multi-tier progress bar showing data quality (hidden at 30+ entries) |
 
 **Requirements:**
 - Insights generated via daily batch processing (not real-time)
@@ -257,7 +263,8 @@ A structured form listing the user's existing products.
 - Trend-based logic using historical sales data
 - Simple moving averages
 - Weekday pattern detection (e.g., Fridays vs. Mondays)
-- No heavy ML required — rule-based statistical methods
+- Holiday-aware adjustments (region-based, default AU-VIC)
+- No heavy ML required — rule-based statistical methods with holiday multipliers
 
 **Minimum Data Required:**
 - Predictions begin after 5–7 days of sales entries
@@ -506,7 +513,6 @@ DemandForecast
 ### Phase 3 — Advanced Intelligence
 - Advanced forecasting models (ML-based)
 - Seasonal pattern detection
-- Event/holiday impact analysis
 - Anomaly detection (unusual sales spikes/drops)
 
 ### Phase 4 — Platform Expansion

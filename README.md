@@ -144,27 +144,33 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Implemented (MVP + Post-MVP)
 
-- Email/password auth with password reset (token-based, email via Resend)
+- Email/password auth with password reset and email verification (Resend)
+- Show/hide password toggle on all auth forms
 - 2-step onboarding with timezone auto-detection
 - Dual-mode sales input (LLM parser with rule-based fallback + manual form)
+- Unit normalization (50+ variations mapped to consistent values)
+- Ambiguous quantity detection ("few eggs" → clarification prompt)
 - Fuzzy product matching with inline product creation
 - Multiple entries per day with original NL text saved
-- Dashboard with 7 card types (today, week trend, top products, next-day forecast, weekly forecast, insights, demand spike alerts)
+- Date picker for logging past dates
+- Dashboard with 8 card types (prediction progress, forecast with holiday indicator, spike alert, today, week trend, top products, weekly forecast, insights)
+- Holiday-aware predictions (AU-VIC public holidays with multipliers)
+- Multi-tier prediction progress bar (0–4 / 5–14 / 15–29 / 30+)
 - Prediction engine with confidence scoring
 - LLM-powered insight generation (Claude Haiku) with template fallback
 - AI chat interface — ask business questions, get data-driven answers
 - Atomic database operations (transactions)
 - Product ownership verification (business isolation)
 - Timezone-aware date handling throughout
-- Structured logging, error boundaries, loading skeletons
+- Structured logging, error boundaries, loading skeletons, splash screen
 - i18n architecture (externalized strings, next-intl)
 - Demo data loading for new users
 - PWA support (installable, offline fallback)
-- Email delivery via Resend
+- Email delivery via Resend (password reset + verification)
 - Rate limiting on auth endpoints
 - CSV export of sales history
 - Account and data deletion
-- Settings page
+- Settings page with email verification status
 - Unit override per sale entry in manual mode
 - Warm teal color theme, mobile-first responsive design
 
@@ -172,11 +178,12 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Magic link (passwordless) authentication
 - Voice input, receipt/photo parsing
-- ML-based advanced forecasting
+- ML-based advanced forecasting, seasonal patterns
 - Native mobile apps (iOS/Android)
 - Multi-user per business with role-based access
 - Weekly summary email notifications
 - POS integrations, supplier management
+- Streaming chat responses
 
 ## License
 
