@@ -518,7 +518,7 @@ Security and reliability improvements for real-world usage.
 | 16 | Auth UX Polish | ✅ Complete |
 | 17 | Loading & Splash States | ✅ Complete |
 | 18 | Prediction Data Progress | ✅ Complete |
-| 19 | NL Parser Improvements | Planned |
+| 19 | NL Parser Improvements | ✅ Complete |
 | 20 | Holiday-Aware Predictions | Planned |
 
 ---
@@ -603,20 +603,20 @@ Branch: `feat/phase-19-parser-improvements`
 Improve LLM parsing accuracy with unit normalization and ambiguous quantity detection.
 
 ### Tasks
-- [ ] 19.1 Unit normalization:
+- [x] 19.1 Unit normalization:
   - Update LLM prompt to specify exact accepted unit strings from `KNOWN_UNITS`
   - Add post-processing normalizer on LLM response (e.g., "Litre" → "liters", "L" → "liters", "Kg" → "kg")
   - Ensure consistent units stored in database regardless of how user types them
-- [ ] 19.2 Ambiguous quantity detection:
+- [x] 19.2 Ambiguous quantity detection:
   - Update LLM prompt to return `status: "ok" | "ambiguous"` per item
   - Add optional `clarification` field (e.g., "You said 'few' — how many exactly?")
   - Update `ParsedItem` type with `status` and `clarification` fields
-- [ ] 19.3 Update confirmation screen UI:
+- [x] 19.3 Update confirmation screen UI:
   - Ambiguous items shown with yellow/amber highlight
   - Clarification message displayed below the item
   - Quantity field auto-focused for user to fill in
   - Cannot save until all ambiguous items have a valid quantity
-- [ ] 19.4 Update rule-based fallback parser to also normalize units (for consistency when LLM is unavailable)
+- [x] 19.4 Update rule-based fallback parser to also normalize units (for consistency when LLM is unavailable)
 
 ### Acceptance Criteria
 - "2L milk" and "2 litres milk" both normalize to unit "liters" in the database
