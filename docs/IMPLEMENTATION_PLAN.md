@@ -517,7 +517,7 @@ Security and reliability improvements for real-world usage.
 | 15 | Production Hardening | ✅ Complete |
 | 16 | Auth UX Polish | ✅ Complete |
 | 17 | Loading & Splash States | ✅ Complete |
-| 18 | Prediction Data Progress | Planned |
+| 18 | Prediction Data Progress | ✅ Complete |
 | 19 | NL Parser Improvements | Planned |
 | 20 | Holiday-Aware Predictions | Planned |
 
@@ -578,14 +578,14 @@ Branch: `feat/phase-18-prediction-progress`
 Show users how close they are to unlocking and improving predictions, motivating continued data entry.
 
 ### Tasks
-- [ ] 18.1 Build multi-tier progress indicator component with 4 levels:
+- [x] 18.1 Build multi-tier progress indicator component with 4 levels:
   - 🔴 0–4 entries: "Log 5 days to unlock predictions"
   - 🟡 5–14 entries: "Basic predictions active"
   - 🟢 15–29 entries: "Predictions improving"
   - 🔵 30+ entries: "Predictions are reliable"
-- [ ] 18.2 Place at top of dashboard (below business name, above forecast card)
-- [ ] 18.3 Auto-hide when user reaches 30+ entries (reliable tier)
-- [ ] 18.4 Use `totalEntries` from existing dashboard API response (no backend changes)
+- [x] 18.2 Place at top of dashboard (below business name, above forecast card)
+- [x] 18.3 Auto-hide when user reaches 30+ entries (reliable tier)
+- [x] 18.4 Use `totalEntries` from existing dashboard API response (no backend changes)
 
 ### Acceptance Criteria
 - New users see the progress bar guiding them to log 5 days
