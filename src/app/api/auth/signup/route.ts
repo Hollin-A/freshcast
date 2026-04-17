@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/email";
 
 const signupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -49,6 +51,28 @@ export async function POST(request: Request) {
     });
 
     logger.info("auth", "User signed up", { email });
+
+    // Send verification email (non-blocking, don't fail signup if email fails)
+    try {
+      const token = crypto.randomBytes(32).toString("hex");
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await prisma.verificationToken.create({
+        data: { identifier: `verify:${email}`, token, expires },
+      });
+      const verifyUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+      await sendEmail(
+        email,
+        "Welcome to BizSense — Verify your email",
+        `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
+          <h2 style="color: #2a9d8f; font-size: 24px; margin-bottom: 8px;">Welcome to BizSense</h2>
+          <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">Thanks for signing up. Verify your email to get the most out of BizSense.</p>
+          <a href="${verifyUrl}" style="display: inline-block; background-color: #2a9d8f; color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; font-weight: 500;">Verify Email</a>
+          <p style="color: #999; font-size: 13px; margin-top: 32px;">This link expires in 24 hours.</p>
+        </div>`
+      );
+    } catch (emailErr) {
+      logger.warn("auth", "Failed to send verification email", emailErr);
+    }
 
     return NextResponse.json(
       { message: "Account created successfully" },
