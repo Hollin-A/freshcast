@@ -51,15 +51,16 @@ export async function getBusinessId(): Promise<string | null> {
 export async function getBusinessContext(): Promise<{
   businessId: string;
   timezone: string;
+  region: string;
 } | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
 
   const business = await prisma.business.findUnique({
     where: { userId: session.user.id },
-    select: { id: true, timezone: true },
+    select: { id: true, timezone: true, region: true },
   });
 
   if (!business) return null;
-  return { businessId: business.id, timezone: business.timezone };
+  return { businessId: business.id, timezone: business.timezone, region: business.region };
 }

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getDayOfWeekFromDate, getLocalDateStr, toUTCDate } from "@/lib/dates";
 import { MIN_ENTRIES_FOR_PREDICTIONS } from "@/lib/constants";
+import { getHolidayMultiplier } from "@/data/holidays";
+import type { Holiday } from "@/data/holidays";
 
 export type ProductPrediction = {
   product: string;
@@ -8,6 +10,7 @@ export type ProductPrediction = {
   predictedQuantity: number;
   unit: string | null;
   confidence: number;
+  holidayAdjusted?: boolean;
 };
 
 export type DayPrediction = {
@@ -98,8 +101,9 @@ async function getProductSalesHistory(
 
 export async function predictNextDay(
   businessId: string,
-  timezone: string
-): Promise<{ predictions: ProductPrediction[]; dataPoints: number } | null> {
+  timezone: string,
+  region: string = "AU-VIC"
+): Promise<{ predictions: ProductPrediction[]; dataPoints: number; holiday: Holiday | null } | null> {
   const entryCount = await prisma.salesEntry.count({ where: { businessId } });
   if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
 
@@ -135,24 +139,35 @@ export async function predictNextDay(
 
     if (predicted <= 0) continue;
 
+    // Apply holiday multiplier
+    const tomorrowStr = tomorrowDate.toISOString().split("T")[0];
+    const { multiplier, holiday: _ } = getHolidayMultiplier(tomorrowStr, region);
+    const adjustedPrediction = Math.round(predicted * multiplier);
+
     predictions.push({
       product: product.name,
       productId: product.id,
-      predictedQuantity: Math.round(predicted),
+      predictedQuantity: adjustedPrediction,
       unit: product.defaultUnit,
       confidence: calculateConfidence(sameWeekday, recent),
+      holidayAdjusted: multiplier !== 1.0,
     });
   }
+
+  const tomorrowStr = tomorrowDate.toISOString().split("T")[0];
+  const { holiday } = getHolidayMultiplier(tomorrowStr, region);
 
   return {
     predictions: predictions.sort((a, b) => b.predictedQuantity - a.predictedQuantity),
     dataPoints: entryCount,
+    holiday,
   };
 }
 
 export async function predictNextWeek(
   businessId: string,
-  timezone: string
+  timezone: string,
+  region: string = "AU-VIC"
 ): Promise<WeeklyProductPrediction[] | null> {
   const entryCount = await prisma.salesEntry.count({ where: { businessId } });
   if (entryCount < MIN_ENTRIES_FOR_PREDICTIONS) return null;
@@ -189,10 +204,14 @@ export async function predictNextWeek(
       else if (recent.length === 0) predicted = mean(sameWeekday);
       else predicted = 0.6 * mean(sameWeekday) + 0.4 * mean(recent);
 
+      // Apply holiday multiplier
+      const dateStr = targetDate.toISOString().split("T")[0];
+      const { multiplier } = getHolidayMultiplier(dateStr, region);
+
       daily.push({
-        date: targetDate.toISOString().split("T")[0],
+        date: dateStr,
         dayOfWeek: DAY_NAMES[targetWeekday],
-        predictedQuantity: Math.round(Math.max(predicted, 0)),
+        predictedQuantity: Math.round(Math.max(predicted * multiplier, 0)),
       });
     }
 
