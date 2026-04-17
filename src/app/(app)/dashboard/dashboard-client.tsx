@@ -84,6 +84,9 @@ export function DashboardClient() {
   // State 2 & 3: Has historical data (may or may not have today's)
   return (
     <div className="space-y-4">
+      {data.totalEntries < 30 && (
+        <PredictionProgressBar entries={data.totalEntries} />
+      )}
       {data.forecast && data.forecast.predictions.length > 0 && (
         <ForecastCard forecast={data.forecast} />
       )}
@@ -99,16 +102,61 @@ export function DashboardClient() {
       {data.insights.length > 0 && (
         <InsightsCard insights={data.insights} />
       )}
-      {!data.forecast && data.totalEntries > 0 && (
-        <Card>
-          <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Log at least 5 days of sales to see demand predictions
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
+  );
+}
+
+function PredictionProgressBar({ entries }: { entries: number }) {
+  const tiers = [
+    { min: 0, max: 4, label: "Log 5 days to unlock predictions", color: "bg-red-400/60" },
+    { min: 5, max: 14, label: "Basic predictions active", color: "bg-amber-400/60" },
+    { min: 15, max: 29, label: "Predictions improving", color: "bg-primary/50" },
+    { min: 30, max: Infinity, label: "Predictions are reliable", color: "bg-primary" },
+  ];
+
+  const currentTier = tiers.find((t) => entries >= t.min && entries <= t.max) || tiers[0];
+  const progress = Math.min((entries / 30) * 100, 100);
+
+  // Tier markers at 5, 15, 30
+  const markers = [
+    { at: (5 / 30) * 100, label: "5" },
+    { at: (15 / 30) * 100, label: "15" },
+    { at: 100, label: "30" },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="py-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-medium">{currentTier.label}</span>
+          <span className="text-xs text-muted-foreground">{entries} entries</span>
+        </div>
+        <div className="relative h-2 rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${currentTier.color}`}
+            style={{ width: `${progress}%` }}
+          />
+          {markers.map((m) => (
+            <div
+              key={m.label}
+              className="absolute top-0 h-full w-px bg-foreground/10"
+              style={{ left: `${m.at}%` }}
+            />
+          ))}
+        </div>
+        <div className="flex justify-between mt-1">
+          {markers.map((m) => (
+            <span
+              key={m.label}
+              className="text-[9px] text-muted-foreground"
+              style={{ marginLeft: m.label === "5" ? `${m.at - 2}%` : undefined }}
+            >
+              {m.label}
+            </span>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
