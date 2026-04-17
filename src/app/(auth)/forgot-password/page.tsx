@@ -13,7 +13,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -90,14 +89,14 @@ export default function ForgotPasswordPage() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-4 pt-2">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Sending..." : "Send reset link"}
           </Button>
-          <Link href="/login" className="text-sm text-muted-foreground underline">
+          <Link href="/login" className="text-sm text-muted-foreground underline text-center">
             Back to login
           </Link>
-        </CardFooter>
+        </CardContent>
       </form>
     </Card>
   );

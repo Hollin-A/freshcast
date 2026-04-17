@@ -14,7 +14,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -133,11 +132,11 @@ export function ResetPasswordForm() {
             )}
           </div>
         </CardContent>
-        <CardFooter className="pb-6">
+        <CardContent className="pt-2">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Resetting..." : "Reset password"}
           </Button>
-        </CardFooter>
+        </CardContent>
       </form>
     </Card>
   );

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 
 const signupSchema = z.object({
@@ -87,15 +87,15 @@ export default function SignupPage() {
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4 pb-6">
+        <CardContent className="flex flex-col gap-4 pt-2">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? t("creatingAccount") : t("signup")}
           </Button>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground text-center">
             {t("hasAccount")}{" "}
             <Link href="/login" className="text-primary underline">{t("login")}</Link>
           </p>
-        </CardFooter>
+        </CardContent>
       </form>
     </Card>
   );
