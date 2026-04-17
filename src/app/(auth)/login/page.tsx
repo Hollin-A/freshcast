@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -68,11 +69,11 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{t("password")}</Label>
-            <Input id="password" type="password" placeholder={t("passwordPlaceholder")} autoComplete="current-password" {...register("password")} />
+            <PasswordInput id="password" placeholder={t("passwordPlaceholder")} autoComplete="current-password" {...register("password")} />
             {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 pb-6">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? t("loggingIn") : t("login")}
           </Button>

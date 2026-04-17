@@ -8,8 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Card,
   CardContent,
@@ -110,9 +110,8 @@ export function ResetPasswordForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="At least 8 characters"
               autoComplete="new-password"
               {...register("password")}
@@ -123,9 +122,8 @@ export function ResetPasswordForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder="Repeat your password"
               autoComplete="new-password"
               {...register("confirmPassword")}
@@ -135,7 +133,7 @@ export function ResetPasswordForm() {
             )}
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="pb-6">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Resetting..." : "Reset password"}
           </Button>
