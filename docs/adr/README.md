@@ -20,6 +20,7 @@ This directory contains the architectural decisions made for BizSense.
 | [012](012-ai-chat-implemented.md) | AI Chat Interface Implemented | Accepted |
 | [013](013-timezone-aware-dates.md) | Timezone-Aware Date Handling | Accepted |
 | [014](014-multiple-daily-entries.md) | Multiple Sales Entries Per Day | Accepted |
+| [015](015-holiday-aware-predictions.md) | Holiday-Aware Demand Predictions | Accepted |
 
 ## Format
 

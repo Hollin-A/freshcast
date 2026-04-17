@@ -519,7 +519,7 @@ Security and reliability improvements for real-world usage.
 | 17 | Loading & Splash States | ✅ Complete |
 | 18 | Prediction Data Progress | ✅ Complete |
 | 19 | NL Parser Improvements | ✅ Complete |
-| 20 | Holiday-Aware Predictions | Planned |
+| 20 | Holiday-Aware Predictions | ✅ Complete |
 
 ---
 
@@ -633,15 +633,15 @@ Branch: `feat/phase-20-holiday-predictions`
 Adjust demand predictions based on public holidays for the business's region.
 
 ### Tasks
-- [ ] 20.1 Add `region` field to Business model (default: `"AU-VIC"`, set during onboarding)
-- [ ] 20.2 Create `src/data/holidays.ts` — Victoria public holidays for 2026–2027 with type classification:
+- [x] 20.1 Add `region` field to Business model (default: `"AU-VIC"`, set during onboarding)
+- [x] 20.2 Create `src/data/holidays.ts` — Victoria public holidays for 2026–2027 with type classification:
   - `closed`: most retail closed (Christmas, Good Friday) → multiplier 0.3
   - `low`: reduced traffic (Anzac Day morning, Boxing Day) → multiplier 0.6
   - `pre-holiday`: day before a holiday → multiplier 1.2
   - `post-holiday`: day after long weekend → multiplier 1.1
-- [ ] 20.3 Update prediction engine: check if forecast date is a holiday, apply multiplier to base prediction
-- [ ] 20.4 Show holiday indicator on forecast card (e.g., "📅 Public holiday tomorrow — expect lower sales")
-- [ ] 20.5 Auto-detect region during onboarding (default AU-VIC, stored as variable for future expansion)
+- [x] 20.3 Update prediction engine: check if forecast date is a holiday, apply multiplier to base prediction
+- [x] 20.4 Show holiday indicator on forecast card (e.g., "📅 Public holiday tomorrow — expect lower sales")
+- [x] 20.5 Auto-detect region during onboarding (default AU-VIC, stored as variable for future expansion)
 
 ### Acceptance Criteria
 - Predictions for Christmas Day are ~70% lower than normal
