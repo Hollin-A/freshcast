@@ -515,7 +515,7 @@ Security and reliability improvements for real-world usage.
 | 13 | LLM Integration (Claude) | ✅ Complete |
 | 14 | AI Chat Interface | ✅ Complete |
 | 15 | Production Hardening | ✅ Complete |
-| 16 | Auth UX Polish | Planned |
+| 16 | Auth UX Polish | ✅ Complete |
 | 17 | Loading & Splash States | Planned |
 | 18 | Prediction Data Progress | Planned |
 | 19 | NL Parser Improvements | Planned |
@@ -530,15 +530,15 @@ Branch: `feat/phase-16-auth-ux`
 Fix visual issues on auth pages and add email verification for a complete auth lifecycle.
 
 ### Tasks
-- [ ] 16.1 Fix padding on login/signup/reset password cards — bottom of card clips after last input field
-- [ ] 16.2 Add show/hide password toggle (eye icon) on all password input fields (login, signup, reset password)
-- [ ] 16.3 Build email verification flow:
+- [x] 16.1 Fix padding on login/signup/reset password cards — bottom of card clips after last input field
+- [x] 16.2 Add show/hide password toggle (eye icon) on all password input fields (login, signup, reset password)
+- [x] 16.3 Build email verification flow:
   - On signup, send a verification email with a unique link via Resend
   - `POST /api/auth/verify-email` endpoint — validates token, sets `emailVerified` on User
   - Verification page (`/verify-email`) that handles the link click
-- [ ] 16.4 Create teal-themed verification email template (consistent with password reset email)
-- [ ] 16.5 Show verification status in settings page ("Email verified ✓" or "Not verified — Send verification email")
-- [ ] 16.6 Email verification is optional — users can use the app without verifying
+- [x] 16.4 Create teal-themed verification email template (consistent with password reset email)
+- [x] 16.5 Show verification status in settings page ("Email verified ✓" or "Not verified — Send verification email")
+- [x] 16.6 Email verification is optional — users can use the app without verifying
 
 ### Acceptance Criteria
 - Auth page cards have proper bottom padding, no clipping

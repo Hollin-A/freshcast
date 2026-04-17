@@ -12,17 +12,20 @@ import { Separator } from "@/components/ui/separator";
 export function SettingsClient({
   userName,
   userEmail,
+  emailVerified,
   businessName,
   businessType,
   timezone,
 }: {
   userName: string;
   userEmail: string;
+  emailVerified: boolean;
   businessName: string;
   businessType: string;
   timezone: string;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
 
   async function handleDeleteAccount() {
     const confirmed = confirm(
@@ -67,6 +70,32 @@ export function SettingsClient({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Email</span>
             <span>{userEmail}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Verification</span>
+            {emailVerified ? (
+              <span className="text-sm text-primary">✓ Verified</span>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={sendingVerification}
+                onClick={async () => {
+                  setSendingVerification(true);
+                  try {
+                    await fetch("/api/auth/send-verification", { method: "POST" });
+                    toast.success("Verification email sent");
+                  } catch {
+                    toast.error("Failed to send");
+                  } finally {
+                    setSendingVerification(false);
+                  }
+                }}
+              >
+                {sendingVerification ? "Sending..." : "Verify email"}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

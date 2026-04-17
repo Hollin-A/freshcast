@@ -249,6 +249,8 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 | POST | `/api/auth/[...nextauth]` | Auth.js handler (login) |
 | POST | `/api/auth/forgot-password` | Request password reset email (rate limited) |
 | POST | `/api/auth/reset-password` | Set new password with token (atomic) |
+| POST | `/api/auth/send-verification` | Send email verification link |
+| GET | `/api/auth/verify-email` | Verify email via token (redirects to settings) |
 
 ### 5.2 Business
 

@@ -7,10 +7,16 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const business = await prisma.business.findUnique({
-    where: { userId: session.user.id },
-    select: { name: true, type: true, timezone: true, onboarded: true },
-  });
+  const [business, user] = await Promise.all([
+    prisma.business.findUnique({
+      where: { userId: session.user.id },
+      select: { name: true, type: true, timezone: true, onboarded: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { emailVerified: true },
+    }),
+  ]);
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
@@ -18,6 +24,7 @@ export default async function SettingsPage() {
       <SettingsClient
         userName={session.user.name || ""}
         userEmail={session.user.email || ""}
+        emailVerified={!!user?.emailVerified}
         businessName={business.name}
         businessType={business.type}
         timezone={business.timezone}
