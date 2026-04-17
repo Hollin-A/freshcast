@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     const sent = await sendEmail(
       email,
-      "Reset your BizSense password",
+      "Reset your Freshcast password",
       buildPasswordResetEmail(resetUrl)
     );
 

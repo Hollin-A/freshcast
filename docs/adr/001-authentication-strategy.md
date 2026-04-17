@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-BizSense targets small retail business owners with moderate digital literacy. We need an authentication approach that is:
+Freshcast targets small retail business owners with moderate digital literacy. We need an authentication approach that is:
 
 - Familiar and low-friction for non-technical users
 - Simple to implement for MVP

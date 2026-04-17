@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BizSense",
+  title: "Freshcast",
   description:
     "AI-powered sales tracking and demand prediction for small businesses",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BizSense",
+    title: "Freshcast",
   },
   formatDetection: {
     telephone: false,

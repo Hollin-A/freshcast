@@ -1,8 +1,8 @@
-# BizSense
+# Freshcast
 
 AI-powered sales tracking and demand prediction for small retail businesses. Log daily sales in natural language, get insights and forecasts — without the complexity of traditional POS systems.
 
-**[Live Demo →](https://bizsense-au.vercel.app/)** · Demo login: `demo@bizsense.app` / `demo1234`
+**[Live Demo →](https://freshcast-au.vercel.app/)** · Demo login: `demo@freshcast.app` / `demo1234`
 
 <p align="center">
   <img src="docs/screenshots/dashboard.jpg" alt="Dashboard" width="280" />
@@ -25,7 +25,7 @@ AI-powered sales tracking and demand prediction for small retail businesses. Log
 
 ## What it does
 
-BizSense helps small business owners (market vendors, butchers, cafés) track what they sell and predict what they'll need tomorrow.
+Freshcast helps small business owners (market vendors, butchers, cafés) track what they sell and predict what they'll need tomorrow.
 
 - **Natural language sales input** — type "sold 20 eggs, 30kg beef" and the parser extracts structured data
 - **Manual form input** — tap through a product list with quantity fields
@@ -106,8 +106,8 @@ This project was built with a spec-driven development approach:
 ### Setup
 
 ```bash
-git clone https://github.com/Hollin-A/bizsense.git
-cd bizsense
+git clone https://github.com/Hollin-A/freshcast.git
+cd freshcast
 npm install
 ```
 

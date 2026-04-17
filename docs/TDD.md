@@ -1,8 +1,8 @@
-# BizSense — Technical Design Document (TDD)
+# Freshcast — Technical Design Document (TDD)
 
 ## 1. Document Overview
 
-This document describes the technical architecture, data model, API contracts, component structure, and implementation details for BizSense. It is informed by the [PRD](./PRD.md) and the [Architecture Decision Records](./adr/README.md).
+This document describes the technical architecture, data model, API contracts, component structure, and implementation details for Freshcast. It is informed by the [PRD](./PRD.md) and the [Architecture Decision Records](./adr/README.md).
 
 ### Referenced ADRs
 
@@ -476,7 +476,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
 | `AUTH_SECRET` | Yes | Auth.js session encryption key |
-| `AUTH_URL` | Yes | Application URL (e.g., `https://bizsense.vercel.app`) |
+| `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.vercel.app`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
 | `RESEND_API_KEY` | No | Resend API key (password reset falls back to console.log) |
 

@@ -28,7 +28,7 @@ export default async function DashboardPage() {
       </div>
       <DashboardClient />
       <p className="text-center text-xs text-muted-foreground mt-8 mb-4">
-        Your data is private. BizSense works only for your business.
+        Your data is private. Freshcast works only for your business.
       </p>
     </div>
   );

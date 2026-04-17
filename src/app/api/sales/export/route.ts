@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="bizsense-sales-${from.toISOString().split("T")[0]}-to-${to.toISOString().split("T")[0]}.csv"`,
+        "Content-Disposition": `attachment; filename="freshcast-sales-${from.toISOString().split("T")[0]}-to-${to.toISOString().split("T")[0]}.csv"`,
       },
     });
   } catch (err) {

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "BizSense",
-    short_name: "BizSense",
+    name: "Freshcast",
+    short_name: "Freshcast",
     description:
       "AI-powered sales tracking and demand prediction for small businesses",
     start_url: "/dashboard",

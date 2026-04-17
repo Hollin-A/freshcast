@@ -3,7 +3,7 @@ import { logger } from "./logger";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = "BizSense <onboarding@resend.dev>";
+const FROM_EMAIL = "Freshcast <onboarding@resend.dev>";
 
 export async function sendEmail(
   to: string,
@@ -34,7 +34,7 @@ export async function sendEmail(
 export function buildPasswordResetEmail(resetUrl: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
-      <h2 style="color: #2a9d8f; font-size: 24px; margin-bottom: 8px;">BizSense</h2>
+      <h2 style="color: #2a9d8f; font-size: 24px; margin-bottom: 8px;">Freshcast</h2>
       <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
         You requested a password reset. Click the button below to set a new password.
       </p>
@@ -45,7 +45,7 @@ export function buildPasswordResetEmail(resetUrl: string): string {
         This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
       </p>
       <p style="color: #ccc; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 16px;">
-        BizSense — Sales tracking for small businesses
+        Freshcast — Sales tracking for small businesses
       </p>
     </div>
   `;

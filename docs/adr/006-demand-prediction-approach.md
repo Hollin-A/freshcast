@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Demand prediction is the core differentiator of BizSense — telling vendors what to stock for tomorrow. We need to decide the prediction approach.
+Demand prediction is the core differentiator of Freshcast — telling vendors what to stock for tomorrow. We need to decide the prediction approach.
 
 Options considered:
 

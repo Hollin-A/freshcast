@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/email";
 function buildVerificationEmail(verifyUrl: string): string {
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
-      <h2 style="color: #2a9d8f; font-size: 24px; margin-bottom: 8px;">Welcome to BizSense</h2>
+      <h2 style="color: #2a9d8f; font-size: 24px; margin-bottom: 8px;">Welcome to Freshcast</h2>
       <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
         Thanks for signing up. Please verify your email address by clicking the button below.
       </p>
@@ -20,7 +20,7 @@ function buildVerificationEmail(verifyUrl: string): string {
         This link expires in 24 hours. If you didn't create this account, you can safely ignore this email.
       </p>
       <p style="color: #ccc; font-size: 12px; margin-top: 40px; border-top: 1px solid #eee; padding-top: 16px;">
-        BizSense — Sales tracking for small businesses
+        Freshcast — Sales tracking for small businesses
       </p>
     </div>
   `;
@@ -62,7 +62,7 @@ export async function POST() {
 
     const sent = await sendEmail(
       session.user.email,
-      "Verify your BizSense email",
+      "Verify your Freshcast email",
       buildVerificationEmail(verifyUrl)
     );
 

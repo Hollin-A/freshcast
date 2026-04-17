@@ -1,4 +1,4 @@
-const CACHE_NAME = "bizsense-v1";
+const CACHE_NAME = "freshcast-v1";
 const OFFLINE_URL = "/offline";
 
 // Install: cache the offline fallback page

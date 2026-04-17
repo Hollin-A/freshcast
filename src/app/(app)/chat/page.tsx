@@ -15,7 +15,7 @@ export default async function ChatPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-6 flex flex-col" style={{ height: "calc(100vh - 5rem)" }}>
-      <h1 className="text-xl font-semibold mb-4">Ask BizSense</h1>
+      <h1 className="text-xl font-semibold mb-4">Ask Freshcast</h1>
       <ChatClient businessName={business.name} />
     </div>
   );

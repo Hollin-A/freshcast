@@ -124,7 +124,7 @@ export function OnboardingWizard() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to BizSense</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Freshcast</CardTitle>
           <CardDescription>
             Tell us about your business to get started
           </CardDescription>

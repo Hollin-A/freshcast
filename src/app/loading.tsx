@@ -5,13 +5,13 @@ export default function RootLoading() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/icons/icon-192.png"
-          alt="BizSense"
+          alt="Freshcast"
           width={80}
           height={80}
           className="rounded-2xl"
         />
         <p className="text-lg font-semibold text-[oklch(0.55_0.14_168)]">
-          BizSense
+          Freshcast
         </p>
       </div>
     </div>

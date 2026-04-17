@@ -1,6 +1,6 @@
-# Architecture Decision Records (ADRs) — BizSense
+# Architecture Decision Records (ADRs) — Freshcast
 
-This directory contains the architectural decisions made for BizSense.
+This directory contains the architectural decisions made for Freshcast.
 
 ## Index
 

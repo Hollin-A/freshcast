@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-BizSense is a mobile-first web application that needs to be built quickly (4-week MVP timeline) with a small team. The stack must support:
+Freshcast is a mobile-first web application that needs to be built quickly (4-week MVP timeline) with a small team. The stack must support:
 
 - Server-side rendering for mobile performance
 - API routes for backend logic

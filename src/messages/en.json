@@ -14,16 +14,16 @@
     "notFound": "Page not found",
     "notFoundDesc": "The page you're looking for doesn't exist.",
     "goToDashboard": "Go to Dashboard",
-    "privacy": "Your data is private. BizSense works only for your business."
+    "privacy": "Your data is private. Freshcast works only for your business."
   },
   "auth": {
     "login": "Log in",
     "loginTitle": "Welcome back",
-    "loginDesc": "Log in to your BizSense account",
+    "loginDesc": "Log in to your Freshcast account",
     "loggingIn": "Logging in...",
     "signup": "Sign up",
     "signupTitle": "Create your account",
-    "signupDesc": "Get started with BizSense in under 2 minutes",
+    "signupDesc": "Get started with Freshcast in under 2 minutes",
     "creatingAccount": "Creating account...",
     "email": "Email",
     "emailPlaceholder": "you@example.com",
@@ -61,7 +61,7 @@
     "loginFailed": "Account created but login failed. Please log in manually."
   },
   "onboarding": {
-    "welcome": "Welcome to BizSense",
+    "welcome": "Welcome to Freshcast",
     "tellUs": "Tell us about your business to get started",
     "businessName": "Business name",
     "businessNamePlaceholder": "e.g., Ali's Butcher Shop",

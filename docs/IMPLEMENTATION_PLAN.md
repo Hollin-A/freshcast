@@ -1,6 +1,6 @@
-# BizSense — Implementation Plan
+# Freshcast — Implementation Plan
 
-This document tracks the phased implementation of BizSense MVP. Each phase has clear deliverables, acceptance criteria, and a dependency chain. Phases are designed to be independently testable — you verify each one works before moving to the next.
+This document tracks the phased implementation of Freshcast MVP. Each phase has clear deliverables, acceptance criteria, and a dependency chain. Phases are designed to be independently testable — you verify each one works before moving to the next.
 
 References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 
@@ -221,7 +221,7 @@ Phase 6 complete.
 - [x] 7.3 Error boundaries and fallback UI
 - [x] 7.4 Empty states for all sections (no products, no sales, no insights)
 - [x] 7.5 Create seed script (`prisma/seed.ts`) with demo business, products, and 14 days of sales data
-- [x] 7.6 Add privacy messaging ("Your data is private. BizSense works only for your business.")
+- [x] 7.6 Add privacy messaging ("Your data is private. Freshcast works only for your business.")
 - [x] 7.7 Update metadata (title, description, OG tags)
 - [x] 7.8 Environment variable validation on startup
 - [ ] 7.9 Deployment to Vercel + Neon production database
@@ -373,11 +373,11 @@ Items previously deferred but now implemented: rate limiting (Phase 15), email d
 ### Phase 11: PWA Support
 Branch: `feat/phase-11-pwa`
 
-Make BizSense installable as a standalone app on mobile devices.
+Make Freshcast installable as a standalone app on mobile devices.
 
 #### Tasks
 - [x] 11.1 Create `public/manifest.json` with app name, short name, theme color (teal), background color, display: standalone, start_url: /dashboard
-- [x] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the BizSense logo/icon
+- [x] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the Freshcast logo/icon
 - [x] 11.3 Add `<link rel="manifest">` and meta tags (theme-color, apple-mobile-web-app-capable) to root layout
 - [x] 11.4 Create a basic service worker for app shell caching (offline fallback page)
 - [x] 11.5 Add apple-touch-icon for iOS home screen

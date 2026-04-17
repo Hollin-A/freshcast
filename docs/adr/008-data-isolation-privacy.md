@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-BizSense handles business sales data that owners consider sensitive. Trust is critical for adoption — small business owners need confidence that their data is private and not shared or compared with competitors.
+Freshcast handles business sales data that owners consider sensitive. Trust is critical for adoption — small business owners need confidence that their data is private and not shared or compared with competitors.
 
 Options considered:
 
@@ -26,7 +26,7 @@ Shared database with strict application-level isolation. Every database query is
 - Shared database with strict scoping is the industry standard for multi-tenant SaaS
 - Prisma middleware can enforce `businessId` filtering on every query automatically
 - Simpler to manage, backup, and migrate than per-tenant databases
-- Sufficient for the privacy guarantees BizSense promises
+- Sufficient for the privacy guarantees Freshcast promises
 
 ## Implementation Approach
 

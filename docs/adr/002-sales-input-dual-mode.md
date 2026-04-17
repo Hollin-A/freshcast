@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-The core feature of BizSense is sales logging. The original concept was natural language input only ("I sold 20 eggs, 30kg beef"). However, we need to consider:
+The core feature of Freshcast is sales logging. The original concept was natural language input only ("I sold 20 eggs, 30kg beef"). However, we need to consider:
 
 - Not all users will be comfortable typing free-form text
 - NL parsing can misinterpret input, causing frustration

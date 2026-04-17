@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Traditional sales tracking systems capture both quantity and price/revenue. We need to decide whether BizSense should track pricing data.
+Traditional sales tracking systems capture both quantity and price/revenue. We need to decide whether Freshcast should track pricing data.
 
 Options considered:
 

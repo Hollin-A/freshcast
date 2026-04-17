@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-BizSense targets small retail businesses that may operate in non-English-speaking regions. While MVP launches in English only, we need to decide whether to build localization into the architecture now or retrofit later.
+Freshcast targets small retail businesses that may operate in non-English-speaking regions. While MVP launches in English only, we need to decide whether to build localization into the architecture now or retrofit later.
 
 Options considered:
 

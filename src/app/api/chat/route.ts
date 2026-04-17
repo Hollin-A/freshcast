@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
 
-const SYSTEM_PROMPT = `You are BizSense AI, a helpful business assistant for a small retail business owner. You answer questions about their sales data, trends, and predictions.
+const SYSTEM_PROMPT = `You are Freshcast AI, a helpful business assistant for a small retail business owner. You answer questions about their sales data, trends, and predictions.
 
 Rules:
 - Only answer based on the data provided in the context. Never make up numbers or assume data you don't have.

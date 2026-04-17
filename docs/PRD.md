@@ -1,10 +1,10 @@
-# BizSense — Product Requirements Document (PRD)
+# Freshcast — Product Requirements Document (PRD)
 
 ## 1. Overview
 
 ### Product Summary
 
-BizSense is a mobile-first AI assistant for small retail businesses that helps owners quickly log daily sales and receive actionable insights, trends, and demand predictions — without requiring complex inventory or POS systems.
+Freshcast is a mobile-first AI assistant for small retail businesses that helps owners quickly log daily sales and receive actionable insights, trends, and demand predictions — without requiring complex inventory or POS systems.
 
 ### Problem Statement
 
@@ -19,7 +19,7 @@ Existing solutions (POS/ERP systems) are too complex, require heavy setup, and a
 
 ### Solution
 
-BizSense provides:
+Freshcast provides:
 
 - Ultra-simple sales input (natural language + manual form)
 - Quantity-focused demand prediction (core differentiator)
@@ -73,7 +73,7 @@ All without requiring full inventory, catalog setup, or ERP integration.
 
 ## 4. Non-Goals (MVP Boundaries)
 
-BizSense will NOT:
+Freshcast will NOT:
 
 - Replace POS systems
 - Manage inventory lifecycle
@@ -324,7 +324,7 @@ Each business's data is private and completely isolated.
 
 ### User-Facing Message
 
-> "Your data is private. BizSense works only for your business."
+> "Your data is private. Freshcast works only for your business."
 
 ---
 
@@ -542,4 +542,4 @@ DemandForecast
 
 ## 16. Final Product Statement
 
-> **BizSense** is a lightweight AI assistant that helps small retail businesses turn daily sales quantities into meaningful insights and smarter stocking decisions — without the complexity of traditional systems. Its core differentiator is quantity-based demand prediction that tells vendors exactly what to prepare for tomorrow.
+> **Freshcast** is a lightweight AI assistant that helps small retail businesses turn daily sales quantities into meaningful insights and smarter stocking decisions — without the complexity of traditional systems. Its core differentiator is quantity-based demand prediction that tells vendors exactly what to prepare for tomorrow.
