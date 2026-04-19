@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Fraunces, JetBrains_Mono } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { getMessages, getLocale } from "next-intl/server";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
@@ -11,10 +11,9 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
+const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-serif",
   subsets: ["latin"],
-  axes: ["opsz"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -60,7 +59,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers locale={locale} messages={messages as Record<string, unknown>}>
