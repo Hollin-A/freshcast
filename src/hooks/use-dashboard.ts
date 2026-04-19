@@ -55,7 +55,7 @@ export type DashboardData = {
       predictedQuantity: number;
     }[];
   }[] | null;
-  insights: { id?: string; type: string; content: string }[];
+  insights: { id?: string; type: string; content: string; metadata?: Record<string, unknown> | null }[];
   lastUpdated: string;
 };
 

@@ -76,12 +76,12 @@ export async function generateInsights(
     const rounded = Math.round(Math.abs(change));
 
     if (rounded >= 10) {
-      const direction = change > 0 ? "increased" : "decreased";
+      const direction = change > 0 ? "up" : "down";
       insights.push({
         type: "TREND",
-        content: `${current.name} sales ${direction} ${rounded}% this week`,
+        content: `${current.name} sales ${direction} ${rounded}%`,
         generationMethod: "template",
-        metadata: { productId, change: Math.round(change) },
+        metadata: { productId, change: Math.round(change), description: change > 0 ? "Biggest mover this week." : "Worth keeping an eye on." },
       });
     }
   }
@@ -97,9 +97,9 @@ export async function generateInsights(
       const direction = overallChange > 0 ? "up" : "down";
       insights.push({
         type: "COMPARISON",
-        content: `Total sales ${direction} ${rounded}% compared to last week`,
+        content: `Total sales ${direction} ${rounded}% vs last week`,
         generationMethod: "template",
-        metadata: { thisTotal: Math.round(thisTotal), prevTotal: Math.round(prevTotal) },
+        metadata: { thisTotal: Math.round(thisTotal), prevTotal: Math.round(prevTotal), description: overallChange > 0 ? "Momentum is building." : "Might be seasonal." },
       });
     }
   }
@@ -111,9 +111,9 @@ export async function generateInsights(
     const concentration = Math.round((top3Total / thisTotal) * 100);
     insights.push({
       type: "TOP_PRODUCTS",
-      content: `Your top 3 products account for ${concentration}% of total sales`,
+      content: `Top 3 drive ${concentration}% of volume`,
       generationMethod: "template",
-      metadata: { concentration, topProducts: sorted.slice(0, 3).map((p) => p.name) },
+      metadata: { concentration, topProducts: sorted.slice(0, 3).map((p) => p.name), description: "Focus your prep there." },
     });
   }
 
@@ -121,9 +121,9 @@ export async function generateInsights(
   const productCount = thisWeekTotals.size;
   insights.push({
     type: "SUMMARY",
-    content: `You logged ${Math.round(thisTotal)} total units this week across ${productCount} product${productCount !== 1 ? "s" : ""}`,
+    content: `${Math.round(thisTotal)} units this week`,
     generationMethod: "template",
-    metadata: { totalUnits: Math.round(thisTotal), productCount },
+    metadata: { totalUnits: Math.round(thisTotal), productCount, description: `Across ${productCount} product${productCount !== 1 ? "s" : ""}.` },
   });
 
   // Weekday pattern: find strongest and weakest days
@@ -143,9 +143,9 @@ export async function generateInsights(
     if (maxQty > minQty) {
       insights.push({
         type: "SUMMARY",
-        content: `${DAY_NAMES[maxDay]} is your strongest day, ${DAY_NAMES[minDay]} is your slowest`,
+        content: `${DAY_NAMES[maxDay]} is your strongest day`,
         generationMethod: "template",
-        metadata: { strongestDay: DAY_NAMES[maxDay], slowestDay: DAY_NAMES[minDay] },
+        metadata: { strongestDay: DAY_NAMES[maxDay], slowestDay: DAY_NAMES[minDay], description: `${DAY_NAMES[minDay]} is your slowest.` },
       });
     }
   }
@@ -153,11 +153,12 @@ export async function generateInsights(
   return insights;
 }
 
-const INSIGHT_SYSTEM_PROMPT = `You are a business analytics assistant for a small retail business. Given sales data, generate 3-5 short, actionable insights. Each insight should be one sentence, conversational, and helpful for a small business owner planning their stock.
+const INSIGHT_SYSTEM_PROMPT = `You are a business analytics assistant for a small retail business. Given sales data, generate 3-5 short, actionable insights. Each insight should have a punchy headline and a brief one-line description.
 
 Return a JSON array where each item has:
 - "type": one of "TREND", "COMPARISON", "TOP_PRODUCTS", or "SUMMARY"
-- "content": the insight text (one sentence, natural language)
+- "headline": short punchy headline (e.g., "Eggs sales up 73%")
+- "description": brief actionable follow-up (e.g., "Biggest jump week-over-week.")
 
 Only use the data provided. Do not make assumptions about data you don't have. Be specific with numbers and percentages.`;
 
@@ -183,7 +184,7 @@ async function generateLLMInsights(
     ),
   });
 
-  const result = await generateJSON<{ type: string; content: string }[]>(
+  const result = await generateJSON<{ type: string; headline: string; description?: string; content?: string }[]>(
     INSIGHT_SYSTEM_PROMPT,
     `Here is the sales data for this business:\n${dataContext}`,
     512
@@ -194,12 +195,13 @@ async function generateLLMInsights(
   const validTypes = new Set(["TREND", "COMPARISON", "TOP_PRODUCTS", "SUMMARY"]);
 
   return result
-    .filter((r) => validTypes.has(r.type) && typeof r.content === "string")
+    .filter((r) => validTypes.has(r.type) && (typeof r.headline === "string" || typeof r.content === "string"))
     .slice(0, 5)
     .map((r) => ({
       type: r.type as InsightType,
-      content: r.content,
+      content: r.headline || r.content || "",
       generationMethod: "llm" as const,
+      metadata: r.description ? { description: r.description } : undefined,
     }));
 }
 
@@ -219,7 +221,7 @@ export async function getOrGenerateInsights(businessId: string, timezone: string
   if (latest) {
     const insights = await prisma.dailyInsight.findMany({
       where: { businessId, date: { gte: todayDate } },
-      select: { id: true, type: true, content: true, generationMethod: true },
+      select: { id: true, type: true, content: true, generationMethod: true, metadata: true },
     });
     return { insights, generatedAt: latest.createdAt.toISOString() };
   }
@@ -299,7 +301,7 @@ export async function getOrGenerateInsights(businessId: string, timezone: string
 
   const storedInsights = await prisma.dailyInsight.findMany({
     where: { businessId, date: { gte: todayDate } },
-    select: { id: true, type: true, content: true, generationMethod: true },
+    select: { id: true, type: true, content: true, generationMethod: true, metadata: true },
   });
 
   return { insights: storedInsights, generatedAt: new Date().toISOString() };

@@ -470,7 +470,7 @@ function Insights({
   insights,
   lastUpdated,
 }: {
-  insights: { type: string; content: string }[];
+  insights: { type: string; content: string; metadata?: Record<string, unknown> | null }[];
   lastUpdated?: string;
 }) {
   const ACCENT_COLORS = ["bg-olive", "bg-terra", "bg-harvest"];
@@ -490,16 +490,22 @@ function Insights({
         )}
       </div>
       <div className="mt-3 flex flex-col gap-3.5">
-        {insights.map((insight, i) => (
-          <div key={i} className="flex gap-3">
-            <div className={`w-[3px] shrink-0 rounded-full ${ACCENT_COLORS[i % ACCENT_COLORS.length]}`} />
-            <div>
-              <p className="font-serif text-base font-medium tracking-tight text-ink">
-                {insight.content}
-              </p>
+        {insights.map((insight, i) => {
+          const description = (insight.metadata as Record<string, unknown> | null)?.description as string | undefined;
+          return (
+            <div key={i} className="flex gap-3">
+              <div className={`w-[3px] shrink-0 rounded-full ${ACCENT_COLORS[i % ACCENT_COLORS.length]}`} />
+              <div>
+                <p className="font-serif text-base font-medium tracking-tight text-ink">
+                  {insight.content}
+                </p>
+                {description && (
+                  <p className="mt-0.5 text-[13px] text-muted-warm">{description}</p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
