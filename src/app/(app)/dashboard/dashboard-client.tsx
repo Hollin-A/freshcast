@@ -148,10 +148,15 @@ function ForecastHero({
     forecastDate: string;
     predictions: {
       product: string;
+      productId: string;
       predictedQuantity: number;
       unit: string | null;
       confidence: number;
       holidayAdjusted?: boolean;
+      pastWeek?: number[];
+      recentAvg?: number;
+      trend?: string;
+      breakdown?: { weekdayAvg: number; recentAvg: number; holidayMultiplier: number };
     }[];
     dataPoints: number;
     holiday?: { name: string; type: string } | null;
@@ -164,9 +169,43 @@ function ForecastHero({
     day: "numeric",
   });
 
+  // Compute overall trend for subtitle
+  const trendsWithAvg = forecast.predictions
+    .filter((p) => p.recentAvg && p.recentAvg > 0)
+    .map((p) => ((p.predictedQuantity - (p.recentAvg || 0)) / (p.recentAvg || 1)) * 100);
+  const avgTrend = trendsWithAvg.length > 0
+    ? Math.round(trendsWithAvg.reduce((s, v) => s + v, 0) / trendsWithAvg.length)
+    : 0;
+
+  function handlePrepList() {
+    const lines = forecast.predictions
+      .slice(0, 10)
+      .map((p) => `${p.product}: ~${p.predictedQuantity} ${p.unit || "units"}`)
+      .join("\n");
+    const text = `Prep list for ${dateLabel}\n\n${lines}`;
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Prep list copied to clipboard");
+    });
+  }
+
+  function handleShare() {
+    const lines = forecast.predictions
+      .slice(0, 10)
+      .map((p) => `${p.product}: ~${p.predictedQuantity} ${p.unit || "units"}`)
+      .join("\n");
+    const text = `Freshcast prep list for ${dateLabel}\n\n${lines}`;
+    if (navigator.share) {
+      navigator.share({ title: "Freshcast Prep List", text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success("Copied to clipboard");
+      });
+    }
+  }
+
   return (
-    <div className="mx-4 overflow-hidden rounded-2xl bg-ink p-5 text-cream">
-      <div className="flex items-start justify-between">
+    <div className="mx-4 relative overflow-hidden rounded-2xl bg-linear-to-br from-ink to-[#2d2418] p-5 text-cream">
+      <div className="flex items-start justify-between relative">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wider text-clay">
             Prep for tomorrow
@@ -174,11 +213,13 @@ function ForecastHero({
           <p className="mt-1 font-serif text-[22px] font-medium tracking-tight">
             {dateLabel}
           </p>
-          {forecast.holiday && (
-            <p className="mt-0.5 text-[13px] text-cream/60">
-              📅 {forecast.holiday.name}
-            </p>
-          )}
+          <p className="mt-0.5 text-[13px] text-cream/60">
+            {forecast.holiday
+              ? `📅 ${forecast.holiday.name}`
+              : avgTrend !== 0
+                ? `Expect ${Math.abs(avgTrend)}% ${avgTrend > 0 ? "above" : "below"} average`
+                : "Based on your recent patterns"}
+          </p>
         </div>
         {forecast.holiday && (
           <Badge variant="gold" className="shrink-0">
@@ -188,28 +229,61 @@ function ForecastHero({
       </div>
       <div className="my-5 h-px bg-cream/12" />
       <div className="flex flex-col gap-3.5">
-        {forecast.predictions.slice(0, 5).map((p, i) => (
-          <button
-            key={i}
-            onClick={() => onSelectProduct(p.product)}
-            className="flex w-full items-center gap-3 text-left"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-medium text-cream">{p.product}</p>
-              <p className="font-mono text-[10.5px] text-cream/50 tracking-wide">
-                {Math.round(p.confidence * 100)}% confident
-              </p>
-            </div>
-            <div className="text-right">
-              <span className="font-serif text-2xl font-medium tracking-tight text-clay">
-                {p.predictedQuantity}
-              </span>
-              <span className="ml-1 text-[11px] text-cream/60">
-                {p.unit || "units"}
-              </span>
-            </div>
-          </button>
-        ))}
+        {forecast.predictions.slice(0, 5).map((p, i) => {
+          const sparkData = p.pastWeek ?? [];
+          const sparkMax = Math.max(...sparkData, 1);
+          return (
+            <button
+              key={i}
+              onClick={() => onSelectProduct(p.product)}
+              className="flex w-full items-center gap-3 text-left"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-medium text-cream">{p.product}</p>
+                <p className="font-mono text-[10.5px] text-cream/50 tracking-wide">
+                  vs 7d avg · {Math.round(p.confidence * 100)}% confident
+                </p>
+              </div>
+              {sparkData.length > 0 && (
+                <div className="flex items-end gap-px" style={{ width: 56, height: 22 }}>
+                  {sparkData.map((v, si) => (
+                    <div
+                      key={si}
+                      className="flex-1 rounded-[1px] bg-cream/35"
+                      style={{ height: `${Math.max((v / sparkMax) * 100, 8)}%` }}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="text-right min-w-[80px]">
+                <span className="font-serif text-2xl font-medium tracking-tight text-clay">
+                  {p.predictedQuantity}
+                </span>
+                <p className="text-[11px] text-cream/60">
+                  {p.unit || "units"}
+                  {p.trend && (
+                    <span className="ml-1 text-sage">{p.trend}</span>
+                  )}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="my-5 h-px bg-cream/12" />
+      <div className="flex gap-2.5">
+        <button
+          onClick={handlePrepList}
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-clay font-semibold text-sm text-ink"
+        >
+          Use as prep list
+        </button>
+        <button
+          onClick={handleShare}
+          className="flex h-11 items-center justify-center rounded-full border border-cream/30 px-5 text-sm font-medium text-cream"
+        >
+          Share
+        </button>
       </div>
     </div>
   );

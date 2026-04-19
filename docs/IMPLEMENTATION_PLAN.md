@@ -865,11 +865,11 @@ Expand `GET /api/dashboard` and the prediction engine to return richer per-produ
 Use the expanded API data from 22.2 to match the design mockups.
 
 ##### Tasks
-- [ ] 22.3.1 Add mini sparklines (7 tiny bars) per product row in the forecast hero card
-- [ ] 22.3.2 Add "vs 7d avg" label and trend percentage (e.g., "+24%") per product in forecast hero
-- [ ] 22.3.3 Add contextual subtitle to forecast hero ("Market day — expect X% above average") computed from the average trend across top products
-- [ ] 22.3.4 Add "Use as prep list" button — formats forecast as text list and copies to clipboard
-- [ ] 22.3.5 Add "Share" button — uses Web Share API (`navigator.share`) with forecast text, falls back to clipboard copy on desktop
+- [x] 22.3.1 Add mini sparklines (7 tiny bars) per product row in the forecast hero card
+- [x] 22.3.2 Add "vs 7d avg" label and trend percentage (e.g., "+24%") per product in forecast hero
+- [x] 22.3.3 Add contextual subtitle to forecast hero ("Market day — expect X% above average") computed from the average trend across top products
+- [x] 22.3.4 Add "Use as prep list" button — formats forecast as text list and copies to clipboard
+- [x] 22.3.5 Add "Share" button — uses Web Share API (`navigator.share`) with forecast text, falls back to clipboard copy on desktop
 
 ##### Acceptance Criteria
 - Each product in the forecast hero shows a 7-bar sparkline and trend percentage
