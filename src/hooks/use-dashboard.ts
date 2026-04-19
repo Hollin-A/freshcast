@@ -28,10 +28,19 @@ export type DashboardData = {
     forecastDate: string;
     predictions: {
       product: string;
+      productId: string;
       predictedQuantity: number;
       unit: string | null;
       confidence: number;
       holidayAdjusted?: boolean;
+      pastWeek?: number[];
+      recentAvg?: number;
+      trend?: string;
+      breakdown?: {
+        weekdayAvg: number;
+        recentAvg: number;
+        holidayMultiplier: number;
+      };
     }[];
     dataPoints: number;
     holiday: { name: string; type: string } | null;

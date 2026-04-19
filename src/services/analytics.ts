@@ -172,3 +172,111 @@ export async function getTopProducts(
       rank: i + 1,
     }));
 }
+
+export type ProductDailyHistory = {
+  productId: string;
+  product: string;
+  unit: string | null;
+  daily: number[];
+  avgPerDay: number;
+  trend: number; // week-over-week percentage change
+};
+
+export async function getProductDailyHistory(
+  businessId: string,
+  timezone: string,
+  days = 7
+): Promise<ProductDailyHistory[]> {
+  const weekStart = getDaysAgoUTC(timezone, days - 1);
+  const prevWeekStart = getDaysAgoUTC(timezone, days * 2 - 1);
+
+  const [currentEntries, prevEntries] = await Promise.all([
+    prisma.salesEntry.findMany({
+      where: { businessId, date: { gte: weekStart } },
+      include: {
+        items: {
+          include: { product: { select: { id: true, name: true, defaultUnit: true } } },
+        },
+      },
+    }),
+    prisma.salesEntry.findMany({
+      where: { businessId, date: { gte: prevWeekStart, lt: weekStart } },
+      include: {
+        items: {
+          include: { product: { select: { id: true, name: true, defaultUnit: true } } },
+        },
+      },
+    }),
+  ]);
+
+  // Build date keys for the period
+  const dateKeys: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = getDaysAgoUTC(timezone, i);
+    dateKeys.push(d.toISOString().split("T")[0]);
+  }
+
+  // Aggregate per product per day
+  const productMap = new Map<string, {
+    name: string;
+    unit: string | null;
+    currentDaily: Map<string, number>;
+    prevTotal: number;
+  }>();
+
+  for (const entry of currentEntries) {
+    const dateKey = new Date(entry.date).toISOString().split("T")[0];
+    for (const item of entry.items) {
+      let prod = productMap.get(item.productId);
+      if (!prod) {
+        prod = {
+          name: item.product.name,
+          unit: item.unit ?? item.product.defaultUnit ?? null,
+          currentDaily: new Map(),
+          prevTotal: 0,
+        };
+        productMap.set(item.productId, prod);
+      }
+      prod.currentDaily.set(dateKey, (prod.currentDaily.get(dateKey) ?? 0) + item.quantity);
+    }
+  }
+
+  for (const entry of prevEntries) {
+    for (const item of entry.items) {
+      let prod = productMap.get(item.productId);
+      if (!prod) {
+        prod = {
+          name: item.product.name,
+          unit: item.unit ?? item.product.defaultUnit ?? null,
+          currentDaily: new Map(),
+          prevTotal: 0,
+        };
+        productMap.set(item.productId, prod);
+      }
+      prod.prevTotal += item.quantity;
+    }
+  }
+
+  const results: ProductDailyHistory[] = [];
+  for (const [productId, prod] of productMap) {
+    const daily = dateKeys.map((dk) => Math.round((prod.currentDaily.get(dk) ?? 0) * 10) / 10);
+    const currentTotal = daily.reduce((s, v) => s + v, 0);
+    const avgPerDay = currentTotal / days;
+    const trend = prod.prevTotal > 0
+      ? Math.round(((currentTotal - prod.prevTotal) / prod.prevTotal) * 1000) / 10
+      : 0;
+
+    if (currentTotal > 0 || prod.prevTotal > 0) {
+      results.push({
+        productId,
+        product: prod.name,
+        unit: prod.unit,
+        daily,
+        avgPerDay: Math.round(avgPerDay * 10) / 10,
+        trend,
+      });
+    }
+  }
+
+  return results.sort((a, b) => b.avgPerDay - a.avgPerDay);
+}

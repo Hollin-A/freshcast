@@ -11,6 +11,11 @@ export type ProductPrediction = {
   unit: string | null;
   confidence: number;
   holidayAdjusted?: boolean;
+  breakdown?: {
+    weekdayAvg: number;
+    recentAvg: number;
+    holidayMultiplier: number;
+  };
 };
 
 export type DayPrediction = {
@@ -151,6 +156,11 @@ export async function predictNextDay(
       unit: product.defaultUnit,
       confidence: calculateConfidence(sameWeekday, recent),
       holidayAdjusted: multiplier !== 1.0,
+      breakdown: {
+        weekdayAvg: Math.round(mean(sameWeekday) * 10) / 10,
+        recentAvg: Math.round(mean(recent) * 10) / 10,
+        holidayMultiplier: multiplier,
+      },
     });
   }
 

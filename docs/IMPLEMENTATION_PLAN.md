@@ -841,16 +841,16 @@ Phase 21 complete.
 Expand `GET /api/dashboard` and the prediction engine to return richer per-product data.
 
 ##### Tasks
-- [ ] 22.2.1 Add `getProductDailyHistory(businessId, timezone, days)` to analytics service — returns per-product daily quantities for the last N days
-- [ ] 22.2.2 Compute per-product 7-day average and week-over-week trend percentage in the analytics service
-- [ ] 22.2.3 Expand `predictNextDay` return type to include prediction breakdown: `weekdayAvg`, `recentAvg`, `weekdayWeight`, `recentWeight`, `holidayMultiplier`
-- [ ] 22.2.4 Update `GET /api/dashboard` response to include:
+- [x] 22.2.1 Add `getProductDailyHistory(businessId, timezone, days)` to analytics service — returns per-product daily quantities for the last N days
+- [x] 22.2.2 Compute per-product 7-day average and week-over-week trend percentage in the analytics service
+- [x] 22.2.3 Expand `predictNextDay` return type to include prediction breakdown: `weekdayAvg`, `recentAvg`, `weekdayWeight`, `recentWeight`, `holidayMultiplier`
+- [x] 22.2.4 Update `GET /api/dashboard` response to include:
   - `forecast.predictions[].weekdayAvg` — average for same weekday
   - `forecast.predictions[].recentAvg` — 7-day average
   - `forecast.predictions[].trend` — percentage change vs 7-day avg (e.g., "+24%")
   - `forecast.predictions[].pastWeek` — array of 7 daily quantities (for sparklines)
   - `forecast.predictions[].breakdown` — `{ weekdayAvg, recentAvg, holidayMultiplier }`
-- [ ] 22.2.5 Update `DashboardData` TypeScript type in `use-dashboard.ts` to match new response shape
+- [x] 22.2.5 Update `DashboardData` TypeScript type in `use-dashboard.ts` to match new response shape
 
 ##### Acceptance Criteria
 - Dashboard API returns per-product sparkline data (7 daily values)

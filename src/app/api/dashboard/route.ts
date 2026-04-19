@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { getTodaySummary, getWeekSummary, getTopProducts } from "@/services/analytics";
+import { getTodaySummary, getWeekSummary, getTopProducts, getProductDailyHistory } from "@/services/analytics";
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
@@ -16,11 +16,12 @@ export async function GET() {
 
     const { businessId, timezone, region } = ctx;
 
-    const [todaySummary, weekSummary, topProducts, predictions, weeklyPredictions, insightsResult, totalEntries] =
+    const [todaySummary, weekSummary, topProducts, productHistory, predictions, weeklyPredictions, insightsResult, totalEntries] =
       await Promise.all([
         getTodaySummary(businessId, timezone),
         getWeekSummary(businessId, timezone),
         getTopProducts(businessId, timezone),
+        getProductDailyHistory(businessId, timezone, 7),
         predictNextDay(businessId, timezone, region).catch(() => null),
         predictNextWeek(businessId, timezone, region).catch(() => null),
         getOrGenerateInsights(businessId, timezone).catch(() => ({
@@ -43,7 +44,19 @@ export async function GET() {
       forecast: predictions
         ? {
             forecastDate: tomorrowDate.toISOString().split("T")[0],
-            predictions: predictions.predictions,
+            predictions: predictions.predictions.map((p) => {
+              const history = productHistory.find((h) => h.productId === p.productId);
+              return {
+                ...p,
+                pastWeek: history?.daily ?? [],
+                recentAvg: history?.avgPerDay ?? 0,
+                trend: history
+                  ? (history.avgPerDay > 0
+                    ? `${p.predictedQuantity > history.avgPerDay ? "+" : ""}${Math.round(((p.predictedQuantity - history.avgPerDay) / history.avgPerDay) * 100)}%`
+                    : "")
+                  : "",
+              };
+            }),
             dataPoints: predictions.dataPoints,
             holiday: predictions.holiday
               ? { name: predictions.holiday.name, type: predictions.holiday.type }
