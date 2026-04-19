@@ -52,9 +52,11 @@ export function SettingsClient({
   businessType: string;
   timezone: string;
   region: string;
+  weeklyEmailEnabled: boolean;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
+  const [weeklyEmail, setWeeklyEmail] = useState(weeklyEmailEnabled);
 
   async function handleDeleteAccount() {
     const confirmed = confirm(
@@ -139,6 +141,35 @@ export function SettingsClient({
         <SettingsRow icon="🗓" color="#6B7A3A" label="Timezone" detail={timezoneCity} />
         <SettingsRow icon="🎯" color="#6E3A4A" label="Holiday region" detail={region} />
         <SettingsRow icon="🌐" color="#C69840" label="Language" detail="English" last />
+      </div>
+
+      {/* Forecast */}
+      <p className="mx-5 mb-2.5 mt-6 text-[11px] font-bold uppercase tracking-wider text-muted-warm">Forecast</p>
+      <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
+        <div className="flex items-center gap-3 px-3.5 py-3.5">
+          <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg text-sm" style={{ background: "#B5553A", color: "#FFF8EC" }}>📬</div>
+          <span className="flex-1 text-[15px] text-ink">Weekly summary email</span>
+          <button
+            onClick={async () => {
+              const next = !weeklyEmail;
+              setWeeklyEmail(next);
+              try {
+                await fetch("/api/business", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ weeklyEmailEnabled: next }),
+                });
+              } catch {
+                setWeeklyEmail(!next);
+              }
+            }}
+            className="flex h-[26px] w-[44px] items-center rounded-full p-0.5 transition-colors"
+            style={{ background: weeklyEmail ? "#6B7A3A" : "#E4D9C1", justifyContent: weeklyEmail ? "flex-end" : "flex-start" }}
+            aria-label="Toggle weekly email"
+          >
+            <div className="h-[22px] w-[22px] rounded-full bg-white shadow-sm" />
+          </button>
+        </div>
       </div>
 
       {/* Data */}

@@ -50,7 +50,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 19 | NL Parser Improvements | ✅ Complete |
 | 20 | Holiday-Aware Predictions | ✅ Complete |
 | 21 | Editorial Rebrand | ✅ Complete |
-| 22 | Post-Rebrand Enhancements | 🔲 Not started |
+| 22 | Post-Rebrand Enhancements | ✅ Complete |
 
 ---
 
@@ -919,12 +919,12 @@ Add per-product statistics to the products page.
 Add opt-in weekly email summarizing the past week's sales and next week's forecast.
 
 ##### Tasks
-- [ ] 22.6.1 Add `weeklyEmailEnabled` boolean field to Business model (default: false), run Prisma migration
-- [ ] 22.6.2 Add toggle row in settings page for "Weekly summary email" (reads/writes the new field via `PATCH /api/business`)
-- [ ] 22.6.3 Build `buildWeeklySummaryEmail(businessId)` function — queries last week's sales totals, top products, and next week's forecast, returns HTML email
-- [ ] 22.6.4 Create warm editorial HTML email template matching the app's design language
-- [ ] 22.6.5 Build `POST /api/email/weekly-summary` endpoint — generates and sends the weekly email for a given business
-- [ ] 22.6.6 Add Vercel Cron job (`vercel.json` cron config) to trigger weekly emails every Monday at 6:00 AM for businesses with `weeklyEmailEnabled = true`
+- [x] 22.6.1 Add `weeklyEmailEnabled` boolean field to Business model (default: false), run Prisma migration
+- [x] 22.6.2 Add toggle row in settings page for "Weekly summary email" (reads/writes the new field via `PATCH /api/business`)
+- [x] 22.6.3 Build `buildWeeklySummaryEmail(businessId)` function — queries last week's sales totals, top products, and next week's forecast, returns HTML email
+- [x] 22.6.4 Create warm editorial HTML email template matching the app's design language
+- [x] 22.6.5 Build `POST /api/email/weekly-summary` endpoint — generates and sends the weekly email for a given business
+- [x] 22.6.6 Add Vercel Cron job (`vercel.json` cron config) to trigger weekly emails every Monday at 6:00 AM for businesses with `weeklyEmailEnabled = true`
 
 ##### Acceptance Criteria
 - Users can toggle weekly emails on/off in settings

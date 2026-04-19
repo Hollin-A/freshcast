@@ -69,6 +69,7 @@ model Business {
   locale    String       @default("en")
   timezone  String       @default("UTC")
   region    String       @default("AU-VIC")
+  weeklyEmailEnabled Boolean @default(false)
   onboarded Boolean      @default(false)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt

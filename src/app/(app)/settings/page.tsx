@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   const [business, user] = await Promise.all([
     prisma.business.findUnique({
       where: { userId: session.user.id },
-      select: { name: true, type: true, timezone: true, region: true, onboarded: true },
+      select: { name: true, type: true, timezone: true, region: true, weeklyEmailEnabled: true, onboarded: true },
     }),
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -29,6 +29,7 @@ export default async function SettingsPage() {
         businessType={business.type}
         timezone={business.timezone}
         region={business.region}
+        weeklyEmailEnabled={business.weeklyEmailEnabled}
       />
     </div>
   );

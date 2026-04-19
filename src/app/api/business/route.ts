@@ -115,3 +115,43 @@ export async function GET() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+const updateBusinessSchema = z.object({
+  weeklyEmailEnabled: z.boolean().optional(),
+});
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const business = await prisma.business.findUnique({
+      where: { userId: session.user.id },
+    });
+    if (!business) {
+      return errorResponse("NOT_FOUND", "No business found", 404);
+    }
+
+    const body = await request.json();
+    const result = updateBusinessSchema.safeParse(body);
+
+    if (!result.success) {
+      return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
+        fields: result.error.flatten().fieldErrors,
+      });
+    }
+
+    const updated = await prisma.business.update({
+      where: { id: business.id },
+      data: result.data,
+      select: { id: true, weeklyEmailEnabled: true },
+    });
+
+    return NextResponse.json(updated);
+  } catch (err) {
+    logger.error("business", "PATCH /api/business failed", err);
+    return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
+  }
+}
