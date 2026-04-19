@@ -25,6 +25,35 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 
 ---
 
+## Phase Summary
+
+| Phase | Focus | Status |
+|-------|-------|--------|
+| 1 | Database & Auth UI | ✅ Complete |
+| 2 | Onboarding | ✅ Complete |
+| 3 | Product Management | ✅ Complete |
+| 4 | Sales Input | ✅ Complete |
+| 5 | Dashboard & Analytics | ✅ Complete |
+| 6 | Predictions & Insights | ✅ Complete |
+| 7 | Polish & Launch | ✅ Complete |
+| 8 | MVP Completion | ✅ Complete |
+| 9 | Security & Correctness | ✅ Complete |
+| 10 | UX Polish | ✅ Complete |
+| 11 | PWA Support | ✅ Complete |
+| 12 | Email Infrastructure | ✅ Complete |
+| 13 | LLM Integration (Claude) | ✅ Complete |
+| 14 | AI Chat Interface | ✅ Complete |
+| 15 | Production Hardening | ✅ Complete |
+| 16 | Auth UX Polish | ✅ Complete |
+| 17 | Loading & Splash States | ✅ Complete |
+| 18 | Prediction Data Progress | ✅ Complete |
+| 19 | NL Parser Improvements | ✅ Complete |
+| 20 | Holiday-Aware Predictions | ✅ Complete |
+| 21 | Editorial Rebrand | ✅ Complete |
+| 22 | Post-Rebrand Enhancements | 🔲 Not started |
+
+---
+
 ## Phase 1: Database & Auth UI
 Branch: `feat/phase-1-auth`
 
@@ -284,22 +313,6 @@ Phase 7 complete.
 
 ---
 
-## Phase Summary
-
-| Phase | Focus | Key Deliverable |
-|-------|-------|-----------------|
-| 1 | Database & Auth UI | Users can sign up and log in |
-| 2 | Onboarding | Business profile + initial products created |
-| 3 | Product Management | Full product CRUD |
-| 4 | Sales Input | Dual-mode sales logging with NL parser |
-| 5 | Dashboard & Analytics | Home screen with summaries and trends |
-| 6 | Predictions & Insights | Demand forecasts and auto-generated insights |
-| 7 | Polish & Launch | Mobile refinement, seed data, deployment |
-| 8 | MVP Completion | Password reset, weekly predictions, entry deletion, i18n |
-| 9 | Security & Correctness | Critical bug fixes, data integrity, validation |
-| 10 | UX Polish | Manual mode improvements, demo data, product list refresh |
-| 21 | Editorial Rebrand | Warm editorial visual refresh across all screens |
-
 ---
 
 ## Phase 9: Security & Correctness Fixes
@@ -369,14 +382,14 @@ Items previously deferred but now implemented: rate limiting (Phase 15), email d
 
 ---
 
-## Post-MVP Roadmap
+---
 
-### Phase 11: PWA Support
+## Phase 11: PWA Support
 Branch: `feat/phase-11-pwa`
 
 Make Freshcast installable as a standalone app on mobile devices.
 
-#### Tasks
+### Tasks
 - [x] 11.1 Create `public/manifest.json` with app name, short name, theme color (teal), background color, display: standalone, start_url: /dashboard
 - [x] 11.2 Generate app icons in required sizes (192x192, 512x512, maskable) from the Freshcast logo/icon
 - [x] 11.3 Add `<link rel="manifest">` and meta tags (theme-color, apple-mobile-web-app-capable) to root layout
@@ -385,7 +398,7 @@ Make Freshcast installable as a standalone app on mobile devices.
 - [x] 11.6 Test "Add to Home Screen" on iOS Safari and Android Chrome
 - [x] 11.7 Verify standalone mode launches without browser chrome
 
-#### Acceptance Criteria
+### Acceptance Criteria
 - App is installable via browser "Add to Home Screen" prompt
 - Launches in standalone mode (no URL bar)
 - Has proper app icon and splash screen
@@ -393,12 +406,12 @@ Make Freshcast installable as a standalone app on mobile devices.
 
 ---
 
-### Phase 12: Email Infrastructure
+## Phase 12: Email Infrastructure
 Branch: `feat/phase-12-email`
 
 Wire up real email delivery. Required before LLM integration (for weekly summaries later).
 
-#### Tasks
+### Tasks
 - [x] 12.1 Set up Resend account and get API key
 - [x] 12.2 Create `src/lib/email.ts` utility with `sendEmail(to, subject, html)` function
 - [x] 12.3 Replace console.log in forgot-password route with actual email delivery
@@ -406,21 +419,21 @@ Wire up real email delivery. Required before LLM integration (for weekly summari
 - [x] 12.5 Add `RESEND_API_KEY` to environment variables
 - [x] 12.6 Test full password reset flow end-to-end with real email
 
-#### Acceptance Criteria
+### Acceptance Criteria
 - Password reset emails are delivered to real inboxes
 - Email has clean HTML template with reset link
 - Works in production (Vercel)
 
 ---
 
-### Phase 13: LLM Integration (Claude Haiku)
+## Phase 13: LLM Integration (Claude Haiku)
 Branch: `feat/phase-13-llm`
 
 Integrate Claude 3.5 Haiku for two upgrades: smarter NL sales parsing and more natural dashboard insights. Both use the same Claude client with graceful fallback to existing rule-based/template logic.
 
 Model: `claude-3-5-haiku-latest` (~$0.80/M input, $3.20/M output — pennies per month for a single-user app)
 
-#### Tasks
+### Tasks
 
 ##### 13A — Claude Client Setup
 - [x] 13.1 Install `@anthropic-ai/sdk`
@@ -441,7 +454,7 @@ Model: `claude-3-5-haiku-latest` (~$0.80/M input, $3.20/M output — pennies per
 - [x] 13.12 Add `parseMethod` field to the parse response: `"rule-based" | "llm"` so the UI can indicate which method was used
 - [x] 13.13 Test with edge cases the rule-based parser struggles with: "about two dozen eggs", "sold some beef maybe 30 kilos", "10 of each chicken and lamb"
 
-#### Acceptance Criteria
+### Acceptance Criteria
 - Dashboard insights are more natural and varied when Claude is available
 - NL parser handles ambiguous/conversational input that the rule-based parser misses
 - Both features fall back gracefully when the API key is missing or the API is down
@@ -452,12 +465,12 @@ Model: `claude-3-5-haiku-latest` (~$0.80/M input, $3.20/M output — pennies per
 
 ---
 
-### Phase 14: AI Chat Interface
+## Phase 14: AI Chat Interface
 Branch: `feat/phase-14-ai-chat`
 
 Let users ask business questions in natural language and get answers based on their own data. Uses the same Claude client from Phase 13.
 
-#### Tasks
+### Tasks
 - [x] 14.1 Create `POST /api/chat` route — accepts a user message, queries relevant business data, sends to Claude with context
 - [x] 14.2 Build the data context builder — given a user question, determine which analytics to query (today's sales, weekly trends, product history, predictions) and format as Claude context
 - [x] 14.3 Design the system prompt — constrain Claude to only answer based on the user's data, no external assumptions
@@ -467,7 +480,7 @@ Let users ask business questions in natural language and get answers based on th
 - [x] 14.7 Add suggested questions on empty chat ("What sold best this week?", "When should I prepare more chicken?", "How did eggs perform this month?")
 - [ ] 14.8 Add streaming response support for better UX (show tokens as they arrive)
 
-#### Acceptance Criteria
+### Acceptance Criteria
 - User can ask "What sold best this week?" and get an accurate answer from their data
 - User can ask "When should I prepare more chicken?" and get a prediction-based answer
 - Responses are constrained to the user's own data (no hallucinated external info)
@@ -476,12 +489,12 @@ Let users ask business questions in natural language and get answers based on th
 
 ---
 
-### Phase 15: Production Hardening
+## Phase 15: Production Hardening
 Branch: `feat/phase-15-production`
 
 Security and reliability improvements for real-world usage.
 
-#### Tasks
+### Tasks
 - [x] 15.1 Add rate limiting on auth endpoints (Upstash Ratelimit)
 - [x] 15.2 Add account and data deletion (`DELETE /api/account` with cascade)
 - [x] 15.3 Add settings/profile page with logout, delete account, timezone change
@@ -489,39 +502,11 @@ Security and reliability improvements for real-world usage.
 - [x] 15.5 Add demand spike alert card on dashboard (>30% above average)
 - [x] 15.6 Add unit selector override per sale entry in manual mode
 
-#### Acceptance Criteria
+### Acceptance Criteria
 - Auth endpoints are rate-limited (3 forgot-password per email per hour, 10 signups per IP per hour)
 - Users can delete their account and all associated data
 - Users can export their sales data as CSV
 - Dashboard highlights unusual demand spikes proactively
-
----
-
-### Phase Summary (Full Roadmap)
-
-| Phase | Focus | Status |
-|-------|-------|--------|
-| 1 | Database & Auth UI | ✅ Complete |
-| 2 | Onboarding | ✅ Complete |
-| 3 | Product Management | ✅ Complete |
-| 4 | Sales Input | ✅ Complete |
-| 5 | Dashboard & Analytics | ✅ Complete |
-| 6 | Predictions & Insights | ✅ Complete |
-| 7 | Polish & Launch | ✅ Complete |
-| 8 | MVP Completion | ✅ Complete |
-| 9 | Security & Correctness | ✅ Complete |
-| 10 | UX Polish | ✅ Complete |
-| 11 | PWA Support | ✅ Complete |
-| 12 | Email Infrastructure | ✅ Complete |
-| 13 | LLM Integration (Claude) | ✅ Complete |
-| 14 | AI Chat Interface | ✅ Complete |
-| 15 | Production Hardening | ✅ Complete |
-| 16 | Auth UX Polish | ✅ Complete |
-| 17 | Loading & Splash States | ✅ Complete |
-| 18 | Prediction Data Progress | ✅ Complete |
-| 19 | NL Parser Improvements | ✅ Complete |
-| 20 | Holiday-Aware Predictions | ✅ Complete |
-| 21 | Editorial Rebrand | ✅ Complete |
 
 ---
 
@@ -825,6 +810,139 @@ All previous phases complete. No API or data model changes required.
 - Mobile-first responsive layout maintained
 - i18n strings still externalized (update keys if label text changes)
 - PWA still works (manifest colors updated)
+
+---
+
+## Phase 22: Post-Rebrand Enhancements
+Branch: `feat/phase-22-post-rebrand`
+
+### Goal
+Close the remaining gaps between the design mockups and the implemented UI. Expand APIs where needed to provide richer data for the dashboard, forecast detail, and products screens. Add weekly summary email.
+
+### Dependencies
+Phase 21 complete.
+
+---
+
+#### 22.1 Minor UI Fixes (No API Changes)
+
+##### Tasks
+- [ ] 22.1.1 Show `lastUpdated` timestamp on the insights card ("updated 7:12am" style)
+- [ ] 22.1.2 Add holiday region row to settings page (read existing `region` field from Business model)
+
+##### Acceptance Criteria
+- Insights card shows when insights were last generated
+- Settings page shows the holiday region (e.g., "AU-VIC") in the Business section
+
+---
+
+#### 22.2 Dashboard API Expansion
+
+Expand `GET /api/dashboard` and the prediction engine to return richer per-product data.
+
+##### Tasks
+- [ ] 22.2.1 Add `getProductDailyHistory(businessId, timezone, days)` to analytics service — returns per-product daily quantities for the last N days
+- [ ] 22.2.2 Compute per-product 7-day average and week-over-week trend percentage in the analytics service
+- [ ] 22.2.3 Expand `predictNextDay` return type to include prediction breakdown: `weekdayAvg`, `recentAvg`, `weekdayWeight`, `recentWeight`, `holidayMultiplier`
+- [ ] 22.2.4 Update `GET /api/dashboard` response to include:
+  - `forecast.predictions[].weekdayAvg` — average for same weekday
+  - `forecast.predictions[].recentAvg` — 7-day average
+  - `forecast.predictions[].trend` — percentage change vs 7-day avg (e.g., "+24%")
+  - `forecast.predictions[].pastWeek` — array of 7 daily quantities (for sparklines)
+  - `forecast.predictions[].breakdown` — `{ weekdayAvg, recentAvg, holidayMultiplier }`
+- [ ] 22.2.5 Update `DashboardData` TypeScript type in `use-dashboard.ts` to match new response shape
+
+##### Acceptance Criteria
+- Dashboard API returns per-product sparkline data (7 daily values)
+- Dashboard API returns per-product trend percentage and 7-day average
+- Prediction breakdown factors are included in the response
+- Existing dashboard functionality is not broken
+
+---
+
+#### 22.3 Dashboard UI Updates
+
+Use the expanded API data from 22.2 to match the design mockups.
+
+##### Tasks
+- [ ] 22.3.1 Add mini sparklines (7 tiny bars) per product row in the forecast hero card
+- [ ] 22.3.2 Add "vs 7d avg" label and trend percentage (e.g., "+24%") per product in forecast hero
+- [ ] 22.3.3 Add contextual subtitle to forecast hero ("Market day — expect X% above average") computed from the average trend across top products
+- [ ] 22.3.4 Add "Use as prep list" button — formats forecast as text list and copies to clipboard
+- [ ] 22.3.5 Add "Share" button — uses Web Share API (`navigator.share`) with forecast text, falls back to clipboard copy on desktop
+
+##### Acceptance Criteria
+- Each product in the forecast hero shows a 7-bar sparkline and trend percentage
+- Forecast hero has a contextual subtitle based on overall trend
+- "Use as prep list" copies a formatted prep list to clipboard with toast confirmation
+- "Share" opens the native share sheet on mobile, copies on desktop
+
+---
+
+#### 22.4 Forecast Detail Enhancements
+
+Upgrade the forecast detail overlay to show the full 14-day chart and prediction breakdown.
+
+##### Tasks
+- [ ] 22.4.1 Pass per-product past-7-day data (from 22.2) into the forecast detail component
+- [ ] 22.4.2 Build the 14-day bar chart — 7 solid ink bars (actual past) + 7 hatched terra bars (forecast) with dashed divider between them
+- [ ] 22.4.3 Show "Why this number" breakdown using prediction factors: 7-day average, weekday multiplier, holiday multiplier, confidence with entry count
+- [ ] 22.4.4 Update prep plan card to show ±buffer suggestion based on variance
+
+##### Acceptance Criteria
+- Chart clearly distinguishes past (solid ink) from forecast (hatched terra)
+- Dashed vertical divider separates past and future
+- Tomorrow's bar is labeled with quantity
+- Breakdown card shows the actual contributing factors from the prediction engine
+- Prep plan suggests a buffer amount
+
+---
+
+#### 22.5 Products Page Analytics
+
+Add per-product statistics to the products page.
+
+##### Tasks
+- [ ] 22.5.1 Expand `GET /api/products` response to include per-product analytics: `avgPerDay` (7-day average), `trend` (week-over-week percentage change)
+- [ ] 22.5.2 Update products client UI to show "avg X unit/day · +Y%" below each product name (matching the design's product card layout)
+- [ ] 22.5.3 Update `useProducts` hook TypeScript type to include analytics fields
+
+##### Acceptance Criteria
+- Each product card shows daily average and trend percentage
+- Trend is color-coded (olive for positive, terra for negative)
+- Products with no sales data show no analytics (graceful empty state)
+
+---
+
+#### 22.6 Weekly Summary Email
+
+Add opt-in weekly email summarizing the past week's sales and next week's forecast.
+
+##### Tasks
+- [ ] 22.6.1 Add `weeklyEmailEnabled` boolean field to Business model (default: false), run Prisma migration
+- [ ] 22.6.2 Add toggle row in settings page for "Weekly summary email" (reads/writes the new field via `PATCH /api/business`)
+- [ ] 22.6.3 Build `buildWeeklySummaryEmail(businessId)` function — queries last week's sales totals, top products, and next week's forecast, returns HTML email
+- [ ] 22.6.4 Create warm editorial HTML email template matching the app's design language
+- [ ] 22.6.5 Build `POST /api/email/weekly-summary` endpoint — generates and sends the weekly email for a given business
+- [ ] 22.6.6 Add Vercel Cron job (`vercel.json` cron config) to trigger weekly emails every Monday at 6:00 AM for businesses with `weeklyEmailEnabled = true`
+
+##### Acceptance Criteria
+- Users can toggle weekly emails on/off in settings
+- Email summarizes last week: total units, top products, week-over-week change
+- Email includes next week's forecast for top products
+- Email uses the warm editorial design (cream bg, terra accents, serif headings)
+- Cron runs weekly and only sends to opted-in businesses
+- Email delivery uses existing Resend infrastructure
+
+---
+
+### Phase 22 Acceptance Criteria (Overall)
+- Dashboard forecast hero matches the design with sparklines, trends, and action buttons
+- Forecast detail shows full 14-day chart with prediction breakdown
+- Products page shows per-product analytics
+- Settings shows holiday region and weekly email toggle
+- Weekly summary emails are delivered to opted-in users
+- All existing functionality remains intact
 
 ---
 
