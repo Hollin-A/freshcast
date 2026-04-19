@@ -884,10 +884,10 @@ Use the expanded API data from 22.2 to match the design mockups.
 Upgrade the forecast detail overlay to show the full 14-day chart and prediction breakdown.
 
 ##### Tasks
-- [ ] 22.4.1 Pass per-product past-7-day data (from 22.2) into the forecast detail component
-- [ ] 22.4.2 Build the 14-day bar chart — 7 solid ink bars (actual past) + 7 hatched terra bars (forecast) with dashed divider between them
-- [ ] 22.4.3 Show "Why this number" breakdown using prediction factors: 7-day average, weekday multiplier, holiday multiplier, confidence with entry count
-- [ ] 22.4.4 Update prep plan card to show ±buffer suggestion based on variance
+- [x] 22.4.1 Pass per-product past-7-day data (from 22.2) into the forecast detail component
+- [x] 22.4.2 Build the 14-day bar chart — 7 solid ink bars (actual past) + 7 hatched terra bars (forecast) with dashed divider between them
+- [x] 22.4.3 Show "Why this number" breakdown using prediction factors: 7-day average, weekday multiplier, holiday multiplier, confidence with entry count
+- [x] 22.4.4 Update prep plan card to show ±buffer suggestion based on variance
 
 ##### Acceptance Criteria
 - Chart clearly distinguishes past (solid ink) from forecast (hatched terra)

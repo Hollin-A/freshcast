@@ -87,6 +87,9 @@ export function DashboardClient() {
             confidence={pred.confidence}
             forecastDate={data.forecast.forecastDate}
             weeklyData={weeklyProduct}
+            pastWeek={pred.pastWeek}
+            breakdown={pred.breakdown}
+            dataPoints={data.forecast.dataPoints}
             onClose={() => setSelectedProduct(null)}
           />
         );
