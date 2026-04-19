@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +13,13 @@ export function SalesHistoryClient() {
   const tc = useTranslations("common");
   const { data, isLoading } = useSalesList();
   const deleteMutation = useDeleteSales();
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   async function handleDelete(id: string) {
-    if (!confirm(t("deleteConfirm"))) return;
     try {
       await deleteMutation.mutateAsync(id);
       toast.success(t("deleted"));
+      setConfirmingId(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : tc("error"));
     }
@@ -91,13 +93,31 @@ export function SalesHistoryClient() {
                           {entry.inputMethod === "NATURAL_LANGUAGE" ? "Typed" : "Tapped"}
                         </Badge>
                       </div>
-                      <button
-                        onClick={() => handleDelete(entry.id)}
-                        disabled={deleteMutation.isPending}
-                        className="text-[13px] text-muted-warm"
-                      >
-                        •••
-                      </button>
+                      {confirmingId === entry.id ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="xs"
+                            variant="destructive"
+                            onClick={() => handleDelete(entry.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            {deleteMutation.isPending ? "..." : "Delete"}
+                          </Button>
+                          <button
+                            onClick={() => setConfirmingId(null)}
+                            className="text-xs font-semibold text-muted-warm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmingId(entry.id)}
+                          className="text-[13px] text-muted-warm"
+                        >
+                          •••
+                        </button>
+                      )}
                     </div>
                     {entry.rawInput && (
                       <div className="mb-3 rounded-r-lg border-l-2 border-clay bg-clay/8 py-2.5 pl-3 pr-3">

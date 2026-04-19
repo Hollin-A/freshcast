@@ -65,7 +65,18 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers locale={locale} messages={messages as Record<string, unknown>}>
           {children}
-          <Toaster position="top-center" richColors />
+          <Toaster
+            position="top-center"
+            richColors
+            toastOptions={{
+              style: {
+                background: "#FAF6EC",
+                border: "1px solid #E4D9C1",
+                color: "#1E1A14",
+                fontFamily: "var(--font-sans), ui-sans-serif, system-ui, sans-serif",
+              },
+            }}
+          />
         </Providers>
         <ServiceWorkerRegister />
       </body>
