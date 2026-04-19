@@ -716,11 +716,11 @@ All previous phases complete. No API or data model changes required.
 #### 21.3 Auth Screens
 
 ##### Tasks
-- [ ] 21.3.1 Build `AuthShell` layout — logo top-left, decorative gradient background, large serif title, subtitle, footer links
-- [ ] 21.3.2 Restyle login page — "Welcome back." serif heading, warm input fields, terracotta CTA
-- [ ] 21.3.3 Restyle signup page — "Stock smarter, starting tomorrow." heading, privacy note footer
-- [ ] 21.3.4 Restyle reset password page — clean single-field layout with back link
-- [ ] 21.3.5 Update auth layout background from white to cream with subtle radial gradients
+- [x] 21.3.1 Build `AuthShell` layout — logo top-left, decorative gradient background, large serif title, subtitle, footer links
+- [x] 21.3.2 Restyle login page — "Welcome back." serif heading, warm input fields, terracotta CTA
+- [x] 21.3.3 Restyle signup page — "Stock smarter, starting tomorrow." heading, privacy note footer
+- [x] 21.3.4 Restyle reset password page — clean single-field layout with back link
+- [x] 21.3.5 Update auth layout background from white to cream with subtle radial gradients
 
 ##### Acceptance Criteria
 - Auth pages have editorial feel with serif headings

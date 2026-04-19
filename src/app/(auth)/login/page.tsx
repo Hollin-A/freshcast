@@ -13,9 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
+import { AuthShell } from "@/components/shared/auth-shell";
 
 const loginSchema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -55,37 +53,38 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("loginTitle")}</CardTitle>
-        <CardDescription>{t("loginDesc")}</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
-            <Input id="email" type="email" placeholder={t("emailPlaceholder")} autoComplete="email" {...register("email")} />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">{t("password")}</Label>
-            <PasswordInput id="password" placeholder={t("passwordPlaceholder")} autoComplete="current-password" {...register("password")} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-          </div>
-        </CardContent>
-        <CardContent className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+    <AuthShell
+      title={<>Welcome<br />back.</>}
+      subtitle={t("loginDesc")}
+      footer={
+        <span>
+          {t("noAccount")}{" "}
+          <Link href="/signup" className="font-semibold text-terra">{t("signup")}</Link>
+        </span>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("email")}</Label>
+          <Input id="email" type="email" placeholder={t("emailPlaceholder")} autoComplete="email" {...register("email")} />
+          {errors.email && <p className="text-sm text-terra">{errors.email.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">{t("password")}</Label>
+          <PasswordInput id="password" placeholder={t("passwordPlaceholder")} autoComplete="current-password" {...register("password")} />
+          {errors.password && <p className="text-sm text-terra">{errors.password.message}</p>}
+        </div>
+        <div className="mt-2">
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
             {isLoading ? t("loggingIn") : t("login")}
           </Button>
-          <Link href="/forgot-password" className="text-sm text-muted-foreground underline text-center">
+        </div>
+        <div className="mt-2 text-center">
+          <Link href="/forgot-password" className="text-sm text-body underline underline-offset-[3px]">
             {t("forgotPassword")}
           </Link>
-          <p className="text-sm text-muted-foreground text-center">
-            {t("noAccount")}{" "}
-            <Link href="/signup" className="text-primary underline">{t("signup")}</Link>
-          </p>
-        </CardContent>
+        </div>
       </form>
-    </Card>
+    </AuthShell>
   );
 }

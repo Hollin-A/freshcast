@@ -9,13 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { AuthShell } from "@/components/shared/auth-shell";
 
 const schema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -51,53 +45,46 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <p className="text-lg font-medium mb-2">Check your email</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            If an account exists with that email, we&apos;ve sent a password reset link.
-          </p>
-          <Link href="/login">
-            <Button variant="outline">Back to login</Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <AuthShell
+        title="Check your email"
+        subtitle="If an account exists with that email, we've sent a password reset link."
+        footer={
+          <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
+        }
+      >
+        <div />
+      </AuthShell>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Reset your password</CardTitle>
-        <CardDescription>
-          Enter your email and we&apos;ll send you a reset link
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
-        </CardContent>
-        <CardContent className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full" disabled={isLoading}>
+    <AuthShell
+      title="Reset password"
+      subtitle="Enter the email you signed up with and we'll send a reset link."
+      footer={
+        <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-sm text-terra">{errors.email.message}</p>
+          )}
+        </div>
+        <div className="mt-2">
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
             {isLoading ? "Sending..." : "Send reset link"}
           </Button>
-          <Link href="/login" className="text-sm text-muted-foreground underline text-center">
-            Back to login
-          </Link>
-        </CardContent>
+        </div>
       </form>
-    </Card>
+    </AuthShell>
   );
 }

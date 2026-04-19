@@ -12,9 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
+import { AuthShell } from "@/components/shared/auth-shell";
 
 const signupSchema = z.object({
   name: z.string().min(1, { error: "Name is required" }),
@@ -64,39 +62,42 @@ export default function SignupPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{t("signupTitle")}</CardTitle>
-        <CardDescription>{t("signupDesc")}</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">{t("name")}</Label>
-            <Input id="name" placeholder={t("namePlaceholder")} autoComplete="name" {...register("name")} />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{t("email")}</Label>
-            <Input id="email" type="email" placeholder={t("emailPlaceholder")} autoComplete="email" {...register("email")} />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">{t("password")}</Label>
-            <PasswordInput id="password" placeholder={t("passwordNewPlaceholder")} autoComplete="new-password" {...register("password")} />
-            {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-          </div>
-        </CardContent>
-        <CardContent className="flex flex-col gap-4 pt-2">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? t("creatingAccount") : t("signup")}
+    <AuthShell
+      title={<>Stock smarter,<br />starting tomorrow.</>}
+      subtitle={t("signupDesc")}
+      footer={
+        <span>
+          {t("hasAccount")}{" "}
+          <Link href="/login" className="font-semibold text-terra">{t("login")}</Link>
+        </span>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+        <div className="space-y-2">
+          <Label htmlFor="name">{t("name")}</Label>
+          <Input id="name" placeholder={t("namePlaceholder")} autoComplete="name" {...register("name")} />
+          {errors.name && <p className="text-sm text-terra">{errors.name.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("email")}</Label>
+          <Input id="email" type="email" placeholder={t("emailPlaceholder")} autoComplete="email" {...register("email")} />
+          {errors.email && <p className="text-sm text-terra">{errors.email.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">{t("password")}</Label>
+          <PasswordInput id="password" placeholder={t("passwordNewPlaceholder")} autoComplete="new-password" {...register("password")} />
+          {errors.password && <p className="text-sm text-terra">{errors.password.message}</p>}
+        </div>
+        <div className="mt-2">
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+            {isLoading ? t("creatingAccount") : <>{t("signup")} →</>}
           </Button>
-          <p className="text-sm text-muted-foreground text-center">
-            {t("hasAccount")}{" "}
-            <Link href="/login" className="text-primary underline">{t("login")}</Link>
-          </p>
-        </CardContent>
+        </div>
+        <p className="mt-1 text-center text-xs leading-relaxed text-muted-warm">
+          By continuing you agree to our Terms.<br />
+          Your data is private — Freshcast only works for your business.
+        </p>
       </form>
-    </Card>
+    </AuthShell>
   );
 }
