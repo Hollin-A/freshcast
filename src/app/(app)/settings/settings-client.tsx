@@ -4,10 +4,38 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+
+function SettingsRow({
+  icon,
+  color,
+  label,
+  detail,
+  last,
+  action,
+}: {
+  icon: string;
+  color: string;
+  label: string;
+  detail?: string;
+  last?: boolean;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className={`flex items-center gap-3 px-3.5 py-3.5 ${last ? "" : "border-b border-line"}`}>
+      <div
+        className="flex h-[30px] w-[30px] items-center justify-center rounded-lg text-sm"
+        style={{ background: color, color: "#FFF8EC" }}
+      >
+        {icon}
+      </div>
+      <span className="flex-1 text-[15px] text-ink">{label}</span>
+      {detail && <span className="text-sm text-muted-warm">{detail}</span>}
+      {action}
+      {!action && <span className="text-mute2">›</span>}
+    </div>
+  );
+}
 
 export function SettingsClient({
   userName,
@@ -34,7 +62,7 @@ export function SettingsClient({
     if (!confirmed) return;
 
     const doubleConfirm = confirm(
-      "This is your last chance. Type OK to confirm you want to delete everything."
+      "This is your last chance. Are you absolutely sure?"
     );
     if (!doubleConfirm) return;
 
@@ -54,104 +82,100 @@ export function SettingsClient({
     }
   }
 
+  const timezoneCity = timezone.split("/").pop()?.replace(/_/g, " ") || timezone;
+  const typeLabel = businessType.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
   return (
     <>
-      <h1 className="text-2xl font-semibold mb-6">Settings</h1>
+      <div className="px-5 pt-14 pb-2">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Settings</p>
+        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-ink">{businessName}</h1>
+      </div>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="text-base">Account</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Name</span>
-            <span>{userName}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Email</span>
-            <span>{userEmail}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Verification</span>
-            {emailVerified ? (
-              <span className="text-sm text-primary">✓ Verified</span>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs"
-                disabled={sendingVerification}
-                onClick={async () => {
-                  setSendingVerification(true);
-                  try {
-                    await fetch("/api/auth/send-verification", { method: "POST" });
-                    toast.success("Verification email sent");
-                  } catch {
-                    toast.error("Failed to send");
-                  } finally {
-                    setSendingVerification(false);
-                  }
-                }}
-              >
-                {sendingVerification ? "Sending..." : "Verify email"}
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Business card */}
+      <div className="mx-4 mb-4 flex items-center gap-3.5 rounded-2xl bg-ink p-4.5 text-cream">
+        <div className="flex h-[50px] w-[50px] items-center justify-center rounded-xl bg-terra font-serif text-[22px] font-semibold">
+          {(userName[0] || "U").toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-lg font-medium">{userName}</p>
+          <p className="text-[13px] text-cream/60">{userEmail} · {typeLabel} · {timezoneCity}</p>
+        </div>
+        {emailVerified && <Badge variant="gold">Verified</Badge>}
+      </div>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle className="text-base">Business</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Name</span>
-            <span>{businessName}</span>
+      {/* Email verification */}
+      {!emailVerified && (
+        <div className="mx-4 mb-4 rounded-2xl border border-harvest/30 bg-harvest/8 p-3.5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-ink">Email not verified</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={sendingVerification}
+              onClick={async () => {
+                setSendingVerification(true);
+                try {
+                  await fetch("/api/auth/send-verification", { method: "POST" });
+                  toast.success("Verification email sent");
+                } catch {
+                  toast.error("Failed to send");
+                } finally {
+                  setSendingVerification(false);
+                }
+              }}
+            >
+              {sendingVerification ? "Sending..." : "Verify email"}
+            </Button>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Type</span>
-            <span>{businessType.replace(/_/g, " ").toLowerCase()}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Timezone</span>
-            <span>{timezone}</span>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      <Card className="mb-4">
-        <CardContent className="py-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            Log out
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Business settings */}
+      <p className="mx-5 mb-2.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-warm">Business</p>
+      <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
+        <SettingsRow icon="🏪" color="#B5553A" label="Business name" detail={businessName} />
+        <SettingsRow icon="🗓" color="#6B7A3A" label="Timezone" detail={timezoneCity} />
+        <SettingsRow icon="🌐" color="#C69840" label="Language" detail="English" last />
+      </div>
 
-      <Separator className="my-6" />
-
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
-          <CardDescription>
-            Permanently delete your account and all associated data
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            className="w-full"
+      {/* Data */}
+      <p className="mx-5 mb-2.5 mt-6 text-[11px] font-bold uppercase tracking-wider text-muted-warm">Data</p>
+      <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
+        <SettingsRow
+          icon="⬇"
+          color="#7A6F5E"
+          label="Export sales as CSV"
+          action={
+            <button
+              onClick={() => window.open("/api/sales/export", "_blank")}
+              className="text-sm font-semibold text-terra"
+            >
+              Export
+            </button>
+          }
+        />
+        <SettingsRow icon="🗑" color="#B5553A" label="Delete all data" last action={
+          <button
             onClick={handleDeleteAccount}
             disabled={isDeleting}
+            className="text-sm font-semibold text-terra"
           >
-            {isDeleting ? "Deleting..." : "Delete my account"}
-          </Button>
-        </CardContent>
-      </Card>
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        } />
+      </div>
+
+      <p className="mx-10 mt-6 text-center font-serif text-[13px] italic leading-relaxed text-muted-warm">
+        Your data is private.<br />Freshcast only works for your business.
+      </p>
+
+      <button
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        className="mx-auto mt-4 block text-center text-[13px] font-semibold text-terra"
+      >
+        Log out
+      </button>
     </>
   );
 }

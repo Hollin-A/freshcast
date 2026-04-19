@@ -5,12 +5,11 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts, useAddProduct, useUpdateProduct } from "@/hooks/use-products";
+
+const ACCENT_COLORS = ["bg-terra", "bg-clay", "bg-harvest", "bg-olive", "bg-plum", "bg-muted-warm"];
 
 export function ProductsClient() {
   const t = useTranslations("products");
@@ -64,48 +63,74 @@ export function ProductsClient() {
     }
   }
 
+  const products = data?.products ?? [];
+
   return (
     <>
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("desc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Input placeholder={t("namePlaceholder")} value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAdd()} className="flex-1" />
-            <Input placeholder={t("unitPlaceholder")} value={newUnit} onChange={(e) => setNewUnit(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAdd()} className="w-24" />
-            <Button onClick={handleAdd} disabled={addProduct.isPending || !newName.trim()}>{t("add")}</Button>
+      <div className="px-5 pt-14 pb-2">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+          Catalog · {products.length} products
+        </p>
+        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-ink">
+          Your products
+        </h1>
+      </div>
+
+      <div className="mx-4 mb-4">
+        <div className="flex gap-2 rounded-xl border border-line bg-paper p-1.5">
+          <div className="flex flex-1 items-center gap-2 px-2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="7" stroke="#7A6F5E" strokeWidth="1.6"/>
+              <path d="M20 20l-4-4" stroke="#7A6F5E" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+            <Input
+              placeholder="Add product or search…"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+              className="flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <Button
+            size="sm"
+            onClick={handleAdd}
+            disabled={addProduct.isPending || !newName.trim()}
+          >
+            Add
+          </Button>
+        </div>
+      </div>
+
       {isLoading ? (
-        <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}</div>
+        <div className="space-y-2.5 px-4">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-2xl" />)}
+        </div>
       ) : (
-        <div className="space-y-2">
-          {data?.products.map((product) => (
-            <Card key={product.id}>
-              <CardContent className="flex items-center gap-3 py-3">
-                {editingId === product.id ? (
-                  <>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="flex-1" />
-                    <Input value={editUnit} onChange={(e) => setEditUnit(e.target.value)} placeholder={t("unitPlaceholder")} className="w-24" />
-                    <Button size="sm" onClick={handleSaveEdit}>{tc("save")}</Button>
-                    <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>✕</Button>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1 font-medium">{product.name}</span>
-                    {product.defaultUnit && <Badge variant="secondary">{product.defaultUnit}</Badge>}
-                    <Button size="sm" variant="ghost" onClick={() => startEdit(product)}>{t("edit")}</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDeactivate(product.id)}>{t("remove")}</Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+        <div className="flex flex-col gap-2.5 px-4">
+          {products.map((product, idx) => (
+            <div key={product.id} className="rounded-2xl border border-line bg-paper p-3.5">
+              {editingId === product.id ? (
+                <div className="flex items-center gap-2">
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="flex-1" />
+                  <Input value={editUnit} onChange={(e) => setEditUnit(e.target.value)} placeholder="unit" className="w-20" />
+                  <Button size="sm" onClick={handleSaveEdit}>{tc("save")}</Button>
+                  <button onClick={() => setEditingId(null)} className="text-lg text-mute2">×</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className={`h-9 w-2 shrink-0 rounded-sm ${ACCENT_COLORS[idx % ACCENT_COLORS.length]}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-medium text-ink">{product.name}</p>
+                  </div>
+                  {product.defaultUnit && <Badge variant="secondary">{product.defaultUnit}</Badge>}
+                  <button onClick={() => startEdit(product)} className="text-xs font-semibold text-muted-warm">Edit</button>
+                  <button onClick={() => handleDeactivate(product.id)} className="text-lg text-mute2">×</button>
+                </div>
+              )}
+            </div>
           ))}
-          {data?.products.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">{t("noProducts")}</p>
+          {products.length === 0 && (
+            <p className="py-8 text-center text-sm text-muted-warm">{t("noProducts")}</p>
           )}
         </div>
       )}

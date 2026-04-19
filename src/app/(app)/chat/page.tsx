@@ -14,8 +14,7 @@ export default async function ChatPage() {
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6 flex flex-col" style={{ height: "calc(100vh - 5rem)" }}>
-      <h1 className="text-xl font-semibold mb-4">Ask Freshcast</h1>
+    <div className="mx-auto flex max-w-md flex-col pb-28" style={{ height: "calc(100vh - 5rem)" }}>
       <ChatClient businessName={business.name} />
     </div>
   );

@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
-    <div className="mx-auto max-w-md px-4 py-8">
+    <div className="mx-auto max-w-md pb-28">
       <SettingsClient
         userName={session.user.name || ""}
         userEmail={session.user.email || ""}

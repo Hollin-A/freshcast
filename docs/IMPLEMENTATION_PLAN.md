@@ -790,10 +790,10 @@ All previous phases complete. No API or data model changes required.
 #### 21.7 Remaining Screens
 
 ##### Tasks
-- [ ] 21.7.1 Restyle sales history — streak strip card, entry cards with raw NL quote (clay left border), method tags (terra for NL, olive for manual), date group headers in serif
-- [ ] 21.7.2 Restyle products page — product cards with colored left bars, search/add bar, suggested products as pills
-- [ ] 21.7.3 Restyle chat page — dark user bubbles, paper bot bubbles with terra tag, suggested prompt pills, terra send button
-- [ ] 21.7.4 Restyle settings page — dark business card header with terra avatar, grouped setting rows with emoji icons, olive toggles
+- [x] 21.7.1 Restyle sales history — streak strip card, entry cards with raw NL quote (clay left border), method tags (terra for NL, olive for manual), date group headers in serif
+- [x] 21.7.2 Restyle products page — product cards with colored left bars, search/add bar, suggested products as pills
+- [x] 21.7.3 Restyle chat page — dark user bubbles, paper bot bubbles with terra tag, suggested prompt pills, terra send button
+- [x] 21.7.4 Restyle settings page — dark business card header with terra avatar, grouped setting rows with emoji icons, olive toggles
 
 ##### Acceptance Criteria
 - History entries show raw NL text in styled quote blocks
