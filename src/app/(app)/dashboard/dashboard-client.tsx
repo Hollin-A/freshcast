@@ -4,13 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -23,9 +16,9 @@ export function DashboardClient() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 px-4">
         {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-32 w-full rounded-lg" />
+          <Skeleton key={i} className="h-32 w-full rounded-2xl" />
         ))}
       </div>
     );
@@ -33,74 +26,70 @@ export function DashboardClient() {
 
   if (!data) return null;
 
-  // State 1: Never logged any sales
   if (!data.hasAnySales) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-lg font-medium mb-2">No sales logged yet</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Log your first sales to see insights here
-          </p>
-          <div className="flex flex-col gap-3 items-center">
-            <Link href="/sales">
-              <Button>Log your first sale</Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={loadingDemo}
-              onClick={async () => {
-                setLoadingDemo(true);
-                try {
-                  const res = await fetch("/api/demo", { method: "POST" });
-                  if (!res.ok) {
-                    const body = await res.json();
-                    toast.error(body.error?.message || "Failed to load demo data");
-                    return;
-                  }
-                  toast.success("Demo data loaded!");
-                  queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-                  queryClient.invalidateQueries({ queryKey: ["sales"] });
-                  queryClient.invalidateQueries({ queryKey: ["products"] });
-                } catch {
-                  toast.error("Something went wrong");
-                } finally {
-                  setLoadingDemo(false);
+      <div className="mx-4 rounded-2xl border border-line bg-paper p-8 text-center">
+        <p className="font-serif text-lg font-medium text-ink">No sales logged yet</p>
+        <p className="mt-1 text-sm text-muted-warm">
+          Log your first sales to see insights here
+        </p>
+        <div className="mt-5 flex flex-col items-center gap-3">
+          <Link href="/sales">
+            <Button size="lg">Log your first sale</Button>
+          </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={loadingDemo}
+            onClick={async () => {
+              setLoadingDemo(true);
+              try {
+                const res = await fetch("/api/demo", { method: "POST" });
+                if (!res.ok) {
+                  const body = await res.json();
+                  toast.error(body.error?.message || "Failed to load demo data");
+                  return;
                 }
-              }}
-            >
-              {loadingDemo ? "Loading demo..." : "Try with demo data"}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Sample data to preview the full dashboard experience
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+                toast.success("Demo data loaded!");
+                queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+                queryClient.invalidateQueries({ queryKey: ["sales"] });
+                queryClient.invalidateQueries({ queryKey: ["products"] });
+              } catch {
+                toast.error("Something went wrong");
+              } finally {
+                setLoadingDemo(false);
+              }
+            }}
+          >
+            {loadingDemo ? "Loading demo..." : "Try with demo data"}
+          </Button>
+          <p className="text-xs text-muted-warm">
+            Sample data to preview the full dashboard experience
+          </p>
+        </div>
+      </div>
     );
   }
 
-  // State 2 & 3: Has historical data (may or may not have today's)
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {data.totalEntries < 30 && (
         <PredictionProgressBar entries={data.totalEntries} />
       )}
       {data.forecast && data.forecast.predictions.length > 0 && (
-        <ForecastCard forecast={data.forecast} />
+        <ForecastHero forecast={data.forecast} />
       )}
       {data.forecast && <SpikeAlertCard forecast={data.forecast} weekProducts={data.topProducts} />}
+      <TodayStatus data={data.todaySummary} />
       {data.weeklyForecast && data.weeklyForecast.length > 0 && (
         <WeeklyForecastCard predictions={data.weeklyForecast} />
       )}
-      <TodaySummaryCard data={data.todaySummary} />
-      <WeekTrendCard data={data.weekSummary} />
+      <WeekStory data={data.weekSummary} />
       {data.topProducts.length > 0 && (
-        <TopProductsCard products={data.topProducts} />
+        <TopProducts products={data.topProducts} />
       )}
       {data.insights.length > 0 && (
-        <InsightsCard insights={data.insights} />
+        <Insights insights={data.insights} />
       )}
     </div>
   );
@@ -108,243 +97,32 @@ export function DashboardClient() {
 
 function PredictionProgressBar({ entries }: { entries: number }) {
   const tiers = [
-    { min: 0, max: 4, label: "Log 5 days to unlock predictions", color: "bg-red-400/60" },
-    { min: 5, max: 14, label: "Basic predictions active", color: "bg-amber-400/60" },
-    { min: 15, max: 29, label: "Predictions improving", color: "bg-primary/50" },
-    { min: 30, max: Infinity, label: "Predictions are reliable", color: "bg-primary" },
+    { min: 0, max: 4, label: "Log 5 days to unlock predictions", color: "bg-terra/40" },
+    { min: 5, max: 14, label: "Basic predictions active", color: "bg-harvest/60" },
+    { min: 15, max: 29, label: "Predictions improving", color: "bg-olive/50" },
+    { min: 30, max: Infinity, label: "Predictions are reliable", color: "bg-olive" },
   ];
 
   const currentTier = tiers.find((t) => entries >= t.min && entries <= t.max) || tiers[0];
   const progress = Math.min((entries / 30) * 100, 100);
 
-  // Tier markers at 5, 15, 30
-  const markers = [
-    { at: (5 / 30) * 100, label: "5" },
-    { at: (15 / 30) * 100, label: "15" },
-    { at: 100, label: "30" },
-  ];
-
   return (
-    <Card>
-      <CardContent className="py-3">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium">{currentTier.label}</span>
-          <span className="text-xs text-muted-foreground">{entries} entries</span>
-        </div>
-        <div className="relative h-2 rounded-full bg-muted">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${currentTier.color}`}
-            style={{ width: `${progress}%` }}
-          />
-          {markers.map((m) => (
-            <div
-              key={m.label}
-              className="absolute top-0 h-full w-px bg-foreground/10"
-              style={{ left: `${m.at}%` }}
-            />
-          ))}
-        </div>
-        <div className="flex justify-between mt-1">
-          {markers.map((m) => (
-            <span
-              key={m.label}
-              className="text-[9px] text-muted-foreground"
-              style={{ marginLeft: m.label === "5" ? `${m.at - 2}%` : undefined }}
-            >
-              {m.label}
-            </span>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="mx-4 rounded-2xl border border-line bg-paper px-4 py-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-semibold text-ink">{currentTier.label}</span>
+        <span className="font-mono text-xs text-muted-warm">{entries} entries</span>
+      </div>
+      <div className="relative h-1.5 rounded-full bg-shell">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${currentTier.color}`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
   );
 }
 
-function TodaySummaryCard({
-  data,
-}: {
-  data: {
-    date: string;
-    totalItems: number;
-    totalQuantity: number;
-    items: { product: string; quantity: number; unit: string | null }[];
-  };
-}) {
-  if (data.totalItems === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Today&apos;s Sales</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            You haven&apos;t logged today&apos;s sales yet.{" "}
-            <Link href="/sales" className="text-primary underline">
-              Log now
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Today&apos;s Sales</CardTitle>
-        <CardDescription>
-          {data.totalItems} product{data.totalItems !== 1 ? "s" : ""} ·{" "}
-          {Math.round(data.totalQuantity)} total units
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1">
-          {data.items.map((item, i) => (
-            <div key={i} className="flex justify-between text-sm">
-              <span>{item.product}</span>
-              <span className="text-muted-foreground">
-                {item.quantity}
-                {item.unit ? ` ${item.unit}` : ""}
-              </span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function WeekTrendCard({
-  data,
-}: {
-  data: {
-    totalQuantity: number;
-    previousWeekQuantity: number;
-    changePercent: number;
-    dailyBreakdown: { date: string; totalQuantity: number }[];
-  };
-}) {
-  const isUp = data.changePercent > 0;
-  const isDown = data.changePercent < 0;
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">This Week</CardTitle>
-        <CardDescription>Last 7 days vs previous week</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-baseline gap-3 mb-3">
-          <span className="text-2xl font-semibold">
-            {data.totalQuantity}
-          </span>
-          <span className="text-sm text-muted-foreground">units</span>
-          {data.previousWeekQuantity > 0 && (
-            <Badge
-              variant={isUp ? "default" : isDown ? "destructive" : "secondary"}
-              className="text-xs"
-            >
-              {isUp ? "↑" : isDown ? "↓" : "→"}{" "}
-              {Math.abs(data.changePercent)}%
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-end gap-1" style={{ height: "4rem" }}>
-          {data.dailyBreakdown.map((day) => {
-            const maxQty = Math.max(
-              ...data.dailyBreakdown.map((d) => d.totalQuantity),
-              1
-            );
-            const barMaxHeight = 48; // px, leaving room for label
-            const barHeight = Math.max(
-              Math.round((day.totalQuantity / maxQty) * barMaxHeight),
-              3
-            );
-            const dayLabel = new Date(day.date).toLocaleDateString("en-US", {
-              weekday: "narrow",
-            });
-            return (
-              <div
-                key={day.date}
-                className="flex flex-1 flex-col items-center justify-end gap-1"
-                style={{ height: "100%" }}
-              >
-                <div
-                  className="w-full rounded-sm bg-primary/30"
-                  style={{ height: `${barHeight}px` }}
-                />
-                <span className="text-[10px] text-muted-foreground">
-                  {dayLabel}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TopProductsCard({
-  products,
-}: {
-  products: {
-    product: string;
-    totalQuantity: number;
-    unit: string | null;
-    rank: number;
-  }[];
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Top Products</CardTitle>
-        <CardDescription>This week by quantity</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {products.map((p) => {
-            const maxQty = products[0]?.totalQuantity || 1;
-            const width = Math.max((p.totalQuantity / maxQty) * 100, 8);
-            return (
-              <div key={p.rank} className="space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span>{p.product}</span>
-                  <span className="text-muted-foreground">
-                    {p.totalQuantity}
-                    {p.unit ? ` ${p.unit}` : ""}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary/60"
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-const CONFIDENCE_LABELS: Record<string, string> = {
-  low: "Low confidence",
-  moderate: "Moderate",
-  good: "Good",
-  high: "High confidence",
-};
-
-function getConfidenceLabel(confidence: number): { label: string; color: string } {
-  if (confidence >= 0.75) return { label: CONFIDENCE_LABELS.high, color: "text-green-600" };
-  if (confidence >= 0.6) return { label: CONFIDENCE_LABELS.good, color: "text-blue-600" };
-  if (confidence >= 0.4) return { label: CONFIDENCE_LABELS.moderate, color: "text-amber-600" };
-  return { label: CONFIDENCE_LABELS.low, color: "text-muted-foreground" };
-}
-
-function ForecastCard({
+function ForecastHero({
   forecast,
 }: {
   forecast: {
@@ -367,156 +145,255 @@ function ForecastCard({
   });
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Tomorrow&apos;s Forecast</CardTitle>
-        <CardDescription>
-          {dateLabel}
+    <div className="mx-4 overflow-hidden rounded-2xl bg-ink p-5 text-cream">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-clay">
+            Prep for tomorrow
+          </p>
+          <p className="mt-1 font-serif text-[22px] font-medium tracking-tight">
+            {dateLabel}
+          </p>
           {forecast.holiday && (
-            <span className="block text-amber-600 mt-1">
+            <p className="mt-0.5 text-[13px] text-cream/60">
               📅 {forecast.holiday.name}
-              {forecast.holiday.type === "closed" && " — expect significantly lower sales"}
-              {forecast.holiday.type === "low" && " — expect reduced traffic"}
-              {forecast.holiday.type === "pre-holiday" && " — customers may stock up"}
-              {forecast.holiday.type === "post-holiday" && " — returning to normal"}
-            </span>
+            </p>
           )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {forecast.predictions.slice(0, 5).map((p, i) => {
-            const conf = getConfidenceLabel(p.confidence);
-            return (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span>{p.product}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    ~{p.predictedQuantity}
-                    {p.unit ? ` ${p.unit}` : ""}
-                  </span>
-                  <span className={`text-xs ${conf.color}`}>{conf.label}</span>
-                </div>
-              </div>
-            );
-          })}
         </div>
-      </CardContent>
-    </Card>
+        {forecast.holiday && (
+          <Badge variant="gold" className="shrink-0">
+            {forecast.holiday.type === "pre-holiday" ? "High day" : forecast.holiday.type}
+          </Badge>
+        )}
+      </div>
+      <div className="my-5 h-px bg-cream/12" />
+      <div className="flex flex-col gap-3.5">
+        {forecast.predictions.slice(0, 5).map((p, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium text-cream">{p.product}</p>
+              <p className="font-mono text-[10.5px] text-cream/50 tracking-wide">
+                {Math.round(p.confidence * 100)}% confident
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="font-serif text-2xl font-medium tracking-tight text-clay">
+                {p.predictedQuantity}
+              </span>
+              <span className="ml-1 text-[11px] text-cream/60">
+                {p.unit || "units"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
-function InsightsCard({
+function TodayStatus({
+  data,
+}: {
+  data: {
+    date: string;
+    totalItems: number;
+    totalQuantity: number;
+    items: { product: string; quantity: number; unit: string | null }[];
+  };
+}) {
+  const dayLabel = new Date(data.date).toLocaleDateString("en-US", { weekday: "long" });
+
+  if (data.totalItems === 0) {
+    return (
+      <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+              Today · {dayLabel}
+            </p>
+            <p className="mt-1 font-serif text-lg font-medium text-ink">
+              You haven&apos;t logged yet
+            </p>
+            <p className="mt-0.5 text-[13px] text-muted-warm">
+              30 seconds to keep your forecast sharp.
+            </p>
+          </div>
+          <Link href="/sales">
+            <Button size="sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"/>
+              </svg>
+              Log
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        Today · {dayLabel}
+      </p>
+      <p className="mt-1 font-serif text-lg font-medium text-ink">
+        {data.totalItems} product{data.totalItems !== 1 ? "s" : ""} · {Math.round(data.totalQuantity)} units
+      </p>
+      <div className="mt-3 flex flex-col gap-1">
+        {data.items.map((item, i) => (
+          <div key={i} className="flex justify-between text-sm">
+            <span className="text-ink">{item.product}</span>
+            <span className="font-mono text-xs font-semibold text-body">
+              {item.quantity} <span className="text-mute2">{item.unit || ""}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeekStory({
+  data,
+}: {
+  data: {
+    totalQuantity: number;
+    previousWeekQuantity: number;
+    changePercent: number;
+    dailyBreakdown: { date: string; totalQuantity: number }[];
+  };
+}) {
+  const isUp = data.changePercent > 0;
+  const maxQty = Math.max(...data.dailyBreakdown.map((d) => d.totalQuantity), 1);
+  const peakIdx = data.dailyBreakdown.reduce(
+    (best, d, i) => (d.totalQuantity > (data.dailyBreakdown[best]?.totalQuantity ?? 0) ? i : best),
+    0
+  );
+  const peakDay = data.dailyBreakdown[peakIdx];
+  const peakDayName = peakDay
+    ? new Date(peakDay.date).toLocaleDateString("en-US", { weekday: "long" })
+    : "";
+
+  return (
+    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+            This week&apos;s rhythm
+          </p>
+          {peakDayName && (
+            <p className="mt-1.5 font-serif text-[22px] font-medium leading-tight tracking-tight text-ink">
+              {peakDayName} is your<br />biggest day.
+            </p>
+          )}
+        </div>
+        {data.previousWeekQuantity > 0 && (
+          <Badge variant={isUp ? "olive" : "default"}>
+            {isUp ? "↑" : "↓"} {Math.abs(data.changePercent)}%
+          </Badge>
+        )}
+      </div>
+      <div className="mt-4 grid grid-cols-7 items-end gap-1" style={{ height: 90 }}>
+        {data.dailyBreakdown.map((day, i) => {
+          const pct = maxQty > 0 ? (day.totalQuantity / maxQty) * 100 : 0;
+          const isPeak = i === peakIdx;
+          return (
+            <div key={day.date} className="flex h-full flex-col items-center justify-end">
+              <div
+                className={`w-full rounded-t ${isPeak ? "bg-terra" : "bg-shell"}`}
+                style={{ height: `${Math.max(pct, 3)}%` }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-1.5 grid grid-cols-7 gap-1">
+        {data.dailyBreakdown.map((day, i) => {
+          const label = new Date(day.date).toLocaleDateString("en-US", { weekday: "narrow" });
+          const isPeak = i === peakIdx;
+          return (
+            <span
+              key={day.date}
+              className={`text-center font-mono text-[10px] font-semibold ${isPeak ? "text-terra" : "text-mute2"}`}
+            >
+              {label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const BAR_COLORS = ["bg-terra", "bg-clay", "bg-harvest", "bg-olive", "bg-plum"];
+
+function TopProducts({
+  products,
+}: {
+  products: {
+    product: string;
+    totalQuantity: number;
+    unit: string | null;
+    rank: number;
+  }[];
+}) {
+  const maxQty = products[0]?.totalQuantity || 1;
+
+  return (
+    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        Top this week
+      </p>
+      <div className="mt-3.5 flex flex-col gap-3">
+        {products.map((p, idx) => {
+          const width = Math.max((p.totalQuantity / maxQty) * 100, 8);
+          return (
+            <div key={p.rank}>
+              <div className="mb-1 flex justify-between text-sm">
+                <span className="font-medium text-ink">{p.product}</span>
+                <span className="font-mono text-xs font-semibold text-body">
+                  {p.totalQuantity} <span className="text-mute2">{p.unit || ""}</span>
+                </span>
+              </div>
+              <div className="h-1 rounded-full bg-shell">
+                <div
+                  className={`h-full rounded-full ${BAR_COLORS[idx % BAR_COLORS.length]}`}
+                  style={{ width: `${width}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Insights({
   insights,
 }: {
   insights: { type: string; content: string }[];
 }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Insights</CardTitle>
-        <CardDescription>Auto-generated from your data</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {insights.map((insight, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm">
-              <span className="mt-0.5 text-primary">•</span>
-              <span>{insight.content}</span>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function WeeklyForecastCard({
-  predictions,
-}: {
-  predictions: {
-    product: string;
-    unit: string | null;
-    daily: { date: string; dayOfWeek: string; predictedQuantity: number }[];
-  }[];
-}) {
-  // Find the strongest day across all products
-  const dayTotals = new Map<string, number>();
-  for (const p of predictions) {
-    for (const d of p.daily) {
-      dayTotals.set(d.dayOfWeek, (dayTotals.get(d.dayOfWeek) ?? 0) + d.predictedQuantity);
-    }
-  }
-  let strongestDay = "";
-  let strongestQty = 0;
-  for (const [day, qty] of dayTotals) {
-    if (qty > strongestQty) {
-      strongestDay = day;
-      strongestQty = qty;
-    }
-  }
-
-  // Show top 3 products
-  const topProducts = predictions
-    .map((p) => ({
-      ...p,
-      weekTotal: p.daily.reduce((s, d) => s + d.predictedQuantity, 0),
-    }))
-    .sort((a, b) => b.weekTotal - a.weekTotal)
-    .slice(0, 3);
+  const ACCENT_COLORS = ["bg-olive", "bg-terra", "bg-harvest"];
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Next Week</CardTitle>
-        <CardDescription>
-          {strongestDay && `${strongestDay} looks like your strongest day`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {topProducts.map((product) => (
-            <div key={product.product}>
-              <p className="text-sm font-medium mb-1">
-                {product.product}
-                {product.unit && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    ({product.unit})
-                  </span>
-                )}
+    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        What Freshcast noticed
+      </p>
+      <div className="mt-3 flex flex-col gap-3.5">
+        {insights.map((insight, i) => (
+          <div key={i} className="flex gap-3">
+            <div className={`w-[3px] shrink-0 rounded-full ${ACCENT_COLORS[i % ACCENT_COLORS.length]}`} />
+            <div>
+              <p className="font-serif text-base font-medium tracking-tight text-ink">
+                {insight.content}
               </p>
-              <div className="flex gap-1">
-                {product.daily.map((day) => {
-                  const maxQty = Math.max(...product.daily.map((d) => d.predictedQuantity), 1);
-                  const barHeight = Math.max(
-                    Math.round((day.predictedQuantity / maxQty) * 32),
-                    3
-                  );
-                  return (
-                    <div
-                      key={day.date}
-                      className="flex flex-1 flex-col items-center justify-end gap-0.5"
-                      style={{ height: "44px" }}
-                    >
-                      <span className="text-[9px] text-muted-foreground">
-                        {day.predictedQuantity}
-                      </span>
-                      <div
-                        className="w-full rounded-sm bg-primary/25"
-                        style={{ height: `${barHeight}px` }}
-                      />
-                      <span className="text-[9px] text-muted-foreground">
-                        {day.dayOfWeek.slice(0, 2)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -533,7 +410,6 @@ function SpikeAlertCard({
   };
   weekProducts: { product: string; totalQuantity: number }[];
 }) {
-  // Find products where tomorrow's prediction is >30% above weekly daily average
   const spikes: { product: string; predicted: number; average: number; unit: string | null }[] = [];
 
   for (const pred of forecast.predictions) {
@@ -553,18 +429,103 @@ function SpikeAlertCard({
   if (spikes.length === 0) return null;
 
   return (
-    <Card className="border-amber-300/50 bg-amber-50/30">
-      <CardContent className="py-3">
-        <div className="space-y-1">
-          {spikes.map((spike, i) => (
-            <p key={i} className="text-sm">
-              📈 Looks like tomorrow could be a strong day for{" "}
-              <span className="font-medium">{spike.product}</span> — predicted{" "}
-              ~{spike.predicted}{spike.unit ? ` ${spike.unit}` : ""} vs your daily average of ~{spike.average}
-            </p>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="mx-4 rounded-2xl border border-harvest/30 bg-harvest/8 p-4">
+      <div className="flex flex-col gap-1">
+        {spikes.map((spike, i) => (
+          <p key={i} className="text-sm text-ink">
+            📈 Strong day ahead for{" "}
+            <span className="font-semibold">{spike.product}</span> — ~{spike.predicted}
+            {spike.unit ? ` ${spike.unit}` : ""} vs avg ~{spike.average}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WeeklyForecastCard({
+  predictions,
+}: {
+  predictions: {
+    product: string;
+    unit: string | null;
+    daily: { date: string; dayOfWeek: string; predictedQuantity: number }[];
+  }[];
+}) {
+  const dayTotals = new Map<string, number>();
+  for (const p of predictions) {
+    for (const d of p.daily) {
+      dayTotals.set(d.dayOfWeek, (dayTotals.get(d.dayOfWeek) ?? 0) + d.predictedQuantity);
+    }
+  }
+  let strongestDay = "";
+  let strongestQty = 0;
+  for (const [day, qty] of dayTotals) {
+    if (qty > strongestQty) {
+      strongestDay = day;
+      strongestQty = qty;
+    }
+  }
+
+  const topProducts = predictions
+    .map((p) => ({
+      ...p,
+      weekTotal: p.daily.reduce((s, d) => s + d.predictedQuantity, 0),
+    }))
+    .sort((a, b) => b.weekTotal - a.weekTotal)
+    .slice(0, 3);
+
+  return (
+    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        Next week
+      </p>
+      {strongestDay && (
+        <p className="mt-1 font-serif text-base font-medium text-ink">
+          {strongestDay} looks strongest
+        </p>
+      )}
+      <div className="mt-3 flex flex-col gap-3">
+        {topProducts.map((product) => {
+          const maxQty = Math.max(...product.daily.map((d) => d.predictedQuantity), 1);
+          return (
+            <div key={product.product}>
+              <p className="mb-1 text-sm font-medium text-ink">
+                {product.product}
+                {product.unit && (
+                  <span className="ml-1 text-xs text-muted-warm">({product.unit})</span>
+                )}
+              </p>
+              <div className="flex gap-1">
+                {product.daily.map((day) => {
+                  const barHeight = Math.max(
+                    Math.round((day.predictedQuantity / maxQty) * 32),
+                    3
+                  );
+                  return (
+                    <div
+                      key={day.date}
+                      className="flex flex-1 flex-col items-center justify-end gap-0.5"
+                      style={{ height: 44 }}
+                    >
+                      <span className="font-mono text-[9px] text-mute2">
+                        {day.predictedQuantity}
+                      </span>
+                      <div
+                        className="w-full rounded-sm bg-terra/25"
+                        style={{ height: barHeight }}
+                      />
+                      <span className="font-mono text-[9px] text-mute2">
+                        {day.dayOfWeek.slice(0, 2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

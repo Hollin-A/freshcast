@@ -750,14 +750,14 @@ All previous phases complete. No API or data model changes required.
 #### 21.5 Home / Dashboard
 
 ##### Tasks
-- [ ] 21.5.1 Restyle top bar — greeting + business name in serif, avatar circle
-- [ ] 21.5.2 Build forecast hero card — dark background (`#1E1A14`), clay accents, product rows with mini sparklines, "Use as prep list" CTA
-- [ ] 21.5.3 Restyle today status card — "You haven't logged yet" prompt with terra Log button
-- [ ] 21.5.4 Build week rhythm card — bar chart with terra peak highlight, serif headline ("Friday is your biggest day again"), olive trend tag
-- [ ] 21.5.5 Restyle top products card — horizontal progress bars (terra/clay/harvest gradient), mono quantities
-- [ ] 21.5.6 Restyle insights card — colored left-border accents (olive/terra/harvest), serif headlines, "What Freshcast noticed" header
-- [ ] 21.5.7 Restyle prediction progress bar with warm palette
-- [ ] 21.5.8 Restyle spike alert card with warm palette
+- [x] 21.5.1 Restyle top bar — greeting + business name in serif, avatar circle
+- [x] 21.5.2 Build forecast hero card — dark background (`#1E1A14`), clay accents, product rows with mini sparklines, "Use as prep list" CTA
+- [x] 21.5.3 Restyle today status card — "You haven't logged yet" prompt with terra Log button
+- [x] 21.5.4 Build week rhythm card — bar chart with terra peak highlight, serif headline ("Friday is your biggest day again"), olive trend tag
+- [x] 21.5.5 Restyle top products card — horizontal progress bars (terra/clay/harvest gradient), mono quantities
+- [x] 21.5.6 Restyle insights card — colored left-border accents (olive/terra/harvest), serif headlines, "What Freshcast noticed" header
+- [x] 21.5.7 Restyle prediction progress bar with warm palette
+- [x] 21.5.8 Restyle spike alert card with warm palette
 
 ##### Acceptance Criteria
 - Forecast hero is the dominant card with dark background

@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DashboardClient } from "./dashboard-client";
-import { SettingsLink } from "./logout-button";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -16,20 +15,24 @@ export default async function DashboardPage() {
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6">
-      <div className="mb-6 flex items-start justify-between">
+    <div className="mx-auto max-w-md pb-28">
+      <div className="flex items-center justify-between px-5 pt-14 pb-4">
         <div>
-          <h1 className="text-2xl font-semibold">{business.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            Welcome back, {session.user.name || "there"}
+          <p className="text-xs font-semibold tracking-wide text-muted-warm">
+            Good evening, {session.user.name || "there"}
           </p>
+          <h1 className="mt-0.5 font-serif text-[26px] font-medium tracking-tight text-ink">
+            {business.name}
+          </h1>
         </div>
-        <SettingsLink />
+        <a
+          href="/settings"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper font-serif text-base font-semibold text-ink"
+        >
+          {(session.user.name?.[0] || "U").toUpperCase()}
+        </a>
       </div>
       <DashboardClient />
-      <p className="text-center text-xs text-muted-foreground mt-8 mb-4">
-        Your data is private. Freshcast works only for your business.
-      </p>
     </div>
   );
 }
