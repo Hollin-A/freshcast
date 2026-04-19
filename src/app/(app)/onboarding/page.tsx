@@ -20,8 +20,8 @@ export default async function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen flex-col bg-cream">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <OnboardingWizard />
       </div>
     </div>

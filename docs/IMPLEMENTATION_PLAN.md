@@ -734,10 +734,10 @@ All previous phases complete. No API or data model changes required.
 #### 21.4 Onboarding Screens
 
 ##### Tasks
-- [ ] 21.4.1 Build onboarding shell — step counter, progress dots (terra fill), back/skip navigation
-- [ ] 21.4.2 Restyle Step 1 (business name + type) — serif heading, business type tile grid with emoji icons, ink selected state
-- [ ] 21.4.3 Restyle Step 2 (starter products) — product rows with unit tags, dashed add button, suggested products as pills
-- [ ] 21.4.4 Restyle Step 3 (you're set) — numbered steps card with terra circles, "Log my first sale" CTA
+- [x] 21.4.1 Build onboarding shell — step counter, progress dots (terra fill), back/skip navigation
+- [x] 21.4.2 Restyle Step 1 (business name + type) — serif heading, business type tile grid with emoji icons, ink selected state
+- [x] 21.4.3 Restyle Step 2 (starter products) — product rows with unit tags, dashed add button, suggested products as pills
+- [x] 21.4.4 Restyle Step 3 (you're set) — numbered steps card with terra circles, "Log my first sale" CTA
 
 ##### Acceptance Criteria
 - Progress dots fill with terra as steps complete
