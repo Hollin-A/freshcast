@@ -672,16 +672,16 @@ All previous phases complete. No API or data model changes required.
 #### 21.1 Design Tokens & Global Theme
 
 ##### Tasks
-- [ ] 21.1.1 Add Fraunces (serif) and JetBrains Mono fonts to `layout.tsx` via `next/font/google`
-- [ ] 21.1.2 Replace CSS custom properties in `globals.css` with the warm editorial palette:
+- [x] 21.1.1 Add Fraunces (serif) and JetBrains Mono fonts to `layout.tsx` via `next/font/google`
+- [x] 21.1.2 Replace CSS custom properties in `globals.css` with the warm editorial palette:
   - Backgrounds: cream `#F5EFE3`, paper `#FAF6EC`, shell `#EFE6D4`
   - Ink: `#1E1A14`, body `#3B342A`, muted `#7A6F5E`
   - Accents: terra `#B5553A`, olive `#6B7A3A`, harvest `#C69840`, clay `#D48A5E`, plum `#6E3A4A`, sage `#C7CDA8`
   - Semantic: good (olive), warn (harvest), bad (terra)
-- [ ] 21.1.3 Update Tailwind theme to expose new color tokens (terra, olive, harvest, clay, plum, sage, cream, paper, shell, ink)
-- [ ] 21.1.4 Add `--font-serif` CSS variable and Tailwind `font-serif` utility
-- [ ] 21.1.5 Update `themeColor` in viewport metadata from `#2a9d8f` to `#F5EFE3`
-- [ ] 21.1.6 Update PWA manifest theme/background colors
+- [x] 21.1.3 Update Tailwind theme to expose new color tokens (terra, olive, harvest, clay, plum, sage, cream, paper, shell, ink)
+- [x] 21.1.4 Add `--font-serif` CSS variable and Tailwind `font-serif` utility
+- [x] 21.1.5 Update `themeColor` in viewport metadata from `#2a9d8f` to `#F5EFE3`
+- [x] 21.1.6 Update PWA manifest theme/background colors
 
 ##### Acceptance Criteria
 - App background is cream, cards are paper-white

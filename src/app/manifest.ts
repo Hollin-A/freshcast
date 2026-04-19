@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "AI-powered sales tracking and demand prediction for small businesses",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#f9f6f2",
-    theme_color: "#2a9d8f",
+    background_color: "#F5EFE3",
+    theme_color: "#B5553A",
     icons: [
       {
         src: "/apple-touch-icon.png",
