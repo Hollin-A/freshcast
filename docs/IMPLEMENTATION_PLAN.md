@@ -298,6 +298,7 @@ Phase 7 complete.
 | 8 | MVP Completion | Password reset, weekly predictions, entry deletion, i18n |
 | 9 | Security & Correctness | Critical bug fixes, data integrity, validation |
 | 10 | UX Polish | Manual mode improvements, demo data, product list refresh |
+| 21 | Editorial Rebrand | Warm editorial visual refresh across all screens |
 
 ---
 
@@ -520,6 +521,7 @@ Security and reliability improvements for real-world usage.
 | 18 | Prediction Data Progress | ✅ Complete |
 | 19 | NL Parser Improvements | ✅ Complete |
 | 20 | Holiday-Aware Predictions | ✅ Complete |
+| 21 | Editorial Rebrand | 🔲 Not started |
 
 ---
 
@@ -649,6 +651,180 @@ Adjust demand predictions based on public holidays for the business's region.
 - Forecast card shows a holiday label when applicable
 - Region is configurable per business (defaults to AU-VIC)
 - Holiday data is a simple data file, easy to add new regions
+
+---
+
+## Phase 21: Editorial Rebrand
+Branch: `feat/rebrand-editorial`
+
+### Goal
+Replace the current teal/Geist theme with a warm editorial design language — cream backgrounds, terracotta accents, Fraunces serif headings, and earthy tones. Pure UI refresh, no business logic changes.
+
+### Reference
+Design source: `docs/rebranding/` (exported from Claude Design)
+ADR: [016-editorial-rebrand](./adr/016-editorial-rebrand.md)
+
+### Dependencies
+All previous phases complete. No API or data model changes required.
+
+---
+
+#### 21.1 Design Tokens & Global Theme
+
+##### Tasks
+- [ ] 21.1.1 Add Fraunces (serif) and JetBrains Mono fonts to `layout.tsx` via `next/font/google`
+- [ ] 21.1.2 Replace CSS custom properties in `globals.css` with the warm editorial palette:
+  - Backgrounds: cream `#F5EFE3`, paper `#FAF6EC`, shell `#EFE6D4`
+  - Ink: `#1E1A14`, body `#3B342A`, muted `#7A6F5E`
+  - Accents: terra `#B5553A`, olive `#6B7A3A`, harvest `#C69840`, clay `#D48A5E`, plum `#6E3A4A`, sage `#C7CDA8`
+  - Semantic: good (olive), warn (harvest), bad (terra)
+- [ ] 21.1.3 Update Tailwind theme to expose new color tokens (terra, olive, harvest, clay, plum, sage, cream, paper, shell, ink)
+- [ ] 21.1.4 Add `--font-serif` CSS variable and Tailwind `font-serif` utility
+- [ ] 21.1.5 Update `themeColor` in viewport metadata from `#2a9d8f` to `#F5EFE3`
+- [ ] 21.1.6 Update PWA manifest theme/background colors
+
+##### Acceptance Criteria
+- App background is cream, cards are paper-white
+- Serif font (Fraunces) loads and is available via `font-serif` class
+- Monospace font (JetBrains Mono) replaces Geist Mono
+- All existing shadcn components pick up new colors via CSS variables
+- No visual regressions in component rendering
+
+---
+
+#### 21.2 Shared UI Primitives
+
+##### Tasks
+- [ ] 21.2.1 Restyle `button.tsx` — terracotta primary (pill shape, `rounded-full`), shell secondary, ghost, dark variants
+- [ ] 21.2.2 Restyle `card.tsx` — paper background, warm border (`#E4D9C1`), `rounded-2xl` (18px)
+- [ ] 21.2.3 Restyle `input.tsx` and `password-input.tsx` — paper bg, terra focus ring, uppercase labels
+- [ ] 21.2.4 Restyle `badge.tsx` — pill tags with tone variants (terra, olive, gold, plum, muted, ink)
+- [ ] 21.2.5 Restyle `tabs.tsx` — shell background toggle with paper active state
+- [ ] 21.2.6 Update `mobile-nav.tsx` — 5-tab bar (Today, Log, History, Ask, More), terra active state, frosted glass backdrop
+- [ ] 21.2.7 Add section label component (uppercase, small, muted, with optional trailing action)
+- [ ] 21.2.8 Add big number component (serif font, large size, with optional unit and trend)
+
+##### Acceptance Criteria
+- Buttons are pill-shaped with terracotta primary
+- Cards have warm paper background and subtle borders
+- Inputs have terra focus ring with uppercase labels
+- Tab bar has 5 items with correct active states
+- All primitives match the design file proportions and colors
+
+---
+
+#### 21.3 Auth Screens
+
+##### Tasks
+- [ ] 21.3.1 Build `AuthShell` layout — logo top-left, decorative gradient background, large serif title, subtitle, footer links
+- [ ] 21.3.2 Restyle login page — "Welcome back." serif heading, warm input fields, terracotta CTA
+- [ ] 21.3.3 Restyle signup page — "Stock smarter, starting tomorrow." heading, privacy note footer
+- [ ] 21.3.4 Restyle reset password page — clean single-field layout with back link
+- [ ] 21.3.5 Update auth layout background from white to cream with subtle radial gradients
+
+##### Acceptance Criteria
+- Auth pages have editorial feel with serif headings
+- Terracotta primary button on all auth forms
+- Logo (sprout mark + wordmark) visible at top
+- Decorative background gradients (subtle terra + olive)
+- Footer links styled consistently
+
+---
+
+#### 21.4 Onboarding Screens
+
+##### Tasks
+- [ ] 21.4.1 Build onboarding shell — step counter, progress dots (terra fill), back/skip navigation
+- [ ] 21.4.2 Restyle Step 1 (business name + type) — serif heading, business type tile grid with emoji icons, ink selected state
+- [ ] 21.4.3 Restyle Step 2 (starter products) — product rows with unit tags, dashed add button, suggested products as pills
+- [ ] 21.4.4 Restyle Step 3 (you're set) — numbered steps card with terra circles, "Log my first sale" CTA
+
+##### Acceptance Criteria
+- Progress dots fill with terra as steps complete
+- Business type tiles use emoji icons with ink background when selected
+- Product list has removable items with unit tags
+- Final step shows clear "what happens next" guidance
+
+---
+
+#### 21.5 Home / Dashboard
+
+##### Tasks
+- [ ] 21.5.1 Restyle top bar — greeting + business name in serif, avatar circle
+- [ ] 21.5.2 Build forecast hero card — dark background (`#1E1A14`), clay accents, product rows with mini sparklines, "Use as prep list" CTA
+- [ ] 21.5.3 Restyle today status card — "You haven't logged yet" prompt with terra Log button
+- [ ] 21.5.4 Build week rhythm card — bar chart with terra peak highlight, serif headline ("Friday is your biggest day again"), olive trend tag
+- [ ] 21.5.5 Restyle top products card — horizontal progress bars (terra/clay/harvest gradient), mono quantities
+- [ ] 21.5.6 Restyle insights card — colored left-border accents (olive/terra/harvest), serif headlines, "What Freshcast noticed" header
+- [ ] 21.5.7 Restyle prediction progress bar with warm palette
+- [ ] 21.5.8 Restyle spike alert card with warm palette
+
+##### Acceptance Criteria
+- Forecast hero is the dominant card with dark background
+- Week chart highlights peak day in terra
+- Top products show colored progress bars
+- Insights have colored left borders matching their tone
+- Overall dashboard feels warm and editorial
+
+---
+
+#### 21.6 Log Sales Screens
+
+##### Tasks
+- [ ] 21.6.1 Restyle NL input — terra-bordered bubble, highlighted parsed entities (olive for matched, gold for new), bottom input dock with voice mic button
+- [ ] 21.6.2 Build parsed preview section — green dot indicator, "Freshcast understood" header, parsed item rows with checkmark/plus icons
+- [ ] 21.6.3 Add recent logs chips section (italic serif, paper background)
+- [ ] 21.6.4 Restyle manual mode — product rows with +/- steppers (terra plus, shell minus), running total card
+- [ ] 21.6.5 Restyle review screen — quoted raw input with clay left border, parsed items list, olive "once saved" confirmation card
+- [ ] 21.6.6 Restyle log tabs — shell background toggle (matches design tab component)
+
+##### Acceptance Criteria
+- NL input has terra border with entity highlighting
+- Parsed items show matched (checkmark) vs new (plus) status
+- Manual mode has clean stepper rows with running total
+- Review screen shows original text and parsed breakdown
+- Both modes accessible via tab toggle
+
+---
+
+#### 21.7 Remaining Screens
+
+##### Tasks
+- [ ] 21.7.1 Restyle sales history — streak strip card, entry cards with raw NL quote (clay left border), method tags (terra for NL, olive for manual), date group headers in serif
+- [ ] 21.7.2 Restyle products page — product cards with colored left bars, search/add bar, suggested products as pills
+- [ ] 21.7.3 Restyle chat page — dark user bubbles, paper bot bubbles with terra tag, suggested prompt pills, terra send button
+- [ ] 21.7.4 Restyle settings page — dark business card header with terra avatar, grouped setting rows with emoji icons, olive toggles
+
+##### Acceptance Criteria
+- History entries show raw NL text in styled quote blocks
+- Product cards have colored accent bars
+- Chat has clear visual distinction between user and bot messages
+- Settings has grouped sections with consistent row styling
+
+---
+
+#### 21.8 Forecast Detail Screen
+
+##### Tasks
+- [ ] 21.8.1 Build 14-day bar chart (7 past + 7 forecast) — solid ink bars for actual, hatched terra bars for forecast, dashed divider
+- [ ] 21.8.2 Build "Why this number" breakdown card — key-value rows (7-day avg, weekday multiplier, holiday, confidence)
+- [ ] 21.8.3 Build prep plan card — dark header with clay accent, quantity + buffer suggestion, "Add to prep list" CTA
+
+##### Acceptance Criteria
+- Chart clearly distinguishes past (solid) from forecast (hatched)
+- Tomorrow's bar is labeled and highlighted
+- Breakdown explains the prediction factors
+- Prep plan gives actionable quantity with buffer
+
+---
+
+### Phase 21 Acceptance Criteria (Overall)
+- All screens match the design files in `docs/rebranding/project/`
+- No business logic, API routes, or data model changes
+- App remains fully functional — all existing features work as before
+- Mobile-first responsive layout maintained
+- i18n strings still externalized (update keys if label text changes)
+- PWA still works (manifest colors updated)
 
 ---
 

@@ -21,6 +21,7 @@ This directory contains the architectural decisions made for Freshcast.
 | [013](013-timezone-aware-dates.md) | Timezone-Aware Date Handling | Accepted |
 | [014](014-multiple-daily-entries.md) | Multiple Sales Entries Per Day | Accepted |
 | [015](015-holiday-aware-predictions.md) | Holiday-Aware Demand Predictions | Accepted |
+| [016](016-editorial-rebrand.md) | Editorial Rebrand — Warm Palette & Serif Typography | Accepted |
 
 ## Format
 
