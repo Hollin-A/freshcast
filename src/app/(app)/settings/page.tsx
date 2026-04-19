@@ -29,7 +29,7 @@ export default async function SettingsPage() {
         businessType={business.type}
         timezone={business.timezone}
         region={business.region}
-        weeklyEmailEnabled={business.weeklyEmailEnabled}
+        weeklyEmailEnabled={business.weeklyEmailEnabled ?? false}
       />
     </div>
   );

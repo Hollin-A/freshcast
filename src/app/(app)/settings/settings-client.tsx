@@ -44,6 +44,8 @@ export function SettingsClient({
   businessName,
   businessType,
   timezone,
+  region,
+  weeklyEmailEnabled,
 }: {
   userName: string;
   userEmail: string;
