@@ -151,6 +151,7 @@
     "chat": "Ask",
     "history": "History",
     "products": "Products",
-    "more": "More"
+    "more": "More",
+    "settings": "Settings"
   }
 }
