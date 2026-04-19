@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { getProductDailyHistory } from "@/services/analytics";
 
 export async function GET(request: NextRequest) {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
+    const { businessId, timezone } = ctx;
     const active = request.nextUrl.searchParams.get("active") !== "false";
 
     const products = await prisma.product.findMany({
@@ -20,7 +22,20 @@ export async function GET(request: NextRequest) {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ products });
+    // Fetch per-product analytics (7-day avg + trend)
+    const productHistory = await getProductDailyHistory(businessId, timezone, 7);
+    const analyticsMap = new Map(productHistory.map((h) => [h.productId, h]));
+
+    const enriched = products.map((p) => {
+      const analytics = analyticsMap.get(p.id);
+      return {
+        ...p,
+        avgPerDay: analytics?.avgPerDay ?? null,
+        trend: analytics?.trend ?? null,
+      };
+    });
+
+    return NextResponse.json({ products: enriched });
   } catch (err) {
     logger.error("products", "GET /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

@@ -121,6 +121,16 @@ export function ProductsClient() {
                   <div className={`h-9 w-2 shrink-0 rounded-sm ${ACCENT_COLORS[idx % ACCENT_COLORS.length]}`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-[15px] font-medium text-ink">{product.name}</p>
+                    {product.avgPerDay !== null && product.avgPerDay > 0 && (
+                      <p className="mt-0.5 font-mono text-[11px] text-muted-warm">
+                        avg {product.avgPerDay} {product.defaultUnit || "units"}/day
+                        {product.trend !== null && product.trend !== 0 && (
+                          <span className={product.trend > 0 ? " text-olive" : " text-terra"}>
+                            {" · "}{product.trend > 0 ? "+" : ""}{product.trend}%
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </div>
                   {product.defaultUnit && <Badge variant="secondary">{product.defaultUnit}</Badge>}
                   <button onClick={() => startEdit(product)} className="text-xs font-semibold text-muted-warm">Edit</button>

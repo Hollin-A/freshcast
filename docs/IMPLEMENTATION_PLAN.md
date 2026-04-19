@@ -903,9 +903,9 @@ Upgrade the forecast detail overlay to show the full 14-day chart and prediction
 Add per-product statistics to the products page.
 
 ##### Tasks
-- [ ] 22.5.1 Expand `GET /api/products` response to include per-product analytics: `avgPerDay` (7-day average), `trend` (week-over-week percentage change)
-- [ ] 22.5.2 Update products client UI to show "avg X unit/day · +Y%" below each product name (matching the design's product card layout)
-- [ ] 22.5.3 Update `useProducts` hook TypeScript type to include analytics fields
+- [x] 22.5.1 Expand `GET /api/products` response to include per-product analytics: `avgPerDay` (7-day average), `trend` (week-over-week percentage change)
+- [x] 22.5.2 Update products client UI to show "avg X unit/day · +Y%" below each product name (matching the design's product card layout)
+- [x] 22.5.3 Update `useProducts` hook TypeScript type to include analytics fields
 
 ##### Acceptance Criteria
 - Each product card shows daily average and trend percentage

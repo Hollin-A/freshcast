@@ -7,6 +7,8 @@ type Product = {
   name: string;
   defaultUnit: string | null;
   isActive: boolean;
+  avgPerDay: number | null;
+  trend: number | null;
 };
 
 export function useProducts(active = true) {
