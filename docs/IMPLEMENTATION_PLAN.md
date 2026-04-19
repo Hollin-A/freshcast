@@ -771,12 +771,12 @@ All previous phases complete. No API or data model changes required.
 #### 21.6 Log Sales Screens
 
 ##### Tasks
-- [ ] 21.6.1 Restyle NL input — terra-bordered bubble, highlighted parsed entities (olive for matched, gold for new), bottom input dock with voice mic button
-- [ ] 21.6.2 Build parsed preview section — green dot indicator, "Freshcast understood" header, parsed item rows with checkmark/plus icons
-- [ ] 21.6.3 Add recent logs chips section (italic serif, paper background)
-- [ ] 21.6.4 Restyle manual mode — product rows with +/- steppers (terra plus, shell minus), running total card
-- [ ] 21.6.5 Restyle review screen — quoted raw input with clay left border, parsed items list, olive "once saved" confirmation card
-- [ ] 21.6.6 Restyle log tabs — shell background toggle (matches design tab component)
+- [x] 21.6.1 Restyle NL input — terra-bordered bubble, highlighted parsed entities (olive for matched, gold for new), bottom input dock with voice mic button
+- [x] 21.6.2 Build parsed preview section — green dot indicator, "Freshcast understood" header, parsed item rows with checkmark/plus icons
+- [x] 21.6.3 Add recent logs chips section (italic serif, paper background)
+- [x] 21.6.4 Restyle manual mode — product rows with +/- steppers (terra plus, shell minus), running total card
+- [x] 21.6.5 Restyle review screen — quoted raw input with clay left border, parsed items list, olive "once saved" confirmation card
+- [x] 21.6.6 Restyle log tabs — shell background toggle (matches design tab component)
 
 ##### Acceptance Criteria
 - NL input has terra border with entity highlighting

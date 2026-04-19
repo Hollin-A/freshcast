@@ -6,15 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProducts, useAddProduct } from "@/hooks/use-products";
 import { useParseSales, useSaveSales } from "@/hooks/use-sales";
 import type { ParsedItem } from "@/services/sales-parser";
@@ -48,19 +41,15 @@ export function SalesInputClient() {
   const [newProductUnit, setNewProductUnit] = useState("");
 
   const products = productsData?.products ?? [];
-
-  // Track product list version to reset manual items when products change
   const productVersionRef = useRef(0);
   const currentProductVersion = products.map((p) => p.id).join(",");
 
   useEffect(() => {
-    // Reset manual items whenever the product list changes
     if (currentProductVersion && currentProductVersion !== productVersionRef.current.toString()) {
       setManualItems([]);
     }
   }, [currentProductVersion]);
 
-  // Initialize manual items from products
   function initManualItems() {
     productVersionRef.current += 1;
     setManualItems(
@@ -146,14 +135,12 @@ export function SalesInputClient() {
       return;
     }
 
-    // Filter out zero or negative quantities
     const validItems = parsedItems.filter((p) => p.quantity > 0);
     if (validItems.length === 0) {
       toast.error("All items have zero quantity. Please enter valid quantities.");
       return;
     }
 
-    // Check for unresolved ambiguous items
     const unresolvedAmbiguous = parsedItems.filter(
       (p) => p.status === "ambiguous" && (!p.quantity || p.quantity <= 0)
     );
@@ -162,10 +149,9 @@ export function SalesInputClient() {
       return;
     }
 
-    const today = selectedDate;
     try {
       await saveMutation.mutateAsync({
-        date: today,
+        date: selectedDate,
         inputMethod,
         rawInput: inputMethod === "NATURAL_LANGUAGE" ? nlText : null,
         items: validItems.map((p) => ({
@@ -186,95 +172,98 @@ export function SalesInputClient() {
     }
   }
 
-  // Confirmation screen
+  const dateLabel = new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+
+  // Confirmation / Review screen
   if (showConfirm && parsedItems) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Confirm your sales</CardTitle>
-          <CardDescription>
-            Review and edit before saving. Date: {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <>
+        <div className="flex items-center justify-between px-5 pt-14 pb-2">
+          <button onClick={() => { setShowConfirm(false); setParsedItems(null); }} className="text-[15px] text-body">← Edit</button>
+          <span className="text-[15px] text-muted-warm">{dateLabel}</span>
+        </div>
+        <div className="px-5 pt-2 pb-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Confirm your log</p>
+          <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-ink">Looks good?</h1>
+        </div>
+
+        {inputMethod === "NATURAL_LANGUAGE" && nlText && (
+          <div className="mx-4 mb-4 rounded-xl border border-line bg-paper p-3.5">
+            <p className="font-serif text-[15px] italic leading-relaxed text-body">
+              &ldquo;{nlText}&rdquo;
+            </p>
+          </div>
+        )}
+
+        <div className="mx-4 mb-2 flex items-center justify-between">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Parsed items</p>
+          <span className="text-[13px] font-semibold text-terra">{parsedItems.length} items</span>
+        </div>
+
+        <div className="mx-4 flex flex-col gap-2">
           {parsedItems.map((item, index) => (
             <div
               key={index}
-              className={`flex flex-col gap-1 rounded-lg border p-3 ${item.status === "ambiguous" ? "border-amber-300 bg-amber-50/30" : ""}`}
+              className={`flex items-center gap-3 rounded-xl border p-3 ${
+                item.status === "ambiguous"
+                  ? "border-harvest/50 bg-harvest/8"
+                  : "border-line bg-paper"
+              }`}
             >
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{item.product}</span>
-                    {!item.matched && (
-                      <Badge variant="outline" className="text-amber-600">
-                        New
-                      </Badge>
-                    )}
-                    {item.status === "ambiguous" && (
-                      <Badge variant="outline" className="text-amber-600">
-                        ?
-                      </Badge>
-                    )}
-                  </div>
-                  {item.unit && (
-                    <span className="text-xs text-muted-foreground">
-                      {item.unit}
-                    </span>
-                  )}
-                </div>
-                <Input
-                  type="number"
-                  value={item.quantity || ""}
-                  onChange={(e) =>
-                    updateParsedQuantity(index, parseFloat(e.target.value) || 0)
-                  }
-                  className={`w-20 text-center ${item.status === "ambiguous" ? "border-amber-400 ring-amber-200" : ""}`}
-                  min={0}
-                  step="any"
-                  autoFocus={item.status === "ambiguous"}
-                  placeholder={item.status === "ambiguous" ? "qty" : "0"}
-                />
-                {!item.matched && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleAddUnmatched(item)}
-                  >
-                    Add
-                  </Button>
-                )}
-                <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => removeParsedItem(index)}
-              >
-                ✕
-              </Button>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold ${
+                !item.matched
+                  ? "bg-harvest/18 text-[#8A6520]"
+                  : "bg-shell text-body"
+              }`}>
+                {!item.matched ? "+" : "✓"}
               </div>
-              {item.clarification && (
-                <p className="text-xs text-amber-600 pl-1">{item.clarification}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-medium text-ink">{item.product}</p>
+                {!item.matched && (
+                  <p className="text-[11px] text-[#8A6520]">New product — tap to confirm</p>
+                )}
+                {item.clarification && (
+                  <p className="text-[11px] text-harvest">{item.clarification}</p>
+                )}
+              </div>
+              <Input
+                type="number"
+                value={item.quantity || ""}
+                onChange={(e) => updateParsedQuantity(index, parseFloat(e.target.value) || 0)}
+                className={`w-20 text-center font-serif text-lg font-medium [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
+                  item.status === "ambiguous" ? "border-harvest" : ""
+                }`}
+                min={0}
+                step="any"
+                autoFocus={item.status === "ambiguous"}
+                placeholder={item.status === "ambiguous" ? "?" : "0"}
+              />
+              <span className="min-w-[40px] text-xs text-muted-warm">{item.unit || ""}</span>
+              {!item.matched ? (
+                <button onClick={() => handleAddUnmatched(item)} className="text-xs font-semibold text-terra">Add</button>
+              ) : (
+                <button onClick={() => removeParsedItem(index)} className="text-lg text-mute2">×</button>
               )}
             </div>
           ))}
-          {parsedItems.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              No items to save.
-            </p>
-          )}
-          <div className="flex gap-2 pt-2">
+        </div>
+
+        <div className="mx-4 mt-4 rounded-xl border border-olive/20 bg-olive/8 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-olive-dk">Once saved</p>
+          <p className="mt-1 font-serif text-base font-medium tracking-tight text-ink">
+            Tomorrow&apos;s forecast will refresh with your latest data.
+          </p>
+        </div>
+
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-cream px-4 pb-24 pt-4">
+          <div className="mx-auto max-w-md">
             <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => {
-                setShowConfirm(false);
-                setParsedItems(null);
-              }}
-            >
-              Back
-            </Button>
-            <Button
-              className="flex-1"
+              size="lg"
+              className="w-full"
               onClick={handleSave}
               disabled={
                 saveMutation.isPending ||
@@ -282,176 +271,220 @@ export function SalesInputClient() {
                 parsedItems.some((p) => !p.productId)
               }
             >
-              {saveMutation.isPending ? "Saving..." : "Save"}
+              {saveMutation.isPending ? "Saving..." : "Save sales log"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </>
     );
   }
 
-  // Input screen
+  // Main input screen
   return (
     <>
-      <div className="mb-4 min-w-0">
-        <Label className="text-sm text-muted-foreground mb-1 block">Date</Label>
+      <div className="px-5 pt-14 pb-2">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+          Log sales · {dateLabel}
+        </p>
+        <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-ink">
+          Tell me your day.
+        </h1>
+      </div>
+
+      <div className="px-4 pb-3">
+        <Label className="mb-1.5 block text-muted-warm">Date</Label>
         <Input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
           max={new Date().toLocaleDateString("en-CA")}
           className="w-full"
-          style={{ minWidth: 0, width: "100%", boxSizing: "border-box", WebkitAppearance: "none" }}
         />
       </div>
+
       <Tabs
-      defaultValue="nl"
-      onValueChange={(v) => {
-        if (v === "manual") initManualItems();
-      }}
-    >
-      <TabsList className="w-full">
-        <TabsTrigger value="nl" className="flex-1">
-          Type it out
-        </TabsTrigger>
-        <TabsTrigger value="manual" className="flex-1">
-          Enter manually
-        </TabsTrigger>
-      </TabsList>
+        defaultValue="nl"
+        className="px-4"
+        onValueChange={(v) => {
+          if (v === "manual") initManualItems();
+        }}
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="nl" className="flex-1">Speak or type</TabsTrigger>
+          <TabsTrigger value="manual" className="flex-1">By product</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="nl">
-        <Card>
-          <CardHeader>
-            <CardTitle>Log today&apos;s sales</CardTitle>
-            <CardDescription>
-              Type what you sold in plain language
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <textarea
-              className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-              placeholder="e.g., sold 20 eggs, 30kg beef, and 10 milk bottles"
-              value={nlText}
-              onChange={(e) => setNlText(e.target.value)}
-            />
-            <Button
-              className="w-full"
-              onClick={handleParse}
-              disabled={parseMutation.isPending || !nlText.trim()}
-            >
-              {parseMutation.isPending ? "Parsing..." : "Parse"}
-            </Button>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="manual">
-        <Card>
-          <CardHeader>
-            <CardTitle>Log today&apos;s sales</CardTitle>
-            <CardDescription>
-              Enter quantities for each product
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {manualItems.map((item, index) => (
-              <div key={item.productId} className="flex items-center gap-2">
-                <Label className="flex-1 text-sm">{item.productName}</Label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    setManualItems((prev) =>
-                      prev.map((p, i) =>
-                        i === index ? { ...p, quantity: e.target.value } : p
-                      )
-                    )
-                  }
-                  className="w-20 text-center"
-                  min={0}
-                  step="any"
-                />
-                <Input
-                  value={item.unit || ""}
-                  onChange={(e) =>
-                    setManualItems((prev) =>
-                      prev.map((p, i) =>
-                        i === index ? { ...p, unit: e.target.value || null } : p
-                      )
-                    )
-                  }
-                  placeholder="unit"
-                  className="w-16 text-center text-xs"
-                />
+        <TabsContent value="nl">
+          <div className="mt-4">
+            <div className="rounded-2xl border border-terra bg-paper p-4 shadow-[0_0_0_4px_rgba(181,85,58,0.10)]">
+              <textarea
+                className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-ink placeholder:text-mute2 focus:outline-none"
+                placeholder='e.g., "sold 20 eggs, 30kg beef, and 10 milk bottles"'
+                value={nlText}
+                onChange={(e) => setNlText(e.target.value)}
+              />
+              <div className="mt-3 flex items-center gap-2">
+                <Badge variant="secondary">for {dateLabel.split(",")[0]}</Badge>
+                <span className="flex-1" />
+                <span className="font-mono text-[11px] text-mute2">{nlText.length} chars</span>
               </div>
-            ))}
-            {manualItems.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-4">
-                No products yet. Add your first one below.
-              </p>
-            )}
-            {showAddProduct ? (
-              <div className="flex items-center gap-2 pt-2 border-t">
-                <Input
-                  placeholder="Product name"
-                  value={newProductName}
-                  onChange={(e) => setNewProductName(e.target.value)}
-                  className="flex-1"
-                />
-                <Input
-                  placeholder="Unit"
-                  value={newProductUnit}
-                  onChange={(e) => setNewProductUnit(e.target.value)}
-                  className="w-20"
-                />
-                <Button
-                  size="sm"
-                  disabled={addProduct.isPending || !newProductName.trim()}
-                  onClick={async () => {
-                    try {
-                      await addProduct.mutateAsync({
-                        name: newProductName.trim(),
-                        defaultUnit: newProductUnit.trim() || undefined,
-                      });
-                      setNewProductName("");
-                      setNewProductUnit("");
-                      setShowAddProduct(false);
-                      // Reset manual items so they refresh with the new product
-                      setManualItems([]);
-                      toast.success("Product added");
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : "Failed to add");
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowAddProduct(false)}>
-                  ✕
-                </Button>
-              </div>
-            ) : (
+            </div>
+            <div className="mt-4">
               <Button
-                variant="outline"
-                size="sm"
+                size="lg"
                 className="w-full"
-                onClick={() => setShowAddProduct(true)}
+                onClick={handleParse}
+                disabled={parseMutation.isPending || !nlText.trim()}
               >
-                + Add new product
+                {parseMutation.isPending ? "Parsing..." : "Review & save →"}
               </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manual">
+          <div className="mt-4">
+            <div className="mb-2 flex items-baseline justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+                Your products · {manualItems.length}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {manualItems.map((item, index) => (
+                <div
+                  key={item.productId}
+                  className="flex items-center gap-3 rounded-xl border border-line bg-paper px-3.5 py-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-medium text-ink">{item.productName}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-warm">
+                      {item.unit || "units"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-shell text-lg text-body"
+                      onClick={() =>
+                        setManualItems((prev) =>
+                          prev.map((p, i) =>
+                            i === index
+                              ? { ...p, quantity: String(Math.max(0, (parseFloat(p.quantity) || 0) - 1)) }
+                              : p
+                          )
+                        )
+                      }
+                    >
+                      −
+                    </button>
+                    <Input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        setManualItems((prev) =>
+                          prev.map((p, i) =>
+                            i === index ? { ...p, quantity: e.target.value } : p
+                          )
+                        )
+                      }
+                      className={`w-14 text-center font-serif text-lg font-medium ${
+                        item.quantity ? "border-ink bg-ink text-cream" : "bg-shell text-mute2"
+                      }`}
+                      min={0}
+                      step="any"
+                      placeholder="0"
+                    />
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-terra text-lg text-[#FFF8EC]"
+                      onClick={() =>
+                        setManualItems((prev) =>
+                          prev.map((p, i) =>
+                            i === index
+                              ? { ...p, quantity: String((parseFloat(p.quantity) || 0) + 1) }
+                              : p
+                          )
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {showAddProduct ? (
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-line p-3">
+                  <Input
+                    placeholder="Product name"
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                    className="flex-1 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                  />
+                  <Input
+                    placeholder="unit"
+                    value={newProductUnit}
+                    onChange={(e) => setNewProductUnit(e.target.value)}
+                    className="w-16 border-0 bg-transparent p-0 text-center shadow-none focus-visible:ring-0"
+                  />
+                  <Button
+                    size="sm"
+                    disabled={addProduct.isPending || !newProductName.trim()}
+                    onClick={async () => {
+                      try {
+                        await addProduct.mutateAsync({
+                          name: newProductName.trim(),
+                          defaultUnit: newProductUnit.trim() || undefined,
+                        });
+                        setNewProductName("");
+                        setNewProductUnit("");
+                        setShowAddProduct(false);
+                        setManualItems([]);
+                        toast.success("Product added");
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to add");
+                      }
+                    }}
+                  >
+                    Add
+                  </Button>
+                  <button onClick={() => setShowAddProduct(false)} className="text-lg text-mute2">×</button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowAddProduct(true)}
+                  className="flex items-center gap-2.5 rounded-xl border border-dashed border-line px-3.5 py-3 text-sm text-muted-warm"
+                >
+                  <span className="text-lg text-terra">＋</span> Add a new product
+                </button>
+              )}
+            </div>
+
+            {manualItems.some((m) => parseFloat(m.quantity) > 0) && (
+              <div className="mt-4 rounded-xl border border-line bg-paper p-3.5 flex items-center gap-2.5">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Running total</p>
+                  <p className="font-serif text-[22px] font-medium tracking-tight text-ink">
+                    {Math.round(manualItems.reduce((s, m) => s + (parseFloat(m.quantity) || 0), 0))} units · {manualItems.filter((m) => parseFloat(m.quantity) > 0).length} products
+                  </p>
+                </div>
+              </div>
             )}
-            <Button
-              className="w-full mt-2"
-              onClick={handleManualConfirm}
-              disabled={manualItems.length === 0}
-            >
-              Review & confirm
-            </Button>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+
+            <div className="mt-4">
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={handleManualConfirm}
+                disabled={manualItems.length === 0}
+              >
+                Review & save
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
