@@ -107,7 +107,7 @@ export function DashboardClient() {
         <TopProducts products={data.topProducts} />
       )}
       {data.insights.length > 0 && (
-        <Insights insights={data.insights} />
+        <Insights insights={data.insights} lastUpdated={data.lastUpdated} />
       )}
     </div>
   );
@@ -395,16 +395,27 @@ function TopProducts({
 
 function Insights({
   insights,
+  lastUpdated,
 }: {
   insights: { type: string; content: string }[];
+  lastUpdated?: string;
 }) {
   const ACCENT_COLORS = ["bg-olive", "bg-terra", "bg-harvest"];
 
+  const timeLabel = lastUpdated
+    ? new Date(lastUpdated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
+    : null;
+
   return (
     <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
-        What Freshcast noticed
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+          What Freshcast noticed
+        </p>
+        {timeLabel && (
+          <span className="font-mono text-[10px] text-mute2">updated {timeLabel}</span>
+        )}
+      </div>
       <div className="mt-3 flex flex-col gap-3.5">
         {insights.map((insight, i) => (
           <div key={i} className="flex gap-3">

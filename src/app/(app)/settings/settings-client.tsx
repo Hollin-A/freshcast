@@ -51,6 +51,7 @@ export function SettingsClient({
   businessName: string;
   businessType: string;
   timezone: string;
+  region: string;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
@@ -136,6 +137,7 @@ export function SettingsClient({
       <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
         <SettingsRow icon="🏪" color="#B5553A" label="Business name" detail={businessName} />
         <SettingsRow icon="🗓" color="#6B7A3A" label="Timezone" detail={timezoneCity} />
+        <SettingsRow icon="🎯" color="#6E3A4A" label="Holiday region" detail={region} />
         <SettingsRow icon="🌐" color="#C69840" label="Language" detail="English" last />
       </div>
 

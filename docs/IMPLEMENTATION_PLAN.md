@@ -827,8 +827,8 @@ Phase 21 complete.
 #### 22.1 Minor UI Fixes (No API Changes)
 
 ##### Tasks
-- [ ] 22.1.1 Show `lastUpdated` timestamp on the insights card ("updated 7:12am" style)
-- [ ] 22.1.2 Add holiday region row to settings page (read existing `region` field from Business model)
+- [x] 22.1.1 Show `lastUpdated` timestamp on the insights card ("updated 7:12am" style)
+- [x] 22.1.2 Add holiday region row to settings page (read existing `region` field from Business model)
 
 ##### Acceptance Criteria
 - Insights card shows when insights were last generated
