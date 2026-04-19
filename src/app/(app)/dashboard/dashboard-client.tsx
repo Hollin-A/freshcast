@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useQueryClient } from "@tanstack/react-query";
+import { ForecastDetail } from "@/components/shared/forecast-detail";
 
 export function DashboardClient() {
   const { data, isLoading } = useDashboard();
   const queryClient = useQueryClient();
   const [loadingDemo, setLoadingDemo] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -73,11 +75,27 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-3">
+      {selectedProduct && data.forecast && (() => {
+        const pred = data.forecast.predictions.find((p) => p.product === selectedProduct);
+        const weeklyProduct = data.weeklyForecast?.find((w) => w.product === selectedProduct);
+        if (!pred) return null;
+        return (
+          <ForecastDetail
+            product={pred.product}
+            predictedQuantity={pred.predictedQuantity}
+            unit={pred.unit}
+            confidence={pred.confidence}
+            forecastDate={data.forecast.forecastDate}
+            weeklyData={weeklyProduct}
+            onClose={() => setSelectedProduct(null)}
+          />
+        );
+      })()}
       {data.totalEntries < 30 && (
         <PredictionProgressBar entries={data.totalEntries} />
       )}
       {data.forecast && data.forecast.predictions.length > 0 && (
-        <ForecastHero forecast={data.forecast} />
+        <ForecastHero forecast={data.forecast} onSelectProduct={setSelectedProduct} />
       )}
       {data.forecast && <SpikeAlertCard forecast={data.forecast} weekProducts={data.topProducts} />}
       <TodayStatus data={data.todaySummary} />
@@ -124,6 +142,7 @@ function PredictionProgressBar({ entries }: { entries: number }) {
 
 function ForecastHero({
   forecast,
+  onSelectProduct,
 }: {
   forecast: {
     forecastDate: string;
@@ -137,6 +156,7 @@ function ForecastHero({
     dataPoints: number;
     holiday?: { name: string; type: string } | null;
   };
+  onSelectProduct: (product: string) => void;
 }) {
   const dateLabel = new Date(forecast.forecastDate).toLocaleDateString("en-US", {
     weekday: "long",
@@ -169,7 +189,11 @@ function ForecastHero({
       <div className="my-5 h-px bg-cream/12" />
       <div className="flex flex-col gap-3.5">
         {forecast.predictions.slice(0, 5).map((p, i) => (
-          <div key={i} className="flex items-center gap-3">
+          <button
+            key={i}
+            onClick={() => onSelectProduct(p.product)}
+            className="flex w-full items-center gap-3 text-left"
+          >
             <div className="min-w-0 flex-1">
               <p className="text-[15px] font-medium text-cream">{p.product}</p>
               <p className="font-mono text-[10.5px] text-cream/50 tracking-wide">
@@ -184,7 +208,7 @@ function ForecastHero({
                 {p.unit || "units"}
               </span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

@@ -57,7 +57,7 @@ Template-based NL generation that computes per-product trends, week-over-week co
 |-------|-----------|
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Language | TypeScript (strict mode) |
-| UI | Tailwind CSS v4, shadcn/ui, Geist font |
+| UI | Tailwind CSS v4, shadcn/ui, Fraunces + Inter + JetBrains Mono |
 | State | React Query (TanStack Query) |
 | Forms | react-hook-form + Zod v4 |
 | Auth | Auth.js v5 (Credentials provider, JWT) |
@@ -172,7 +172,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - Account and data deletion
 - Settings page with email verification status
 - Unit override per sale entry in manual mode
-- Warm teal color theme, mobile-first responsive design
+- Warm editorial color theme (cream, terracotta, olive), mobile-first responsive design
 
 ### Deferred (Post-MVP)
 

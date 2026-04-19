@@ -521,7 +521,7 @@ Security and reliability improvements for real-world usage.
 | 18 | Prediction Data Progress | ✅ Complete |
 | 19 | NL Parser Improvements | ✅ Complete |
 | 20 | Holiday-Aware Predictions | ✅ Complete |
-| 21 | Editorial Rebrand | 🔲 Not started |
+| 21 | Editorial Rebrand | ✅ Complete |
 
 ---
 
@@ -806,9 +806,9 @@ All previous phases complete. No API or data model changes required.
 #### 21.8 Forecast Detail Screen
 
 ##### Tasks
-- [ ] 21.8.1 Build 14-day bar chart (7 past + 7 forecast) — solid ink bars for actual, hatched terra bars for forecast, dashed divider
-- [ ] 21.8.2 Build "Why this number" breakdown card — key-value rows (7-day avg, weekday multiplier, holiday, confidence)
-- [ ] 21.8.3 Build prep plan card — dark header with clay accent, quantity + buffer suggestion, "Add to prep list" CTA
+- [x] 21.8.1 Build 14-day bar chart (7 past + 7 forecast) — solid ink bars for actual, hatched terra bars for forecast, dashed divider
+- [x] 21.8.2 Build "Why this number" breakdown card — key-value rows (7-day avg, weekday multiplier, holiday, confidence)
+- [x] 21.8.3 Build prep plan card — dark header with clay accent, quantity + buffer suggestion, "Add to prep list" CTA
 
 ##### Acceptance Criteria
 - Chart clearly distinguishes past (solid) from forecast (hatched)
