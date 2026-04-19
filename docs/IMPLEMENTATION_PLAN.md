@@ -695,14 +695,14 @@ All previous phases complete. No API or data model changes required.
 #### 21.2 Shared UI Primitives
 
 ##### Tasks
-- [ ] 21.2.1 Restyle `button.tsx` — terracotta primary (pill shape, `rounded-full`), shell secondary, ghost, dark variants
-- [ ] 21.2.2 Restyle `card.tsx` — paper background, warm border (`#E4D9C1`), `rounded-2xl` (18px)
-- [ ] 21.2.3 Restyle `input.tsx` and `password-input.tsx` — paper bg, terra focus ring, uppercase labels
-- [ ] 21.2.4 Restyle `badge.tsx` — pill tags with tone variants (terra, olive, gold, plum, muted, ink)
-- [ ] 21.2.5 Restyle `tabs.tsx` — shell background toggle with paper active state
-- [ ] 21.2.6 Update `mobile-nav.tsx` — 5-tab bar (Today, Log, History, Ask, More), terra active state, frosted glass backdrop
-- [ ] 21.2.7 Add section label component (uppercase, small, muted, with optional trailing action)
-- [ ] 21.2.8 Add big number component (serif font, large size, with optional unit and trend)
+- [x] 21.2.1 Restyle `button.tsx` — terracotta primary (pill shape, `rounded-full`), shell secondary, ghost, dark variants
+- [x] 21.2.2 Restyle `card.tsx` — paper background, warm border (`#E4D9C1`), `rounded-2xl` (18px)
+- [x] 21.2.3 Restyle `input.tsx` and `password-input.tsx` — paper bg, terra focus ring, uppercase labels
+- [x] 21.2.4 Restyle `badge.tsx` — pill tags with tone variants (terra, olive, gold, plum, muted, ink)
+- [x] 21.2.5 Restyle `tabs.tsx` — shell background toggle with paper active state
+- [x] 21.2.6 Update `mobile-nav.tsx` — 5-tab bar (Today, Log, History, Ask, More), terra active state, frosted glass backdrop
+- [x] 21.2.7 Add section label component (uppercase, small, muted, with optional trailing action)
+- [x] 21.2.8 Add big number component (serif font, large size, with optional unit and trend)
 
 ##### Acceptance Criteria
 - Buttons are pill-shaped with terracotta primary

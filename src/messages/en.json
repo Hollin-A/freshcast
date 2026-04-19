@@ -146,10 +146,11 @@
     }
   },
   "nav": {
-    "home": "Home",
-    "logSales": "Log Sales",
-    "chat": "Ask AI",
+    "home": "Today",
+    "logSales": "Log",
+    "chat": "Ask",
     "history": "History",
-    "products": "Products"
+    "products": "Products",
+    "more": "More"
   }
 }
