@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { getLocalDateStr } from "@/lib/dates";
 
 const createSalesSchema = z.object({
   date: z.string().date(),
@@ -22,10 +23,12 @@ const createSalesSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
+
+    const { businessId, timezone } = ctx;
 
     const body = await request.json();
     const result = createSalesSchema.safeParse(body);
@@ -37,12 +40,11 @@ export async function POST(request: Request) {
     }
 
     const { date, inputMethod, rawInput, items } = result.data;
-    const entryDate = new Date(date);
+    const entryDate = new Date(date + "T00:00:00Z");
 
-    // Check date is not in the future
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (entryDate > today) {
+    // Check date is not in the future (using business timezone)
+    const todayStr = getLocalDateStr(timezone);
+    if (date > todayStr) {
       return errorResponse("VALIDATION_ERROR", "Date cannot be in the future", 400);
     }
 
@@ -95,11 +97,12 @@ export async function POST(request: Request) {
 
 export async function GET(request: NextRequest) {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
+    const { businessId } = ctx;
     const params = request.nextUrl.searchParams;
     const limit = Math.min(parseInt(params.get("limit") || "20"), 100);
     const offset = parseInt(params.get("offset") || "0");
