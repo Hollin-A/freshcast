@@ -13,6 +13,15 @@ export async function DELETE() {
 
     const userId = session.user.id;
 
+    // Check if this is a demo account
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isDemo: true },
+    });
+    if (user?.isDemo) {
+      return errorResponse("FORBIDDEN", "Demo account cannot be deleted", 403);
+    }
+
     // Cascade delete: business → products, sales, insights, forecasts
     const business = await prisma.business.findUnique({
       where: { userId },

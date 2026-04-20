@@ -24,6 +24,15 @@ export async function POST(request: Request) {
 
     const { email, token, password } = result.data;
 
+    // Check if this is a demo account
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { isDemo: true },
+    });
+    if (user?.isDemo) {
+      return errorResponse("FORBIDDEN", "Demo account password cannot be changed", 403);
+    }
+
     // Use a transaction: find token, validate, delete, update password — atomically
     const success = await prisma.$transaction(async (tx) => {
       // Delete the token immediately to prevent reuse in a race

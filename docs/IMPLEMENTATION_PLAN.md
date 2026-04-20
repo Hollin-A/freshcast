@@ -51,7 +51,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 20 | Holiday-Aware Predictions | ✅ Complete |
 | 21 | Editorial Rebrand | ✅ Complete |
 | 22 | Post-Rebrand Enhancements | ✅ Complete |
-| 23 | Demo Security & Rate Limiting | 🔲 Not started |
+| 23 | Demo Security & Rate Limiting | ✅ Complete |
 
 ---
 
@@ -961,9 +961,9 @@ Phase 22 complete.
 #### 23.1 Rate Limit LLM Endpoints
 
 ##### Tasks
-- [ ] 23.1.1 Add rate limiting to `POST /api/chat` — 20 messages per user per hour (reuse existing `rateLimit` utility)
-- [ ] 23.1.2 Add rate limiting to `POST /api/sales/parse` — 30 parses per user per hour
-- [ ] 23.1.3 Return a user-friendly error message when rate limited ("You've sent too many messages. Try again in a few minutes.")
+- [x] 23.1.1 Add rate limiting to `POST /api/chat` — 20 messages per user per hour (reuse existing `rateLimit` utility)
+- [x] 23.1.2 Add rate limiting to `POST /api/sales/parse` — 30 parses per user per hour
+- [x] 23.1.3 Return a user-friendly error message when rate limited ("You've sent too many messages. Try again in a few minutes.")
 
 ##### Acceptance Criteria
 - Chat endpoint rejects requests beyond 20/hour per user with 429 status
@@ -976,10 +976,10 @@ Phase 22 complete.
 #### 23.2 Protect Demo Account
 
 ##### Tasks
-- [ ] 23.2.1 Add `isDemo` boolean field to User model (default: false), run Prisma migration
-- [ ] 23.2.2 Set `isDemo: true` on the demo user in `prisma/seed.ts`
-- [ ] 23.2.3 Block account deletion for demo users in `DELETE /api/account` — return "Demo account cannot be deleted"
-- [ ] 23.2.4 Block password change for demo users in `POST /api/auth/reset-password` — return "Demo account password cannot be changed"
+- [x] 23.2.1 Add `isDemo` boolean field to User model (default: false), run Prisma migration
+- [x] 23.2.2 Set `isDemo: true` on the demo user in `prisma/seed.ts`
+- [x] 23.2.3 Block account deletion for demo users in `DELETE /api/account` — return "Demo account cannot be deleted"
+- [x] 23.2.4 Block password change for demo users in `POST /api/auth/reset-password` — return "Demo account password cannot be changed"
 
 ##### Acceptance Criteria
 - Demo account cannot be deleted via the settings page

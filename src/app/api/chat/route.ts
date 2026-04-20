@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as z from "zod";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
 
@@ -45,6 +46,12 @@ export async function POST(request: Request) {
     }
 
     const { message, history } = result.data;
+
+    // Rate limit: 20 messages per user per hour
+    const { success: rateLimitOk } = rateLimit(`chat:${ctx.businessId}`, 20, 60 * 60 * 1000);
+    if (!rateLimitOk) {
+      return errorResponse("RATE_LIMITED", "You've sent too many messages. Try again in a few minutes.", 429);
+    }
 
     // Build data context
     const dataContext = await buildChatContext(ctx.businessId, ctx.timezone);

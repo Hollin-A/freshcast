@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId } from "@/lib/api-helpers";
+import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 import { parseSalesInput } from "@/services/sales-parser";
 import { llmParseSalesInput } from "@/services/llm-sales-parser";
 
@@ -12,9 +13,17 @@ const parseSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const businessId = await getBusinessId();
-    if (!businessId) {
+    const ctx = await getBusinessContext();
+    if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    const { businessId } = ctx;
+
+    // Rate limit: 30 parses per user per hour
+    const { success: rateLimitOk } = rateLimit(`parse:${businessId}`, 30, 60 * 60 * 1000);
+    if (!rateLimitOk) {
+      return errorResponse("RATE_LIMITED", "Too many parse requests. Try again in a few minutes.", 429);
     }
 
     const body = await request.json();

@@ -81,6 +81,7 @@ async function main() {
       name: "Demo User",
       passwordHash,
       emailVerified: new Date(),
+      isDemo: true,
     },
   });
   console.log(`Created user: ${user.email}`);
