@@ -5,19 +5,23 @@ AI-powered sales tracking and demand prediction for small retail businesses. Log
 **[Live Demo →](https://freshcast-au.vercel.app/)** · Demo login: `demo@freshcast.app` / `demo1234`
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.jpg" alt="Dashboard" width="280" />
-  <img src="docs/screenshots/sales_input_nl_parse.jpg" alt="Natural Language Sales Input" width="280" />
-  <img src="docs/screenshots/sales_history.jpg" alt="Sales History" width="280" />
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="280" />
+  <img src="docs/screenshots/insights.png" alt="Insights" width="280" />
+  <img src="docs/screenshots/sales_input_nl_parse.png" alt="Natural Language Sales Input" width="280" />
+  <img src="docs/screenshots/ai_chat_response.png" alt="Chat" width="280" />
 </p>
 
 <details>
 <summary>More screenshots</summary>
 <p align="center">
-  <img src="docs/screenshots/sales_input_manual.jpg" alt="Manual Sales Input" width="280" />
-  <img src="docs/screenshots/products.jpg" alt="Products" width="280" />
-  <img src="docs/screenshots/login.jpg" alt="Login" width="280" />
-  <img src="docs/screenshots/signup.jpg" alt="Sign Up" width="280" />
-  <img src="docs/screenshots/reset_your_password.jpg" alt="Reset Password" width="280" />
+  <img src="docs/screenshots/sales_input_manual_form.png" alt="Manual Sales Input" width="280" />
+  <img src="docs/screenshots/products.png" alt="Products" width="280" />
+  <img src="docs/screenshots/sales_history.png" alt="Sales History" width="280" />
+  <img src="docs/screenshots/settings.png" alt="Settings" width="280" />
+  <img src="docs/screenshots/onboarding_step_01.png" alt="Onboarding" width="280" />
+  <img src="docs/screenshots/login.png" alt="Login" width="280" />
+  <img src="docs/screenshots/signup.png" alt="Sign Up" width="280" />
+  <img src="docs/screenshots/reset_password.png" alt="Reset Password" width="280" />
 </p>
 </details>
 
