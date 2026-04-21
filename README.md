@@ -152,7 +152,9 @@ Run the test suite:
 npm test
 ```
 
-Tests cover core business logic: sales parser, product matcher, prediction engine, unit normalizer, date utilities, and rate limiter. All tests are pure unit tests with no database or network calls.
+Tests cover core business logic: sales parser, product matcher, prediction engine, unit normalizer, date utilities, holiday multipliers, and rate limiter. All tests are pure unit tests with no database or network calls.
+
+CI runs automatically on every push and PR via GitHub Actions — linting, type checking, and tests.
 
 ## What I Built vs What I Deferred
 
