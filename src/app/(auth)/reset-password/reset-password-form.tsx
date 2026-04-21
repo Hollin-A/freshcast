@@ -32,6 +32,12 @@ export function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
   if (!token || !email) {
     return (
       <AuthShell
@@ -68,12 +74,6 @@ export function ResetPasswordForm() {
       setIsLoading(false);
     }
   }
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   if (success) {
     return (

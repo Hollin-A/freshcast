@@ -4,7 +4,7 @@ import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
-import { getLocalDateStr, toUTCDate } from "@/lib/dates";
+import { getLocalDateStr } from "@/lib/dates";
 
 export async function GET(
   _req: NextRequest,
@@ -74,7 +74,6 @@ export async function PUT(
     // Only allow editing today's entry (using business timezone)
     const ctx2 = await getBusinessContext();
     const todayStr = getLocalDateStr(ctx2?.timezone ?? "UTC");
-    const todayDate = toUTCDate(todayStr);
     const entryDateStr = new Date(entry.date).toISOString().split("T")[0];
     if (entryDateStr !== todayStr) {
       return errorResponse("VALIDATION_ERROR", "Can only edit today's entry", 400);

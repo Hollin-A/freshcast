@@ -19,7 +19,6 @@ export async function buildWeeklySummaryEmail(businessId: string): Promise<strin
     predictNextWeek(businessId, timezone, region).catch(() => null),
   ]);
 
-  const userName = business.user.name || "there";
   const changeDir = weekSummary.changePercent > 0 ? "up" : weekSummary.changePercent < 0 ? "down" : "flat";
   const changeAbs = Math.abs(weekSummary.changePercent);
 

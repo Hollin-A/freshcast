@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as z from "zod";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
+import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseSalesInput } from "@/services/sales-parser";

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
