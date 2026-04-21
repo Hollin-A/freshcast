@@ -31,7 +31,7 @@ export type WeeklyProductPrediction = {
   daily: DayPrediction[];
 };
 
-function mean(values: number[]): number {
+export function mean(values: number[]): number {
   if (values.length === 0) return 0;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
@@ -43,7 +43,7 @@ const CONFIDENCE_MODERATE_MAX = 15; // 5-14 entries: moderate (0.5)
 const CONFIDENCE_GOOD_MAX = 30;     // 15-29 entries: good (0.7)
 // 30+ entries: high confidence (0.85)
 
-function calculateConfidence(
+export function calculateConfidence(
   sameWeekdayData: number[],
   recentData: number[]
 ): number {
@@ -71,6 +71,20 @@ const DAY_NAMES = [
   "Sunday", "Monday", "Tuesday", "Wednesday",
   "Thursday", "Friday", "Saturday",
 ];
+
+/**
+ * Calculate a predicted quantity from weekday and recent data.
+ * Uses 60% weekday weight + 40% recent weight.
+ */
+export function calculatePrediction(
+  sameWeekdayData: number[],
+  recentData: number[]
+): number {
+  if (sameWeekdayData.length === 0 && recentData.length === 0) return 0;
+  if (sameWeekdayData.length === 0) return mean(recentData);
+  if (recentData.length === 0) return mean(sameWeekdayData);
+  return 0.6 * mean(sameWeekdayData) + 0.4 * mean(recentData);
+}
 
 async function getProductSalesHistory(
   businessId: string,
@@ -137,11 +151,7 @@ export async function predictNextDay(
 
     const recent = history.slice(0, 7).map((h) => h.quantity);
 
-    let predicted: number;
-    if (sameWeekday.length === 0) predicted = mean(recent);
-    else if (recent.length === 0) predicted = mean(sameWeekday);
-    else predicted = 0.6 * mean(sameWeekday) + 0.4 * mean(recent);
-
+    const predicted = calculatePrediction(sameWeekday, recent);
     if (predicted <= 0) continue;
 
     // Apply holiday multiplier
@@ -209,10 +219,7 @@ export async function predictNextWeek(
 
       const recent = history.slice(0, 7).map((h) => h.quantity);
 
-      let predicted: number;
-      if (sameWeekday.length === 0) predicted = mean(recent);
-      else if (recent.length === 0) predicted = mean(sameWeekday);
-      else predicted = 0.6 * mean(sameWeekday) + 0.4 * mean(recent);
+      const predicted = calculatePrediction(sameWeekday, recent);
 
       // Apply holiday multiplier
       const dateStr = targetDate.toISOString().split("T")[0];

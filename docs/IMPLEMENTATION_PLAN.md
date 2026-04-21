@@ -1057,14 +1057,12 @@ Phase 23 complete. No feature changes — testing only.
 
 #### 24.4 Prediction Engine Tests
 
-Note: Skipped for now — requires Prisma mocking which adds significant complexity. The prediction engine is indirectly tested through the dashboard API in production. Can be added later with a database test helper.
-
 ##### Tasks
-- [ ] 24.4.1 Create `src/services/__tests__/prediction-engine.test.ts` with mock Prisma data
-- [ ] 24.4.2 Test weekday weighting: Friday data weighted higher for Friday predictions
-- [ ] 24.4.3 Test confidence calculation: more data points → higher confidence
-- [ ] 24.4.4 Test holiday multiplier: Christmas prediction is ~70% lower
-- [ ] 24.4.5 Test minimum data threshold: returns null with < 5 entries
+- [x] 24.4.1 Extract `mean`, `calculateConfidence`, and `calculatePrediction` as exported pure functions from prediction engine
+- [x] 24.4.2 Create `src/services/__tests__/prediction-engine.test.ts`
+- [x] 24.4.3 Test weighted prediction: 60% weekday + 40% recent
+- [x] 24.4.4 Test confidence scaling with data volume (low/moderate/good/high tiers)
+- [x] 24.4.5 Test confidence reduction with high variance data
 
 ##### Acceptance Criteria
 - Predictions use 60% weekday / 40% recent weighting
