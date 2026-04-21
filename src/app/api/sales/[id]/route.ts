@@ -8,7 +8,7 @@ import { getLocalDateStr } from "@/lib/dates";
 
 export async function GET(
   _req: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();
@@ -53,7 +53,7 @@ const updateItemsSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();
@@ -119,7 +119,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();
