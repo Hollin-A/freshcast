@@ -140,6 +140,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Tests cover core business logic: sales parser, product matcher, prediction engine, unit normalizer, date utilities, and rate limiter. All tests are pure unit tests with no database or network calls.
+
 ## What I Built vs What I Deferred
 
 ### Implemented (MVP + Post-MVP)

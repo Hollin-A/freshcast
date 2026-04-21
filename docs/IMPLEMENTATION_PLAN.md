@@ -52,6 +52,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 21 | Editorial Rebrand | ✅ Complete |
 | 22 | Post-Rebrand Enhancements | ✅ Complete |
 | 23 | Demo Security & Rate Limiting | ✅ Complete |
+| 24 | Unit Testing Foundation | 🔲 Not started |
 
 ---
 
@@ -993,6 +994,118 @@ Phase 22 complete.
 - LLM-calling endpoints are rate limited to prevent cost abuse
 - Demo account is protected from deletion and password changes
 - Normal user experience is unaffected by these guards
+
+---
+
+## Phase 24: Unit Testing Foundation
+Branch: `feat/phase-24-testing`
+
+### Goal
+Add a test suite covering core business logic — the services that parse sales, match products, predict demand, normalize units, and handle dates. These are the highest-value tests: pure functions with no UI, easy to write, and they catch bugs that silently corrupt data.
+
+### Dependencies
+Phase 23 complete. No feature changes — testing only.
+
+---
+
+#### 24.1 Test Setup
+
+##### Tasks
+- [ ] 24.1.1 Install Vitest as a dev dependency
+- [ ] 24.1.2 Create `vitest.config.ts` with TypeScript and path alias support
+- [ ] 24.1.3 Add `"test": "vitest --run"` script to `package.json`
+- [ ] 24.1.4 Verify setup with a trivial passing test
+
+##### Acceptance Criteria
+- `npm test` runs and exits cleanly
+- TypeScript and `@/` path aliases work in test files
+
+---
+
+#### 24.2 Sales Parser & Unit Normalizer Tests
+
+##### Tasks
+- [ ] 24.2.1 Create `src/services/__tests__/sales-parser.test.ts`
+- [ ] 24.2.2 Test basic NL parsing: "sold 20 eggs, 30kg beef" → correct products and quantities
+- [ ] 24.2.3 Test unit extraction: "5kg", "2 liters", "3 dozen" → correct quantity and unit
+- [ ] 24.2.4 Test edge cases: empty input, no quantities, duplicate products
+- [ ] 24.2.5 Create `src/lib/__tests__/unit-normalizer.test.ts`
+- [ ] 24.2.6 Test unit normalization: "Litre" → "liters", "Kg" → "kg", "L" → "liters", "pcs" → "pieces"
+
+##### Acceptance Criteria
+- Parser correctly extracts products, quantities, and units from NL text
+- Unit normalizer maps all known variations to canonical forms
+- Edge cases return empty results, not errors
+
+---
+
+#### 24.3 Product Matcher Tests
+
+##### Tasks
+- [ ] 24.3.1 Create `src/services/__tests__/product-matcher.test.ts`
+- [ ] 24.3.2 Test exact matching: "Eggs" matches "Eggs"
+- [ ] 24.3.3 Test fuzzy matching: "egg" matches "Eggs", "minced beef" matches "Minced beef"
+- [ ] 24.3.4 Test no match: "halloumi" returns unmatched when not in product list
+- [ ] 24.3.5 Test plural handling: "chickens" matches "Chicken breast"
+
+##### Acceptance Criteria
+- Exact matches return the correct product ID
+- Fuzzy matches work for common variations (case, plural, substring)
+- Unmatched items are flagged correctly
+
+---
+
+#### 24.4 Prediction Engine Tests
+
+##### Tasks
+- [ ] 24.4.1 Create `src/services/__tests__/prediction-engine.test.ts` with mock Prisma data
+- [ ] 24.4.2 Test weekday weighting: Friday data weighted higher for Friday predictions
+- [ ] 24.4.3 Test confidence calculation: more data points → higher confidence
+- [ ] 24.4.4 Test holiday multiplier: Christmas prediction is ~70% lower
+- [ ] 24.4.5 Test minimum data threshold: returns null with < 5 entries
+
+##### Acceptance Criteria
+- Predictions use 60% weekday / 40% recent weighting
+- Confidence scales with data volume
+- Holiday multipliers are applied correctly
+- Insufficient data returns null, not bad predictions
+
+---
+
+#### 24.5 Date Utility Tests
+
+##### Tasks
+- [ ] 24.5.1 Create `src/lib/__tests__/dates.test.ts`
+- [ ] 24.5.2 Test `getLocalDateStr` returns correct date for Melbourne timezone at midnight boundary
+- [ ] 24.5.3 Test `getTodayUTC` returns a Date object at UTC midnight for the local date
+- [ ] 24.5.4 Test `getDaysAgoUTC` returns the correct date N days back
+
+##### Acceptance Criteria
+- Date functions return correct results across timezone boundaries
+- The midnight Melbourne edge case (the bug we just fixed) is covered
+
+---
+
+#### 24.6 Rate Limiter Tests
+
+##### Tasks
+- [ ] 24.6.1 Create `src/lib/__tests__/rate-limit.test.ts`
+- [ ] 24.6.2 Test allows requests within limit
+- [ ] 24.6.3 Test blocks requests beyond limit
+- [ ] 24.6.4 Test window resets after expiry
+
+##### Acceptance Criteria
+- Rate limiter allows N requests within the window
+- Request N+1 is rejected
+- After the window expires, requests are allowed again
+
+---
+
+### Phase 24 Acceptance Criteria (Overall)
+- `npm test` runs ~25-30 tests and passes
+- Core business logic (parser, matcher, predictions, dates, rate limiter) is covered
+- Tests run in < 5 seconds
+- No database or network calls in tests (pure unit tests with mocks where needed)
 
 ---
 
