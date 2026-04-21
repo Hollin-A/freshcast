@@ -90,7 +90,8 @@ async function getProductSalesHistory(
   businessId: string,
   productId: string,
   days: number,
-  timezone: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _timezone: string
 ) {
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - days);
@@ -156,7 +157,7 @@ export async function predictNextDay(
 
     // Apply holiday multiplier
     const tomorrowStr = tomorrowDate.toISOString().split("T")[0];
-    const { multiplier, holiday: _ } = getHolidayMultiplier(tomorrowStr, region);
+    const { multiplier } = getHolidayMultiplier(tomorrowStr, region);
     const adjustedPrediction = Math.round(predicted * multiplier);
 
     predictions.push({

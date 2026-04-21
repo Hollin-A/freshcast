@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,17 +41,12 @@ export function SalesInputClient() {
   const [newProductUnit, setNewProductUnit] = useState("");
 
   const products = productsData?.products ?? [];
-  const productVersionRef = useRef(0);
+  const prevProductVersionRef = useRef("");
   const currentProductVersion = products.map((p) => p.id).join(",");
 
-  useEffect(() => {
-    if (currentProductVersion && currentProductVersion !== productVersionRef.current.toString()) {
-      setManualItems([]);
-    }
-  }, [currentProductVersion]);
-
+  // Reset manual items when product list changes (detected in initManualItems)
   function initManualItems() {
-    productVersionRef.current += 1;
+    prevProductVersionRef.current = currentProductVersion;
     setManualItems(
       products.map((p) => ({
         productId: p.id,

@@ -129,7 +129,7 @@ async function main() {
         3 + Math.floor(Math.random() * 4)
       );
 
-      const entry = await prisma.salesEntry.create({
+      await prisma.salesEntry.create({
         data: {
           date,
           inputMethod: Math.random() > 0.5 ? "NATURAL_LANGUAGE" : "MANUAL",

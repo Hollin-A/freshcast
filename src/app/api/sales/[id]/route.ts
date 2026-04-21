@@ -4,11 +4,11 @@ import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
-import { getLocalDateStr, toUTCDate } from "@/lib/dates";
+import { getLocalDateStr } from "@/lib/dates";
 
 export async function GET(
   _req: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();
@@ -53,7 +53,7 @@ const updateItemsSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();
@@ -74,7 +74,6 @@ export async function PUT(
     // Only allow editing today's entry (using business timezone)
     const ctx2 = await getBusinessContext();
     const todayStr = getLocalDateStr(ctx2?.timezone ?? "UTC");
-    const todayDate = toUTCDate(todayStr);
     const entryDateStr = new Date(entry.date).toISOString().split("T")[0];
     if (entryDateStr !== todayStr) {
       return errorResponse("VALIDATION_ERROR", "Can only edit today's entry", 400);
@@ -120,7 +119,7 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  ctx: RouteContext<"/api/sales/[id]">
+  ctx: { params: Promise<{ id: string }> }
 ) {
   try {
     const businessId = await getBusinessId();

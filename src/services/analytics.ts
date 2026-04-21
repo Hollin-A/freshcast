@@ -3,7 +3,6 @@ import {
   getTodayUTC,
   getDaysAgoUTC,
   getLocalDateStr,
-  toUTCDate,
 } from "@/lib/dates";
 
 export type ProductTotal = {

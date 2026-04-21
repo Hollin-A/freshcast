@@ -115,7 +115,7 @@ export function parseSalesInput(
   products: ProductRecord[]
 ): { parsed: ParsedItem[]; unmatched: string[] } {
   // Step 1: Normalize
-  let normalized = text.replace(FILLER_WORDS, " ").replace(/\s+/g, " ").trim();
+  const normalized = text.replace(FILLER_WORDS, " ").replace(/\s+/g, " ").trim();
 
   // Step 2: Tokenize by commas and "and"
   const tokens = normalized
