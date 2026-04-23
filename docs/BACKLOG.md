@@ -136,3 +136,19 @@ Services that add genuine product value while building AWS experience. Cost esti
 
 ### Cost Summary
 At portfolio/demo scale with free tiers: most services cost $0-2/month. The only meaningful costs are Textract after the 3-month free tier (~$1.50/1,000 pages) and Secrets Manager (~$1.60/mo). Total estimated: under $5/month on top of what you already spend.
+
+---
+
+## AWS Deployment
+
+| # | Item | Priority | Effort | Cost (monthly) | Reason |
+|---|------|----------|--------|----------------|--------|
+| 32 | AWS Amplify deployment (staging/secondary) | P0 | 2 hrs | Free tier: 1,000 build min, 5GB hosting, 15GB bandwidth. ~$0-5 | Same-network access to all AWS services via IAM roles. Shows AWS operational experience. Keep Vercel as primary, Amplify for AWS integrations. |
+| 33 | Dockerize the app (Dockerfile) | P1 | 1 hr | $0 (file only, no hosting cost) | Prerequisite for App Runner or ECS if needed later. Shows containerization knowledge. |
+
+### Deployment Strategy
+- Keep Vercel as the primary deployment (demo site, rapid iteration)
+- Set up Amplify as a secondary deployment for AWS service integrations
+- AWS services (S3, SES, Textract, SNS) connect via IAM roles on Amplify — no API keys needed
+- Vercel deployment continues using Resend + direct Anthropic API
+- Both deployments share the same GitHub repo (different branch or environment)
