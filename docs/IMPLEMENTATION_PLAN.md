@@ -53,6 +53,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 22 | Post-Rebrand Enhancements | ✅ Complete |
 | 23 | Demo Security & Rate Limiting | ✅ Complete |
 | 24 | Unit Testing Foundation | ✅ Complete |
+| 25 | Sales Input UX Improvements | 🔲 Not started |
 
 ---
 
@@ -1106,6 +1107,63 @@ Phase 23 complete. No feature changes — testing only.
 - Core business logic (parser, matcher, predictions, dates, rate limiter) is covered
 - Tests run in < 5 seconds
 - No database or network calls in tests (pure unit tests with mocks where needed)
+
+---
+
+## Phase 25: Sales Input UX Improvements
+Branch: `feat/phase-25-sales-ux`
+
+### Goal
+Improve the sales input experience with business-type-aware placeholder text and editable product names in the confirmation screen.
+
+### Dependencies
+Phase 24 complete.
+
+---
+
+#### 25.1 Business-Type-Aware Placeholder Text
+
+##### Tasks
+- [ ] 25.1.1 Create a placeholder text map keyed by `BusinessType` — each entry demonstrates NL parser capabilities (mixed units, commas, multiple items) with products relevant to that business type
+- [ ] 25.1.2 Add `type` to the business select in the sales page server component
+- [ ] 25.1.3 Pass `businessType` to `SalesInputClient` and use it to select the placeholder
+- [ ] 25.1.4 Fallback to a generic placeholder if business type is unknown
+
+##### Acceptance Criteria
+- Butcher sees "sold 12kg lamb chops, 8kg minced beef, 5 chickens"
+- Café sees "sold 45 coffees, 12 sandwiches, 8 slices of cake"
+- Grocer sees "sold 20 eggs, 2L milk, 5kg rice"
+- Unknown/Other types see a generic placeholder
+- Placeholder still demonstrates parser features (quantities, units, commas)
+
+---
+
+#### 25.2 Editable Product Names in Confirmation Screen
+
+##### Tasks
+- [ ] 25.2.1 Make the product name in each parsed item row tappable — tapping opens an inline text input pre-filled with the current name
+- [ ] 25.2.2 On blur or enter, run a client-side match against the products list (case-insensitive exact match using the products already in React Query cache)
+- [ ] 25.2.3 If the new name matches an existing product → update `productId`, set `matched: true`, update unit to that product's default unit
+- [ ] 25.2.4 If the new name doesn't match any product → set `productId: null`, set `matched: false`, show "Add as new product" button with the user's typed name
+- [ ] 25.2.5 If the user clears the input and blurs → revert to the original parser name
+- [ ] 25.2.6 Update the checkmark/plus icon to reflect the current matched/unmatched state after edits
+
+##### Acceptance Criteria
+- User can tap a matched product name and change it to anything
+- Changing to an existing product name re-links to that product
+- Changing to an unknown name marks it as unmatched with "Add as new product"
+- The "Add" button creates the product with the user's typed name, not the parser's original name
+- Reverting (clearing input) restores the original parser match
+- Quantity and unit are preserved when only the name changes
+- Unit updates to the new product's default unit when re-matching to a different existing product
+
+---
+
+### Phase 25 Acceptance Criteria (Overall)
+- NL input placeholder is relevant to the user's business type
+- Users can correct product name matches in the confirmation screen
+- Users can override a match to create a new product with their preferred name
+- All existing confirmation screen functionality (quantity editing, ambiguous items, remove items) still works
 
 ---
 
