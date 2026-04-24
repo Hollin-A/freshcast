@@ -1179,6 +1179,7 @@ These were implemented after the main phases, addressing bugs and feature gaps d
 - [x] Pass parsed unit when adding unmatched products from confirmation screen (`fix/nl-parser-unit-handling`)
 - [x] Fix mobile nav — prevent "Log Sales" tab highlighting on history page (`fix/nav-active-state`)
 - [x] Fix today's summary to aggregate across multiple daily entries (`feat/multiple-daily-entries`)
+- [x] Normalize product default units on create and update — "Pieces", "pcs", "Kg" all stored as canonical form (`fix/normalize-product-units`)
 
 ### Features Added
 - [x] Business timezone field — auto-detected from browser during onboarding (`fix/timezone-aware-dates`)

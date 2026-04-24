@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { normalizeUnit } from "@/lib/unit-normalizer";
 import { BUSINESS_TYPES } from "@/lib/constants";
 
 const createBusinessSchema = z.object({
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
         products: {
           create: products.map((p) => ({
             name: p.name,
-            defaultUnit: p.defaultUnit ?? null,
+            defaultUnit: normalizeUnit(p.defaultUnit) ?? null,
           })),
         },
       },

@@ -3,6 +3,7 @@ import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { normalizeUnit } from "@/lib/unit-normalizer";
 import { getProductDailyHistory } from "@/services/analytics";
 
 export async function GET(request: NextRequest) {
@@ -72,7 +73,7 @@ export async function POST(request: Request) {
     }
 
     const product = await prisma.product.create({
-      data: { name, defaultUnit: defaultUnit ?? null, businessId },
+      data: { name, defaultUnit: normalizeUnit(defaultUnit) ?? null, businessId },
       select: { id: true, name: true, defaultUnit: true, isActive: true },
     });
 
@@ -131,7 +132,7 @@ export async function PATCH(request: Request) {
       where: { id },
       data: {
         ...(name !== undefined && { name }),
-        ...(defaultUnit !== undefined && { defaultUnit }),
+        ...(defaultUnit !== undefined && { defaultUnit: normalizeUnit(defaultUnit) }),
         ...(isActive !== undefined && { isActive }),
       },
       select: { id: true, name: true, defaultUnit: true, isActive: true },
