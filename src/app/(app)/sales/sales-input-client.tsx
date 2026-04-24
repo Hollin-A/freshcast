@@ -19,7 +19,20 @@ type ManualItem = {
   unit: string | null;
 };
 
-export function SalesInputClient() {
+const NL_PLACEHOLDERS: Record<string, string> = {
+  BUTCHER: '"sold 12kg lamb chops, 8kg minced beef, and 5 chickens"',
+  GROCERY: '"sold 20 eggs, 2L milk, 5kg rice, and a dozen bread"',
+  CAFE: '"sold 45 coffees, 12 sandwiches, and 8 slices of cake"',
+  TAKEAWAY: '"sold 30 fried rice, 15 noodles, and 20 spring rolls"',
+  PRODUCE_SELLER: '"sold 10kg tomatoes, 5kg potatoes, and 3 bunches of spinach"',
+  MARKET_STALL: '"sold 30 eggs, 15kg beef, 20 bread, and 5L milk"',
+  RETAIL_VENDOR: '"sold 25 items today — 10 shirts, 8 caps, and 7 bags"',
+  OTHER: '"sold 20 of product A, 15kg of product B, and 10 product C"',
+};
+
+const DEFAULT_PLACEHOLDER = '"e.g., sold 20 eggs, 30kg beef, and 10 milk bottles"';
+
+export function SalesInputClient({ businessType }: { businessType?: string }) {
   const router = useRouter();
   const { data: productsData } = useProducts();
   const parseMutation = useParseSales();
@@ -39,6 +52,7 @@ export function SalesInputClient() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [newProductName, setNewProductName] = useState("");
   const [newProductUnit, setNewProductUnit] = useState("");
+  const [editingNameIndex, setEditingNameIndex] = useState<number | null>(null);
 
   const products = productsData?.products ?? [];
   const prevProductVersionRef = useRef("");
@@ -119,6 +133,25 @@ export function SalesInputClient() {
 
   function removeParsedItem(index: number) {
     setParsedItems((prev) => prev?.filter((_, i) => i !== index) ?? null);
+  }
+
+  function updateParsedName(index: number, newName: string) {
+    if (!newName.trim()) return;
+    const trimmed = newName.trim();
+    // Client-side match against existing products
+    const match = products.find(
+      (p) => p.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    setParsedItems((prev) =>
+      prev?.map((p, i) => {
+        if (i !== index) return p;
+        if (match) {
+          return { ...p, product: match.name, productId: match.id, matched: true, unit: match.defaultUnit ?? p.unit };
+        }
+        return { ...p, product: trimmed, productId: null, matched: false };
+      }) ?? null
+    );
+    setEditingNameIndex(null);
   }
 
   async function handleSave() {
@@ -217,7 +250,26 @@ export function SalesInputClient() {
                 {!item.matched ? "+" : "✓"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-ink">{item.product}</p>
+                {editingNameIndex === index ? (
+                  <input
+                    autoFocus
+                    defaultValue={item.product}
+                    className="w-full bg-transparent text-[15px] font-medium text-ink outline-none border-b border-terra pb-0.5"
+                    onBlur={(e) => updateParsedName(index, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") updateParsedName(index, (e.target as HTMLInputElement).value);
+                      if (e.key === "Escape") setEditingNameIndex(null);
+                    }}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setEditingNameIndex(index)}
+                    className="text-left text-[15px] font-medium text-ink hover:text-terra transition-colors"
+                    title="Tap to edit name"
+                  >
+                    {item.product}
+                  </button>
+                )}
                 {!item.matched && (
                   <p className="text-[11px] text-[#8A6520]">New product — tap to confirm</p>
                 )}
@@ -314,7 +366,7 @@ export function SalesInputClient() {
             <div className="rounded-2xl border border-terra bg-paper p-4 shadow-[0_0_0_4px_rgba(181,85,58,0.10)]">
               <textarea
                 className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-ink placeholder:text-mute2 focus:outline-none"
-                placeholder='e.g., "sold 20 eggs, 30kg beef, and 10 milk bottles"'
+                placeholder={businessType ? (NL_PLACEHOLDERS[businessType] || DEFAULT_PLACEHOLDER) : DEFAULT_PLACEHOLDER}
                 value={nlText}
                 onChange={(e) => setNlText(e.target.value)}
               />

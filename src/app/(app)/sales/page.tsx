@@ -9,13 +9,13 @@ export default async function SalesPage() {
 
   const business = await prisma.business.findUnique({
     where: { userId: session.user.id },
-    select: { onboarded: true },
+    select: { onboarded: true, type: true },
   });
   if (!business?.onboarded) redirect("/onboarding");
 
   return (
     <div className="mx-auto max-w-md pb-28">
-      <SalesInputClient />
+      <SalesInputClient businessType={business.type} />
     </div>
   );
 }
