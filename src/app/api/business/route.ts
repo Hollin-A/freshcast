@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
+import { sanitizeText } from "@/lib/sanitize";
 import { BUSINESS_TYPES } from "@/lib/constants";
 
 const createBusinessSchema = z.object({
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
     const business = await prisma.business.create({
       data: {
-        name,
+        name: sanitizeText(name),
         type,
         locale,
         timezone,
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         products: {
           create: products.map((p) => ({
-            name: p.name,
+            name: sanitizeText(p.name),
             defaultUnit: normalizeUnit(p.defaultUnit) ?? null,
           })),
         },

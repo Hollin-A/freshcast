@@ -54,7 +54,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 23 | Demo Security & Rate Limiting | ✅ Complete |
 | 24 | Unit Testing Foundation | ✅ Complete |
 | 25 | Sales Input UX Improvements | ✅ Complete |
-| 26 | Production Foundations | 🔲 Not started |
+| 26 | Production Foundations | ✅ Complete |
 | 27 | AWS Amplify Deployment | 🔲 Not started |
 | 28 | AWS Email & Scheduling | 🔲 Not started |
 | 29 | Receipt Upload & OCR | 🔲 Not started |
@@ -1190,10 +1190,10 @@ Phase 25 complete.
 #### 26.1 Health & Monitoring
 
 ##### Tasks
-- [ ] 26.1.1 Build `GET /api/health` endpoint — returns DB connectivity status, last insight generation time, uptime, app version
-- [ ] 26.1.2 Install Sentry SDK (`@sentry/nextjs`), configure in `next.config.ts` and root layout
-- [ ] 26.1.3 Add Sentry error boundary reporting to the app error boundary
-- [ ] 26.1.4 Add `SENTRY_DSN` to environment variables
+- [x] 26.1.1 Build `GET /api/health` endpoint — returns DB connectivity status, last insight generation time, uptime, app version
+- [x] 26.1.2 Install Sentry SDK (`@sentry/nextjs`), configure in `next.config.ts` and root layout
+- [x] 26.1.3 Add Sentry error boundary reporting to the app error boundary
+- [x] 26.1.4 Add `SENTRY_DSN` to environment variables
 
 ##### Acceptance Criteria
 - `/api/health` returns JSON with DB status, uptime, and last insight time
@@ -1205,9 +1205,9 @@ Phase 25 complete.
 #### 26.2 Security & Documentation
 
 ##### Tasks
-- [ ] 26.2.1 Add input sanitization — strip HTML/script tags from `rawInput`, product names, and business name before storage
-- [ ] 26.2.2 Create `CHANGELOG.md` — initial changelog covering phases 1–25 in user-facing language
-- [ ] 26.2.3 Extract LLM prompts into `src/prompts/` directory — `chat.ts`, `insights.ts`, `parser.ts` with version comments
+- [x] 26.2.1 Add input sanitization — strip HTML/script tags from `rawInput`, product names, and business name before storage
+- [x] 26.2.2 Create `CHANGELOG.md` — initial changelog covering phases 1–25 in user-facing language
+- [x] 26.2.3 Extract LLM prompts into `src/prompts/` directory — `chat.ts`, `insights.ts`, `parser.ts` with version comments
 
 ##### Acceptance Criteria
 - `<script>` tags in NL input are stripped before storage

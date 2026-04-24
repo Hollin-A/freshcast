@@ -4,6 +4,7 @@ import type { InsightType } from "@/generated/prisma/client";
 import { getDaysAgoUTC, getTodayUTC, getDayOfWeekFromDate } from "@/lib/dates";
 import { generateJSON } from "@/lib/claude";
 import { logger } from "@/lib/logger";
+import { INSIGHT_SYSTEM_PROMPT } from "@/prompts/insights";
 
 type InsightRecord = {
   type: InsightType;
@@ -152,15 +153,6 @@ export async function generateInsights(
 
   return insights;
 }
-
-const INSIGHT_SYSTEM_PROMPT = `You are a business analytics assistant for a small retail business. Given sales data, generate 3-5 short, actionable insights. Each insight should have a punchy headline and a brief one-line description.
-
-Return a JSON array where each item has:
-- "type": one of "TREND", "COMPARISON", "TOP_PRODUCTS", or "SUMMARY"
-- "headline": short punchy headline (e.g., "Eggs sales up 73%")
-- "description": brief actionable follow-up (e.g., "Biggest jump week-over-week.")
-
-Only use the data provided. Do not make assumptions about data you don't have. Be specific with numbers and percentages.`;
 
 async function generateLLMInsights(
   thisWeekTotals: Map<string, { name: string; qty: number }>,

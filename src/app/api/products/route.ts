@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
+import { sanitizeText } from "@/lib/sanitize";
 import { getProductDailyHistory } from "@/services/analytics";
 
 export async function GET(request: NextRequest) {
@@ -63,7 +64,8 @@ export async function POST(request: Request) {
       });
     }
 
-    const { name, defaultUnit } = result.data;
+    const { name: rawName, defaultUnit } = result.data;
+    const name = sanitizeText(rawName);
 
     const existing = await prisma.product.findUnique({
       where: { businessId_name: { businessId, name } },

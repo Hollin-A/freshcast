@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
+import { sanitizeText } from "@/lib/sanitize";
 
 const createSalesSchema = z.object({
   date: z.string().date(),
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
       data: {
         date: entryDate,
         inputMethod,
-        rawInput: rawInput ?? null,
+        rawInput: rawInput ? sanitizeText(rawInput) : null,
         businessId,
         items: {
           create: items.map((item) => ({

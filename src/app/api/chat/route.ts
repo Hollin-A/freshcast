@@ -5,17 +5,7 @@ import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
-
-const SYSTEM_PROMPT = `You are Freshcast AI, a helpful business assistant for a small retail business owner. You answer questions about their sales data, trends, and predictions.
-
-Rules:
-- Only answer based on the data provided in the context. Never make up numbers or assume data you don't have.
-- Keep answers concise and actionable — 2-3 sentences max unless the user asks for detail.
-- Use specific numbers from the data when relevant.
-- If the data doesn't contain enough information to answer, say so honestly.
-- Be warm and supportive — these are small business owners who are busy.
-- When giving predictions or suggestions, frame them as guidance, not certainty ("Based on your data, you might want to..." not "You will sell...").
-- Format numbers nicely (round to whole numbers for quantities).`;
+import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat";
 
 const chatSchema = z.object({
   message: z.string().min(1).max(500),
@@ -59,7 +49,7 @@ export async function POST(request: Request) {
     // Build the full user message with context
     const contextMessage = `Here is the current business data:\n\n${dataContext}\n\nConversation so far:\n${history.map((h) => `${h.role}: ${h.content}`).join("\n")}\n\nUser question: ${message}`;
 
-    const response = await generateText(SYSTEM_PROMPT, contextMessage, 512);
+    const response = await generateText(CHAT_SYSTEM_PROMPT, contextMessage, 512);
 
     if (!response) {
       return errorResponse(
