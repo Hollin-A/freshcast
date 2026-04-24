@@ -54,6 +54,15 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 23 | Demo Security & Rate Limiting | ✅ Complete |
 | 24 | Unit Testing Foundation | ✅ Complete |
 | 25 | Sales Input UX Improvements | ✅ Complete |
+| 26 | Production Foundations | 🔲 Not started |
+| 27 | AWS Amplify Deployment | 🔲 Not started |
+| 28 | AWS Email & Scheduling | 🔲 Not started |
+| 29 | Receipt Upload & OCR | 🔲 Not started |
+| 30 | Observability & API Maturity | 🔲 Not started |
+| 31 | Push Notifications | 🔲 Not started |
+| 32 | Frontend Polish | 🔲 Not started |
+| 33 | Advanced AWS & Infrastructure | 🔲 Not started |
+| 34 | NL Parser Evaluation Framework | 🔲 Not started |
 
 ---
 
@@ -1164,6 +1173,363 @@ Phase 24 complete.
 - Users can correct product name matches in the confirmation screen
 - Users can override a match to create a new product with their preferred name
 - All existing confirmation screen functionality (quantity editing, ambiguous items, remove items) still works
+
+---
+
+## Phase 26: Production Foundations
+Branch: `feat/phase-26-production-foundations`
+
+### Goal
+Establish production-grade practices — monitoring, security, documentation, and prompt management. Quick wins with high portfolio signal.
+
+### Dependencies
+Phase 25 complete.
+
+---
+
+#### 26.1 Health & Monitoring
+
+##### Tasks
+- [ ] 26.1.1 Build `GET /api/health` endpoint — returns DB connectivity status, last insight generation time, uptime, app version
+- [ ] 26.1.2 Install Sentry SDK (`@sentry/nextjs`), configure in `next.config.ts` and root layout
+- [ ] 26.1.3 Add Sentry error boundary reporting to the app error boundary
+- [ ] 26.1.4 Add `SENTRY_DSN` to environment variables
+
+##### Acceptance Criteria
+- `/api/health` returns JSON with DB status, uptime, and last insight time
+- Unhandled errors are reported to Sentry with context (user ID, business ID)
+- Sentry dashboard shows errors from the deployed app
+
+---
+
+#### 26.2 Security & Documentation
+
+##### Tasks
+- [ ] 26.2.1 Add input sanitization — strip HTML/script tags from `rawInput`, product names, and business name before storage
+- [ ] 26.2.2 Create `CHANGELOG.md` — initial changelog covering phases 1–25 in user-facing language
+- [ ] 26.2.3 Extract LLM prompts into `src/prompts/` directory — `chat.ts`, `insights.ts`, `parser.ts` with version comments
+
+##### Acceptance Criteria
+- `<script>` tags in NL input are stripped before storage
+- CHANGELOG.md exists with a summary of shipped features
+- Prompts are in separate versioned files, imported by the services that use them
+
+---
+
+## Phase 27: AWS Amplify Deployment
+Branch: `feat/phase-27-amplify`
+
+### Goal
+Set up AWS Amplify as a secondary deployment. Foundation for all AWS service integrations — services connect via IAM roles instead of API keys.
+
+### Dependencies
+Phase 26 complete.
+
+### Notes
+No custom domain required. Works on Amplify's default `*.amplifyapp.com` domain.
+
+---
+
+#### 27.1 Amplify Setup
+
+##### Tasks
+- [ ] 27.1.1 Create `amplify.yml` build config for Next.js 16 (App Router, SSR)
+- [ ] 27.1.2 Connect GitHub repo to AWS Amplify, deploy from `main` branch
+- [ ] 27.1.3 Configure environment variables in Amplify console (DATABASE_URL, AUTH_SECRET, AUTH_URL, ANTHROPIC_API_KEY)
+- [ ] 27.1.4 Verify full app works on Amplify URL — signup, onboarding, sales, dashboard, chat
+- [ ] 27.1.5 Set up IAM role for the Amplify app with permissions for S3, SES, Textract, SNS, CloudWatch
+
+##### Acceptance Criteria
+- App deploys and runs on Amplify's default domain
+- All features work identically to the Vercel deployment
+- IAM role is configured for future AWS service access
+
+---
+
+#### 27.2 Dockerize
+
+##### Tasks
+- [ ] 27.2.1 Create `Dockerfile` with multi-stage build (deps → build → production)
+- [ ] 27.2.2 Create `.dockerignore` for node_modules, .git, docs
+- [ ] 27.2.3 Verify `docker build` and `docker run` work locally
+
+##### Acceptance Criteria
+- `docker build` produces a working image
+- Container runs the app on port 3000
+- Dockerfile is in the repo for portfolio reference (not used for deployment)
+
+---
+
+## Phase 28: AWS Email & Scheduling
+Branch: `feat/phase-28-aws-email`
+
+### Goal
+Replace Resend with Amazon SES and Vercel Cron with EventBridge. These pair naturally since the weekly email uses both.
+
+### Dependencies
+Phase 27 complete (needs IAM role for SES and EventBridge access).
+
+### Notes
+SES works in sandbox mode without a custom domain — can only send to verified email addresses. Fine for portfolio demo.
+
+---
+
+#### 28.1 Amazon SES
+
+##### Tasks
+- [ ] 28.1.1 Verify sender email in SES console (sandbox mode)
+- [ ] 28.1.2 Install `@aws-sdk/client-ses`
+- [ ] 28.1.3 Create `src/lib/ses.ts` — SES email sender with same interface as existing `sendEmail`
+- [ ] 28.1.4 Update `src/lib/email.ts` — try SES first, fall back to Resend if SES fails or isn't configured
+- [ ] 28.1.5 Test password reset and verification emails via SES
+
+##### Acceptance Criteria
+- Emails send via SES on the Amplify deployment
+- Emails fall back to Resend on the Vercel deployment (no AWS credentials)
+- Both providers use the same email templates
+
+---
+
+#### 28.2 Amazon EventBridge
+
+##### Tasks
+- [ ] 28.2.1 Create EventBridge Scheduler rule — Monday 6 AM UTC → invokes weekly summary endpoint
+- [ ] 28.2.2 Configure the rule to call the Amplify deployment URL with CRON_SECRET header
+- [ ] 28.2.3 Add CloudWatch alarm for failed EventBridge invocations
+
+##### Acceptance Criteria
+- Weekly summary email triggers via EventBridge on the Amplify deployment
+- Vercel deployment continues using Vercel Cron as fallback
+- Failed invocations trigger a CloudWatch alarm
+
+---
+
+## Phase 29: Receipt Upload & OCR
+Branch: `feat/phase-29-receipt-ocr`
+
+### Goal
+Photo-to-sales-data pipeline using S3 and Textract. New feature with genuine product value — bridges the gap between paper receipts and digital sales logging.
+
+### Dependencies
+Phase 27 complete (needs IAM role for S3 and Textract access).
+
+---
+
+#### 29.1 S3 Upload
+
+##### Tasks
+- [ ] 29.1.1 Create S3 bucket with lifecycle policy (auto-delete after 30 days)
+- [ ] 29.1.2 Build `POST /api/receipts/upload` — generates presigned S3 URL for client-side upload
+- [ ] 29.1.3 Build receipt upload UI on the sales input page — camera/file picker, upload progress bar
+- [ ] 29.1.4 Store receipt S3 key on the SalesEntry model (new optional `receiptKey` field)
+
+##### Acceptance Criteria
+- User can take a photo or select a file on the sales input page
+- Photo uploads to S3 via presigned URL (no server-side file handling)
+- Upload shows progress indicator
+
+---
+
+#### 29.2 Textract OCR
+
+##### Tasks
+- [ ] 29.2.1 Install `@aws-sdk/client-textract`
+- [ ] 29.2.2 Build `POST /api/receipts/parse` — sends S3 object to Textract, extracts text
+- [ ] 29.2.3 Chain Textract output → existing NL parser → confirmation screen (same flow as typing)
+- [ ] 29.2.4 Show receipt source indicator in sales history ("📷 From receipt" badge)
+- [ ] 29.2.5 Handle Textract errors gracefully — show "couldn't read receipt, try typing instead"
+
+##### Acceptance Criteria
+- Uploaded receipt photo is processed by Textract
+- Extracted text is fed into the existing NL parser pipeline
+- User sees the same confirmation screen as NL input
+- Failed OCR shows a helpful fallback message
+
+---
+
+## Phase 30: Observability & API Maturity
+Branch: `feat/phase-30-observability`
+
+### Goal
+Backend improvements that show engineering depth — structured logging, consistent API responses, monitoring, and performance optimization.
+
+### Dependencies
+Phase 27 complete (needs IAM for CloudWatch).
+
+---
+
+#### 30.1 API Improvements
+
+##### Tasks
+- [ ] 30.1.1 Build request logging middleware — wrap all API routes with method, path, status code, duration
+- [ ] 30.1.2 Migrate API responses to structured envelope format `{ data, error, meta }` across all routes
+- [ ] 30.1.3 Database indexes audit — review Prisma schema query patterns, add missing indexes, create ADR documenting decisions
+
+##### Acceptance Criteria
+- Every API request is logged with method, path, status, and duration
+- All API responses follow the same envelope format
+- Missing indexes are added with documented rationale
+
+---
+
+#### 30.2 Monitoring
+
+##### Tasks
+- [ ] 30.2.1 Install `@aws-sdk/client-cloudwatch`
+- [ ] 30.2.2 Push custom metrics to CloudWatch — API latency, LLM call count, error rate
+- [ ] 30.2.3 Create CloudWatch alarms — error rate > 5%, LLM failure rate > 20%
+- [ ] 30.2.4 Build LLM cost tracking — log token usage per request, add `GET /api/admin/llm-usage` summary
+
+##### Acceptance Criteria
+- CloudWatch dashboard shows API and LLM metrics
+- Alarms fire when error thresholds are exceeded
+- LLM usage endpoint shows total tokens and estimated cost
+
+---
+
+## Phase 31: Push Notifications
+Branch: `feat/phase-31-notifications`
+
+### Goal
+Morning prep reminders via Amazon SNS. Completes the "wake up to your forecast" story from the PRD.
+
+### Dependencies
+Phase 28 complete (reuses EventBridge scheduling pattern).
+
+### Notes
+Web Push subscriptions are tied to the origin domain. If you later add a custom domain, subscriptions need to be re-created.
+
+---
+
+#### 31.1 Notification Infrastructure
+
+##### Tasks
+- [ ] 31.1.1 Set up Amazon SNS topic for push notifications
+- [ ] 31.1.2 Add Web Push subscription flow — browser permission prompt, store subscription endpoint in DB
+- [ ] 31.1.3 Add `pushSubscription` JSON field to User model, run Prisma migration
+- [ ] 31.1.4 Build `POST /api/notifications/subscribe` — stores push subscription
+- [ ] 31.1.5 Build `POST /api/notifications/morning-prep` — generates prep list from forecast, sends via SNS to Web Push
+
+##### Acceptance Criteria
+- User can enable push notifications from settings
+- Subscription is stored in the database
+
+---
+
+#### 31.2 Scheduling & Preferences
+
+##### Tasks
+- [ ] 31.2.1 Add EventBridge rule — daily at 6 AM → triggers morning prep notification
+- [ ] 31.2.2 Add notification preferences in settings (enable/disable, time preference)
+- [ ] 31.2.3 Fallback: if push fails, send prep summary via email (SES)
+
+##### Acceptance Criteria
+- Opted-in users receive a morning prep notification with tomorrow's forecast
+- Notification includes product quantities from the forecast
+- Failed push falls back to email delivery
+
+---
+
+## Phase 32: Frontend Polish
+Branch: `feat/phase-32-frontend-polish`
+
+### Goal
+UX improvements that show frontend engineering depth. Independent of AWS phases — can be done in parallel.
+
+### Dependencies
+Phase 25 complete (no AWS dependency).
+
+---
+
+#### 32.1 Performance & UX
+
+##### Tasks
+- [ ] 32.1.1 Add optimistic updates — sales save, settings toggles, product add/edit update UI immediately with rollback on error
+- [ ] 32.1.2 Improve skeleton screens — match actual card layouts (forecast hero outline, week chart shape)
+- [ ] 32.1.3 Add feature flags — `src/lib/feature-flags.ts` config to toggle LLM vs template, enable/disable chat
+
+##### Acceptance Criteria
+- Sales save feels instant (UI updates before server confirms)
+- Skeleton screens match the shape of the actual content
+- Feature flags can disable LLM features without code changes
+
+---
+
+#### 32.2 Accessibility & Offline
+
+##### Tasks
+- [ ] 32.2.1 Run Lighthouse accessibility audit, fix all issues scoring below 90
+- [ ] 32.2.2 Document accessibility score in README
+- [ ] 32.2.3 Add offline dashboard caching — service worker caches last dashboard response
+- [ ] 32.2.4 Show "you're offline" banner when network is unavailable
+
+##### Acceptance Criteria
+- Lighthouse accessibility score ≥ 90
+- Dashboard shows cached data when offline
+- Offline banner appears and disappears correctly
+
+---
+
+## Phase 33: Advanced AWS & Infrastructure
+Branch: `feat/phase-33-advanced-aws`
+
+### Goal
+Deeper AWS integrations for learning and portfolio depth. Lower priority but high signal.
+
+### Dependencies
+Phase 27 complete (needs IAM role).
+
+---
+
+#### 33.1 Security & AI
+
+##### Tasks
+- [ ] 33.1.1 Migrate API keys to AWS Secrets Manager — pull at runtime instead of env vars
+- [ ] 33.1.2 Add Amazon Bedrock as alternative to direct Anthropic API — toggle via feature flag
+- [ ] 33.1.3 Add Amazon Translate — auto-translate LLM-generated insights and chat responses for multilingual users
+
+##### Acceptance Criteria
+- API keys are fetched from Secrets Manager on the Amplify deployment
+- Bedrock can be enabled via feature flag as an alternative AI provider
+- Insights can be translated to a second language
+
+---
+
+#### 33.2 Backend Improvements
+
+##### Tasks
+- [ ] 33.2.1 Implement cursor-based pagination on sales history API (replace offset pagination)
+- [ ] 33.2.2 Create ADR for database connection pooling — document Neon + PrismaPg adapter decision
+
+##### Acceptance Criteria
+- Sales history API supports cursor-based pagination
+- Connection pooling decision is documented in an ADR
+
+---
+
+## Phase 34: NL Parser Evaluation Framework
+Branch: `feat/phase-34-parser-eval`
+
+### Goal
+Quality assurance for the AI integration. A unique portfolio differentiator — shows you think about LLM reliability, not just integration.
+
+### Dependencies
+Phase 25 complete (no AWS dependency). Can run in parallel with AWS phases.
+
+---
+
+#### 34.1 Evaluation Suite
+
+##### Tasks
+- [ ] 34.1.1 Create `src/eval/golden-inputs.ts` — 20-30 test inputs with expected parsed outputs covering edge cases
+- [ ] 34.1.2 Build evaluation runner — runs each input through both LLM and rule-based parsers, compares to expected output
+- [ ] 34.1.3 Add `npm run eval` script that outputs accuracy metrics (match rate, unit accuracy, quantity accuracy)
+- [ ] 34.1.4 Integrate into CI — run eval on PR, warn (not fail) if accuracy drops below 80%
+
+##### Acceptance Criteria
+- `npm run eval` runs 20-30 golden inputs and reports accuracy
+- Both LLM and rule-based parsers are evaluated side by side
+- CI reports accuracy metrics on every PR
 
 ---
 
