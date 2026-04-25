@@ -1233,7 +1233,7 @@ No custom domain required. Works on Amplify's default `*.amplifyapp.com` domain.
 #### 27.1 Amplify Setup
 
 ##### Tasks
-- [ ] 27.1.1 Create `amplify.yml` build config for Next.js 16 (App Router, SSR)
+- [x] 27.1.1 Create `amplify.yml` build config for Next.js 16 (App Router, SSR)
 - [ ] 27.1.2 Connect GitHub repo to AWS Amplify, deploy from `main` branch
 - [ ] 27.1.3 Configure environment variables in Amplify console (DATABASE_URL, AUTH_SECRET, AUTH_URL, ANTHROPIC_API_KEY)
 - [ ] 27.1.4 Verify full app works on Amplify URL — signup, onboarding, sales, dashboard, chat
@@ -1249,8 +1249,8 @@ No custom domain required. Works on Amplify's default `*.amplifyapp.com` domain.
 #### 27.2 Dockerize
 
 ##### Tasks
-- [ ] 27.2.1 Create `Dockerfile` with multi-stage build (deps → build → production)
-- [ ] 27.2.2 Create `.dockerignore` for node_modules, .git, docs
+- [x] 27.2.1 Create `Dockerfile` with multi-stage build (deps → build → production)
+- [x] 27.2.2 Create `.dockerignore` for node_modules, .git, docs
 - [ ] 27.2.3 Verify `docker build` and `docker run` work locally
 
 ##### Acceptance Criteria
