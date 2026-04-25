@@ -1251,7 +1251,7 @@ No custom domain required. Works on Amplify's default `*.amplifyapp.com` domain.
 ##### Tasks
 - [x] 27.2.1 Create `Dockerfile` with multi-stage build (deps → build → production)
 - [x] 27.2.2 Create `.dockerignore` for node_modules, .git, docs
-- [ ] 27.2.3 Verify `docker build` and `docker run` work locally
+- [x] 27.2.3 Verify `docker build` and `docker run` work locally
 
 ##### Acceptance Criteria
 - `docker build` produces a working image
