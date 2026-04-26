@@ -2,7 +2,7 @@
 
 AI-powered sales tracking and demand prediction for small retail businesses. Log daily sales in natural language, get insights and forecasts — without the complexity of traditional POS systems.
 
-**[Live Demo →](https://freshcast-au.vercel.app/)** · Demo login: `demo@freshcast.app` / `demo1234`
+**[Live Demo →](https://freshcast-au.vercel.app/)** · **[AWS Demo →](https://freshcast.site/)** · Demo login: `demo@freshcast.app` / `demo1234`
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="280" />
@@ -68,7 +68,7 @@ Template-based NL generation that computes per-product trends, week-over-week co
 | Database | PostgreSQL (Neon serverless) |
 | ORM | Prisma v7 (ESM, PrismaPg adapter) |
 | i18n | next-intl (externalized strings) |
-| Deployment | Vercel |
+| Deployment | Vercel (primary), AWS Amplify (AWS integrations) |
 
 ## Architecture
 
