@@ -55,7 +55,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 24 | Unit Testing Foundation | ✅ Complete |
 | 25 | Sales Input UX Improvements | ✅ Complete |
 | 26 | Production Foundations | ✅ Complete |
-| 27 | AWS Amplify Deployment | 🔲 Not started |
+| 27 | AWS Amplify Deployment | ✅ Complete |
 | 28 | AWS Email & Scheduling | 🔲 Not started |
 | 29 | Receipt Upload & OCR | 🔲 Not started |
 | 30 | Observability & API Maturity | 🔲 Not started |
@@ -1236,8 +1236,8 @@ No custom domain required. Works on Amplify's default `*.amplifyapp.com` domain.
 - [x] 27.1.1 Create `amplify.yml` build config for Next.js 16 (App Router, SSR)
 - [x] 27.1.2 Connect GitHub repo to AWS Amplify, deploy from `main` branch
 - [x] 27.1.3 Configure environment variables in Amplify console (DATABASE_URL, AUTH_SECRET, AUTH_URL, ANTHROPIC_API_KEY)
-- [ ] 27.1.4 Verify full app works on Amplify URL — signup, onboarding, sales, dashboard, chat
-- [ ] 27.1.5 Set up IAM role for the Amplify app with permissions for S3, SES, Textract, SNS, CloudWatch
+- [x] 27.1.4 Verify full app works on Amplify URL — signup, onboarding, sales, dashboard, chat
+- [x] 27.1.5 Set up IAM role for the Amplify app with permissions for S3, SES, Textract, SNS, CloudWatch
 
 ##### Acceptance Criteria
 - App deploys and runs on Amplify's default domain
