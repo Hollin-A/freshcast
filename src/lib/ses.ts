@@ -45,7 +45,13 @@ export async function sendEmailViaSES(
     logger.info("ses", "Email sent via SES", { to, subject });
     return true;
   } catch (err) {
-    logger.warn("ses", "SES email failed, will fall back", { to, error: err });
+    const error = err as Error;
+    logger.warn("ses", "SES email failed, will fall back", {
+      to,
+      errorName: error.name,
+      errorMessage: error.message,
+      stack: error.stack?.split("\n").slice(0, 3).join(" | "),
+    });
     return false;
   }
 }
