@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     CRON_SECRET: process.env.CRON_SECRET,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    SES_FROM_EMAIL: process.env.SES_FROM_EMAIL,
   },
   async headers() {
     return [
