@@ -1277,10 +1277,10 @@ SES works in sandbox mode without a custom domain — can only send to verified 
 #### 28.1 Amazon SES
 
 ##### Tasks
-- [ ] 28.1.1 Verify sender email in SES console (sandbox mode)
-- [ ] 28.1.2 Install `@aws-sdk/client-ses`
-- [ ] 28.1.3 Create `src/lib/ses.ts` — SES email sender with same interface as existing `sendEmail`
-- [ ] 28.1.4 Update `src/lib/email.ts` — try SES first, fall back to Resend if SES fails or isn't configured
+- [x] 28.1.1 Verify sender email in SES console (sandbox mode)
+- [x] 28.1.2 Install `@aws-sdk/client-ses`
+- [x] 28.1.3 Create `src/lib/ses.ts` — SES email sender with same interface as existing `sendEmail`
+- [x] 28.1.4 Update `src/lib/email.ts` — try SES first, fall back to Resend if SES fails or isn't configured
 - [ ] 28.1.5 Test password reset and verification emails via SES
 
 ##### Acceptance Criteria

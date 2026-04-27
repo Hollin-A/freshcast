@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { logger } from "./logger";
+import { sendEmailViaSES } from "./ses";
 
 let resend: Resend | null = null;
 
@@ -11,15 +12,23 @@ function getResend(): Resend | null {
 
 const FROM_EMAIL = "Freshcast <onboarding@resend.dev>";
 
+/**
+ * Send an email. Tries SES first (for AWS deployments), falls back to Resend.
+ */
 export async function sendEmail(
   to: string,
   subject: string,
   html: string
 ): Promise<boolean> {
+  // Try SES first (available on AWS Amplify via IAM role)
+  const sesSent = await sendEmailViaSES(to, subject, html);
+  if (sesSent) return true;
+
+  // Fall back to Resend
   try {
     const client = getResend();
     if (!client) {
-      logger.warn("email", "RESEND_API_KEY not set, skipping email", { to, subject });
+      logger.warn("email", "No email provider available (SES failed, RESEND_API_KEY not set)", { to, subject });
       return false;
     }
 
