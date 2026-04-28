@@ -53,7 +53,7 @@ Confidence scoring adjusts based on data volume and variance. Predictions start 
 
 ### Insight Generator
 
-Template-based NL generation that computes per-product trends, week-over-week comparisons, top product concentration, and weekday patterns. Generated on-demand when the dashboard detects stale data (>24 hours).
+LLM-powered insight generation (Claude Haiku) with template-based fallback. Produces headline + description pairs for the dashboard. Computes per-product trends, week-over-week comparisons, top product concentration, and weekday patterns. Generated on-demand when the dashboard detects stale data (>24 hours), cached in the database to avoid redundant LLM calls.
 
 ## Tech Stack
 
@@ -67,7 +67,12 @@ Template-based NL generation that computes per-product trends, week-over-week co
 | Auth | Auth.js v5 (Credentials provider, JWT) |
 | Database | PostgreSQL (Neon serverless) |
 | ORM | Prisma v7 (ESM, PrismaPg adapter) |
+| AI | Claude Haiku (Anthropic) — NL parsing, insights, chat |
+| Email | Amazon SES (primary), Resend (fallback) |
+| Scheduling | Amazon EventBridge (AWS), Vercel Cron (fallback) |
+| Monitoring | Sentry error tracking |
 | i18n | next-intl (externalized strings) |
+| Testing | Vitest (52 unit tests), GitHub Actions CI |
 | Deployment | Vercel (primary), AWS Amplify (AWS integrations) |
 
 ## Architecture
@@ -79,13 +84,19 @@ Client (Browser)
         │     ├── Auth (signup, login, password reset)
         │     ├── Business & Products (CRUD)
         │     ├── Sales (parse, create, list, delete)
-        │     └── Dashboard (aggregated single-call)
+        │     ├── Dashboard (aggregated single-call)
+        │     ├── Chat (AI-powered Q&A)
+        │     └── Health & Admin
         ├── Services
-        │     ├── Sales Parser (rule-based NL)
+        │     ├── Sales Parser (LLM + rule-based fallback)
         │     ├── Product Matcher (fuzzy matching)
         │     ├── Analytics (trends, comparisons)
-        │     ├── Prediction Engine (moving averages)
-        │     └── Insight Generator (template-based)
+        │     ├── Prediction Engine (moving averages + holidays)
+        │     ├── Insight Generator (LLM + template fallback)
+        │     └── Weekly Email (summary + forecast)
+        ├── AWS Services
+        │     ├── SES (email delivery)
+        │     └── EventBridge (scheduled jobs)
         └── Prisma ORM → PostgreSQL (Neon)
 ```
 
@@ -96,9 +107,10 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 This project was built with a spec-driven development approach:
 
 - **[Product Requirements Document](docs/PRD.md)** — features, user stories, success metrics
-- **[Architecture Decision Records](docs/adr/README.md)** — 10 ADRs covering auth strategy, NL parsing approach, batch vs real-time, data isolation, and more
+- **[Architecture Decision Records](docs/adr/README.md)** — 16 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, and more
 - **[Technical Design Document](docs/TDD.md)** — system architecture, data model, full API contracts, service algorithms
-- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — 10 phases with tasks, acceptance criteria, and completion tracking
+- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — 28+ phases with tasks, acceptance criteria, and completion tracking
+- **[Improvement Backlog](docs/BACKLOG.md)** — prioritized list of future enhancements and AWS integrations
 
 ## Getting Started
 
@@ -118,9 +130,9 @@ npm install
 Create a `.env` file:
 
 ```env
-DATABASE_URL="postgresql://..."
-AUTH_SECRET="your-secret-here"  # generate with: openssl rand -base64 32
-AUTH_URL="http://localhost:3000"
+DATABASE_URL=postgresql://...
+AUTH_SECRET=your-secret-here
+AUTH_URL=http://localhost:3000
 ```
 
 Set up the database:
@@ -160,46 +172,58 @@ CI runs automatically on every push and PR via GitHub Actions — linting, type 
 
 ### Implemented (MVP + Post-MVP)
 
-- Email/password auth with password reset and email verification (Resend)
+- Email/password auth with password reset and email verification
 - Show/hide password toggle on all auth forms
-- 2-step onboarding with timezone auto-detection
+- 3-step onboarding with timezone auto-detection and emoji business type tiles
 - Dual-mode sales input (LLM parser with rule-based fallback + manual form)
+- Business-type-aware placeholder text in NL input
 - Unit normalization (50+ variations mapped to consistent values)
 - Ambiguous quantity detection ("few eggs" → clarification prompt)
 - Fuzzy product matching with inline product creation
+- Editable product names in confirmation screen with client-side re-matching
 - Multiple entries per day with original NL text saved
 - Date picker for logging past dates
-- Dashboard with 8 card types (prediction progress, forecast with holiday indicator, spike alert, today, week trend, top products, weekly forecast, insights)
+- Dashboard with forecast hero (sparklines, trends, prep list), week rhythm chart, top products, insights
+- Forecast detail drill-in with 14-day chart (past + forecast) and prediction breakdown
 - Holiday-aware predictions (AU-VIC public holidays with multipliers)
-- Multi-tier prediction progress bar (0–4 / 5–14 / 15–29 / 30+)
-- Prediction engine with confidence scoring
-- LLM-powered insight generation (Claude Haiku) with template fallback
-- AI chat interface — ask business questions, get data-driven answers
+- Multi-tier prediction progress bar (auto-hides at 30+ entries)
+- Prediction engine with confidence scoring and breakdown factors
+- LLM-powered insight generation (headline + description) with template fallback
+- AI chat interface (floating bubble) — ask business questions, get data-driven answers
+- Per-product analytics on products page (daily average, week-over-week trend)
+- Weekly summary email (opt-in, EventBridge scheduled)
+- Email delivery via Amazon SES (primary) with Resend fallback
+- Sentry error monitoring
+- Health endpoint (`/api/health`)
+- Input sanitization (XSS protection on text fields)
+- Versioned LLM prompts (`src/prompts/`)
 - Atomic database operations (transactions)
 - Product ownership verification (business isolation)
 - Timezone-aware date handling throughout
 - Structured logging, error boundaries, loading skeletons, splash screen
 - i18n architecture (externalized strings, next-intl)
 - Demo data loading for new users
+- Demo account protection (undeletable, password unchangeable)
 - PWA support (installable, offline fallback)
-- Email delivery via Resend (password reset + verification)
-- Rate limiting on auth endpoints
+- Rate limiting on auth, chat, and parse endpoints
 - CSV export of sales history
 - Account and data deletion
-- Settings page with email verification status
-- Unit override per sale entry in manual mode
+- Settings page with email verification, holiday region, weekly email toggle
+- 52 unit tests (Vitest) with GitHub Actions CI
+- Docker support (multi-stage Dockerfile)
+- Dual deployment: Vercel + AWS Amplify
 - Warm editorial color theme (cream, terracotta, olive), mobile-first responsive design
 
 ### Deferred (Post-MVP)
 
 - Magic link (passwordless) authentication
-- Voice input, receipt/photo parsing
+- Voice input, receipt/photo parsing (OCR via Textract planned)
 - ML-based advanced forecasting, seasonal patterns
 - Native mobile apps (iOS/Android)
 - Multi-user per business with role-based access
-- Weekly summary email notifications
 - POS integrations, supplier management
 - Streaming chat responses
+- Push notifications (morning prep reminders)
 
 ## License
 
