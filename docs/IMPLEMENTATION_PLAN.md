@@ -1293,8 +1293,8 @@ SES works in sandbox mode without a custom domain — can only send to verified 
 #### 28.2 Amazon EventBridge
 
 ##### Tasks
-- [ ] 28.2.1 Create EventBridge Scheduler rule — Monday 6 AM UTC → invokes weekly summary endpoint
-- [ ] 28.2.2 Configure the rule to call the Amplify deployment URL with CRON_SECRET header
+- [x] 28.2.1 Create EventBridge Scheduler rule — Monday 6 AM UTC → invokes weekly summary endpoint
+- [x] 28.2.2 Configure the rule to call the Amplify deployment URL with CRON_SECRET header
 - [ ] 28.2.3 Add CloudWatch alarm for failed EventBridge invocations
 
 ##### Acceptance Criteria
