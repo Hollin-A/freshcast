@@ -1281,7 +1281,7 @@ SES works in sandbox mode without a custom domain — can only send to verified 
 - [x] 28.1.2 Install `@aws-sdk/client-ses`
 - [x] 28.1.3 Create `src/lib/ses.ts` — SES email sender with same interface as existing `sendEmail`
 - [x] 28.1.4 Update `src/lib/email.ts` — try SES first, fall back to Resend if SES fails or isn't configured
-- [ ] 28.1.5 Test password reset and verification emails via SES
+- [x] 28.1.5 Test password reset and verification emails via SES
 
 ##### Acceptance Criteria
 - Emails send via SES on the Amplify deployment
