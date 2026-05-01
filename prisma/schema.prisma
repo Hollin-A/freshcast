@@ -116,6 +116,7 @@ model SalesEntry {
   date        DateTime    @db.Date
   inputMethod InputMethod @default(MANUAL)
   rawInput    String?
+  receiptKey  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

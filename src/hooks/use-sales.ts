@@ -8,6 +8,7 @@ type SalesEntry = {
   date: string;
   inputMethod: string;
   rawInput: string | null;
+  receiptKey?: string | null;
   createdAt: string;
   items: {
     id: string;
@@ -56,6 +57,7 @@ export function useSaveSales() {
       date: string;
       inputMethod: "NATURAL_LANGUAGE" | "MANUAL";
       rawInput?: string | null;
+      receiptKey?: string | null;
       items: { productId: string; quantity: number; unit?: string | null }[];
     }) => {
       const res = await fetch("/api/sales", {

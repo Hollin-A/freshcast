@@ -123,6 +123,9 @@ src/
 │   │   │   ├── [id]/route.ts       # GET + PUT + DELETE
 │   │   │   ├── parse/route.ts      # POST (NL parse)
 │   │   │   └── export/route.ts     # GET (CSV download)
+│   │   ├── receipts/
+│   │   │   ├── upload/route.ts     # POST (presigned S3 upload URL)
+│   │   │   └── parse/route.ts      # POST (Textract OCR -> parser pipeline)
 │   │   ├── dashboard/route.ts      # GET (aggregated)
 │   │   ├── predictions/route.ts    # GET (?horizon=day|week)
 │   │   ├── insights/route.ts       # GET
@@ -200,6 +203,7 @@ The complete Prisma schema is in `prisma/schema.prisma`. Key design decisions:
 | Business | `timezone` | IANA timezone for date calculations (auto-detected from browser) |
 | Business | `region` | Region code for holiday-aware predictions (default: AU-VIC) |
 | SalesEntry | `rawInput` | Original NL text for audit trail (nullable, only for NL entries) |
+| SalesEntry | `receiptKey` | S3 object key for receipt-origin entries (nullable) |
 | DailyInsight | `generationMethod` | `"template"` or `"llm"` — tracks which method produced the insight |
 
 ---
@@ -282,6 +286,8 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 | DELETE | `/api/sales/[id]` | Delete entry (cascade via DB) |
 | POST | `/api/sales/parse` | Parse NL text (LLM first, rule-based fallback) |
 | GET | `/api/sales/export` | Download CSV |
+| POST | `/api/receipts/upload` | Generate presigned S3 upload URL for receipt image |
+| POST | `/api/receipts/parse` | OCR receipt via Textract, then parse into sales items |
 
 ### 5.5 Dashboard & Intelligence
 

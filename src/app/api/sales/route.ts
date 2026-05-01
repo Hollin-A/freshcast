@@ -10,6 +10,7 @@ const createSalesSchema = z.object({
   date: z.string().date(),
   inputMethod: z.enum(["NATURAL_LANGUAGE", "MANUAL"]),
   rawInput: z.string().max(1000).optional().nullable(),
+  receiptKey: z.string().max(1024).optional().nullable(),
   items: z
     .array(
       z.object({
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const { date, inputMethod, rawInput, items } = result.data;
+    const { date, inputMethod, rawInput, receiptKey, items } = result.data;
     const entryDate = new Date(date + "T00:00:00Z");
 
     // Check date is not in the future (using business timezone)
@@ -72,6 +73,7 @@ export async function POST(request: Request) {
         date: entryDate,
         inputMethod,
         rawInput: rawInput ? sanitizeText(rawInput) : null,
+        receiptKey: receiptKey ?? null,
         businessId,
         items: {
           create: items.map((item) => ({

@@ -19,6 +19,11 @@ type ManualItem = {
   unit: string | null;
 };
 
+type ReceiptUploadResponse = {
+  key: string;
+  uploadUrl: string;
+};
+
 const NL_PLACEHOLDERS: Record<string, string> = {
   BUTCHER: '"sold 12kg lamb chops, 8kg minced beef, and 5 chickens"',
   GROCERY: '"sold 20 eggs, 2L milk, 5kg rice, and a dozen bread"',
@@ -53,6 +58,9 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
   const [newProductName, setNewProductName] = useState("");
   const [newProductUnit, setNewProductUnit] = useState("");
   const [editingNameIndex, setEditingNameIndex] = useState<number | null>(null);
+  const [receiptKey, setReceiptKey] = useState<string | null>(null);
+  const [isProcessingReceipt, setIsProcessingReceipt] = useState(false);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
 
   const products = productsData?.products ?? [];
   const prevProductVersionRef = useRef("");
@@ -76,10 +84,73 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
     try {
       const result = await parseMutation.mutateAsync(nlText);
       setParsedItems(result.parsed);
+      setReceiptKey(null);
       setInputMethod("NATURAL_LANGUAGE");
       setShowConfirm(true);
     } catch {
       toast.error("Failed to parse input");
+    }
+  }
+
+  async function handleReceiptFile(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file.");
+      return;
+    }
+
+    setIsProcessingReceipt(true);
+    try {
+      const uploadRes = await fetch("/api/receipts/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+      });
+      if (!uploadRes.ok) {
+        const body = await uploadRes.json();
+        throw new Error(body.error?.message || "Failed to prepare upload");
+      }
+
+      const uploadData = (await uploadRes.json()) as ReceiptUploadResponse;
+      const s3PutRes = await fetch(uploadData.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!s3PutRes.ok) {
+        throw new Error("Failed to upload receipt image");
+      }
+
+      const parseRes = await fetch("/api/receipts/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: uploadData.key }),
+      });
+      if (!parseRes.ok) {
+        const body = await parseRes.json();
+        throw new Error(
+          body.error?.message ||
+            "We couldn't read that receipt. Please try typing your sales instead."
+        );
+      }
+
+      const parsedFromReceipt = await parseRes.json();
+      setNlText(parsedFromReceipt.extractedText || "");
+      setParsedItems(parsedFromReceipt.parsed || []);
+      setReceiptKey(parsedFromReceipt.key || uploadData.key);
+      setInputMethod("NATURAL_LANGUAGE");
+      setShowConfirm(true);
+      toast.success("Receipt processed. Review before saving.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "We couldn't read that receipt. Please type your sales manually."
+      );
+    } finally {
+      setIsProcessingReceipt(false);
+      if (receiptInputRef.current) {
+        receiptInputRef.current.value = "";
+      }
     }
   }
 
@@ -102,6 +173,7 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
         matched: true,
       }))
     );
+    setReceiptKey(null);
     setInputMethod("MANUAL");
     setShowConfirm(true);
   }
@@ -182,6 +254,7 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
         date: selectedDate,
         inputMethod,
         rawInput: inputMethod === "NATURAL_LANGUAGE" ? nlText : null,
+        receiptKey: inputMethod === "NATURAL_LANGUAGE" ? receiptKey : null,
         items: validItems.map((p) => ({
           productId: p.productId!,
           quantity: p.quantity,
@@ -192,6 +265,7 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
       setNlText("");
       setParsedItems(null);
       setShowConfirm(false);
+      setReceiptKey(null);
       setManualItems([]);
       router.push("/dashboard");
       router.refresh();
@@ -221,6 +295,11 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
 
         {inputMethod === "NATURAL_LANGUAGE" && nlText && (
           <div className="mx-4 mb-4 rounded-xl border border-line bg-paper p-3.5">
+            {receiptKey && (
+              <div className="mb-2">
+                <Badge variant="gold">From receipt</Badge>
+              </div>
+            )}
             <p className="font-serif text-[15px] italic leading-relaxed text-body">
               &ldquo;{nlText}&rdquo;
             </p>
@@ -363,6 +442,16 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
 
         <TabsContent value="nl">
           <div className="mt-4">
+            <input
+              ref={receiptInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleReceiptFile(file);
+              }}
+            />
             <div className="rounded-2xl border border-terra bg-paper p-4 shadow-[0_0_0_4px_rgba(181,85,58,0.10)]">
               <textarea
                 className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-ink placeholder:text-mute2 focus:outline-none"
@@ -376,12 +465,23 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
                 <span className="font-mono text-[11px] text-mute2">{nlText.length} chars</span>
               </div>
             </div>
+            <div className="mt-3">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() => receiptInputRef.current?.click()}
+                disabled={isProcessingReceipt || parseMutation.isPending}
+              >
+                {isProcessingReceipt ? "Reading receipt..." : "Upload receipt photo"}
+              </Button>
+            </div>
             <div className="mt-4">
               <Button
                 size="lg"
                 className="w-full"
                 onClick={handleParse}
-                disabled={parseMutation.isPending || !nlText.trim()}
+                disabled={parseMutation.isPending || isProcessingReceipt || !nlText.trim()}
               >
                 {parseMutation.isPending ? "Parsing..." : "Review & save →"}
               </Button>

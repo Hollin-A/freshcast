@@ -10,6 +10,9 @@ All notable changes to Freshcast are documented here.
 - Business-type-aware placeholder text in NL sales input
 - Editable product names in sales confirmation screen
 - Unit normalization on product creation and updates
+- Receipt photo upload flow (presigned S3 upload + OCR parsing)
+- Receipt-to-sales pipeline integration with confirmation review before save
+- Sales history "From receipt" badge for OCR-origin entries
 
 ---
 

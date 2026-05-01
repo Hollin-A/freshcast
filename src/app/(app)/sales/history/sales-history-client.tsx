@@ -92,6 +92,7 @@ export function SalesHistoryClient() {
                         <Badge variant={entry.inputMethod === "NATURAL_LANGUAGE" ? "default" : "olive"}>
                           {entry.inputMethod === "NATURAL_LANGUAGE" ? "Typed" : "Tapped"}
                         </Badge>
+                        {entry.receiptKey && <Badge variant="gold">From receipt</Badge>}
                       </div>
                       {confirmingId === entry.id ? (
                         <div className="flex items-center gap-2">

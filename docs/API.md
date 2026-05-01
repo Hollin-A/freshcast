@@ -15,6 +15,7 @@ All API routes are prefixed with `/api`. Authenticated routes require a valid JW
 - [Business](#business)
 - [Products](#products)
 - [Sales](#sales)
+- [Receipts (S3 + OCR)](#receipts-s3--ocr)
 - [Analytics & Insights](#analytics--insights)
 - [AI Chat](#ai-chat)
 - [Demo Data](#demo-data)
@@ -296,6 +297,7 @@ Records a new sales entry for the business.
   "date": "YYYY-MM-DD (must not be in the future)",
   "inputMethod": "NATURAL_LANGUAGE | MANUAL",
   "rawInput": "string (max 1000 chars, optional — used for NL entries)",
+  "receiptKey": "string (optional S3 key for receipt-origin entries)",
   "items": [
     {
       "productId": "string",
@@ -444,6 +446,69 @@ Parses a natural-language sales description into structured line items using Cla
 ```
 
 **Error codes:** `UNAUTHORIZED` (401), `VALIDATION_ERROR` (400), `INTERNAL_ERROR` (500)
+
+---
+
+## Receipts (S3 + OCR)
+
+### `POST /api/receipts/upload`
+
+Generates a presigned S3 upload URL for receipt images.
+
+**Auth required:** Yes
+
+**Request body:**
+```json
+{
+  "fileName": "receipt.jpg",
+  "contentType": "image/jpeg"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "key": "receipts/<businessId>/<timestamp>-<uuid>-receipt.jpg",
+  "uploadUrl": "https://...",
+  "previewUrl": "https://...",
+  "expiresInSeconds": 300
+}
+```
+
+**Notes:**
+- Allowed content types: JPEG, PNG, WEBP
+- `key` is business-scoped and later passed to parse and save APIs
+
+**Error codes:** `UNAUTHORIZED` (401), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
+
+---
+
+### `POST /api/receipts/parse`
+
+Runs OCR on an uploaded receipt image using Amazon Textract, then parses extracted text through the existing sales parser pipeline (LLM first, rule-based fallback).
+
+**Auth required:** Yes
+
+**Request body:**
+```json
+{
+  "key": "receipts/<businessId>/<...>.jpg"
+}
+```
+
+**Response `200`:**
+```json
+{
+  "parsed": [...],
+  "unmatched": [...],
+  "parseMethod": "llm | rule-based",
+  "source": "receipt",
+  "key": "receipts/<businessId>/<...>.jpg",
+  "extractedText": "..."
+}
+```
+
+**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
 
 ---
 
@@ -630,6 +695,7 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 | `date` | date | Local business date |
 | `inputMethod` | enum | `NATURAL_LANGUAGE \| MANUAL` |
 | `rawInput` | string? | Original NL text |
+| `receiptKey` | string? | S3 object key when entry originated from a receipt upload |
 | `businessId` | string | FK → Business |
 
 ### SalesItem

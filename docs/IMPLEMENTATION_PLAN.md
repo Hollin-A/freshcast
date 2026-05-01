@@ -57,7 +57,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 26 | Production Foundations | ✅ Complete |
 | 27 | AWS Amplify Deployment | ✅ Complete |
 | 28 | AWS Email & Scheduling | 🟡 In progress |
-| 29 | Receipt Upload & OCR | 🔲 Not started |
+| 29 | Receipt Upload & OCR | 🟡 In progress |
 | 30 | Observability & API Maturity | 🔲 Not started |
 | 31 | Push Notifications | 🔲 Not started |
 | 32 | Frontend Polish | 🔲 Not started |
@@ -1319,9 +1319,9 @@ Phase 27 complete (needs IAM role for S3 and Textract access).
 
 ##### Tasks
 - [ ] 29.1.1 Create S3 bucket with lifecycle policy (auto-delete after 30 days)
-- [ ] 29.1.2 Build `POST /api/receipts/upload` — generates presigned S3 URL for client-side upload
-- [ ] 29.1.3 Build receipt upload UI on the sales input page — camera/file picker, upload progress bar
-- [ ] 29.1.4 Store receipt S3 key on the SalesEntry model (new optional `receiptKey` field)
+- [x] 29.1.2 Build `POST /api/receipts/upload` — generates presigned S3 URL for client-side upload
+- [x] 29.1.3 Build receipt upload UI on the sales input page — camera/file picker, upload progress bar
+- [x] 29.1.4 Store receipt S3 key on the SalesEntry model (new optional `receiptKey` field)
 
 ##### Acceptance Criteria
 - User can take a photo or select a file on the sales input page
@@ -1333,11 +1333,11 @@ Phase 27 complete (needs IAM role for S3 and Textract access).
 #### 29.2 Textract OCR
 
 ##### Tasks
-- [ ] 29.2.1 Install `@aws-sdk/client-textract`
-- [ ] 29.2.2 Build `POST /api/receipts/parse` — sends S3 object to Textract, extracts text
-- [ ] 29.2.3 Chain Textract output → existing NL parser → confirmation screen (same flow as typing)
-- [ ] 29.2.4 Show receipt source indicator in sales history ("📷 From receipt" badge)
-- [ ] 29.2.5 Handle Textract errors gracefully — show "couldn't read receipt, try typing instead"
+- [x] 29.2.1 Install `@aws-sdk/client-textract`
+- [x] 29.2.2 Build `POST /api/receipts/parse` — sends S3 object to Textract, extracts text
+- [x] 29.2.3 Chain Textract output → existing NL parser → confirmation screen (same flow as typing)
+- [x] 29.2.4 Show receipt source indicator in sales history ("📷 From receipt" badge)
+- [x] 29.2.5 Handle Textract errors gracefully — show "couldn't read receipt, try typing instead"
 
 ##### Acceptance Criteria
 - Uploaded receipt photo is processed by Textract
