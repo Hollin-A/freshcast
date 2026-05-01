@@ -24,6 +24,18 @@ type ReceiptUploadResponse = {
   uploadUrl: string;
 };
 
+async function sendUploadDiagnostic(payload: Record<string, unknown>) {
+  try {
+    await fetch("/api/receipts/upload-diagnostics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // Diagnostics are best-effort only.
+  }
+}
+
 const NL_PLACEHOLDERS: Record<string, string> = {
   BUTCHER: '"sold 12kg lamb chops, 8kg minced beef, and 5 chickens"',
   GROCERY: '"sold 20 eggs, 2L milk, 5kg rice, and a dozen bread"',
@@ -119,6 +131,23 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
       if (!s3PutRes.ok) {
         const s3ErrorBody = await s3PutRes.text().catch(() => "");
         const shortError = s3ErrorBody.slice(0, 240).trim();
+        await sendUploadDiagnostic({
+          stage: "s3-upload",
+          status: s3PutRes.status,
+          statusText: s3PutRes.statusText,
+          bodySnippet: shortError || undefined,
+          uploadHost: (() => {
+            try {
+              return new URL(uploadData.uploadUrl).host;
+            } catch {
+              return undefined;
+            }
+          })(),
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          message: "S3 PUT returned non-OK response",
+        });
         throw new Error(
           shortError
             ? `Failed to upload receipt image (${s3PutRes.status}): ${shortError}`
@@ -147,6 +176,13 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
       setShowConfirm(true);
       toast.success("Receipt processed. Review before saving.");
     } catch (err) {
+      await sendUploadDiagnostic({
+        stage: "s3-upload",
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        message: err instanceof Error ? err.message : "Unknown upload error",
+      });
       toast.error(
         err instanceof Error
           ? err.message
