@@ -265,8 +265,8 @@ Phase 6 complete.
 - [x] 7.6 Add privacy messaging ("Your data is private. Freshcast works only for your business.")
 - [x] 7.7 Update metadata (title, description, OG tags)
 - [x] 7.8 Environment variable validation on startup
-- [ ] 7.9 Deployment to Vercel + Neon production database
-- [ ] 7.10 Smoke test the deployed app end-to-end
+- [x] 7.9 Deployment to Vercel + Neon production database
+- [x] 7.10 Smoke test the deployed app end-to-end
 
 ### Acceptance Criteria
 - App works smoothly on mobile (iOS Safari, Android Chrome)
