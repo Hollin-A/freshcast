@@ -57,7 +57,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 26 | Production Foundations | ✅ Complete |
 | 27 | AWS Amplify Deployment | ✅ Complete |
 | 28 | AWS Email & Scheduling | 🟡 In progress |
-| 29 | Receipt Upload & OCR | 🟡 In progress |
+| 29 | Receipt Upload & OCR | ✅ Complete |
 | 30 | Observability & API Maturity | 🔲 Not started |
 | 31 | Push Notifications | 🔲 Not started |
 | 32 | Frontend Polish | 🔲 Not started |
@@ -1318,7 +1318,7 @@ Phase 27 complete (needs IAM role for S3 and Textract access).
 #### 29.1 S3 Upload
 
 ##### Tasks
-- [ ] 29.1.1 Create S3 bucket with lifecycle policy (auto-delete after 30 days)
+- [x] 29.1.1 Create S3 bucket with lifecycle policy (auto-delete after 30 days)
 - [x] 29.1.2 Build `POST /api/receipts/upload` — generates presigned S3 URL for client-side upload
 - [x] 29.1.3 Build receipt upload UI on the sales input page — camera/file picker, upload progress bar
 - [x] 29.1.4 Store receipt S3 key on the SalesEntry model (new optional `receiptKey` field)
