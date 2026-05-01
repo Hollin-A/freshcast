@@ -112,6 +112,7 @@ This project was built with a spec-driven development approach:
 - **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — 28+ phases with tasks, acceptance criteria, and completion tracking
 - **[Improvement Backlog](docs/BACKLOG.md)** — prioritized list of future enhancements and AWS integrations
 - **[Changelog](CHANGELOG.md)** — shipped changes by release
+- **[Contributing Guide](docs/CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
 
 ### Documentation ownership
 
