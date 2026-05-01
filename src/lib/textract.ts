@@ -2,14 +2,13 @@ import {
   DetectDocumentTextCommand,
   TextractClient,
 } from "@aws-sdk/client-textract";
+import { getAwsRuntimeConfig } from "./aws-config";
 
 let client: TextractClient | null = null;
 
 function getTextractClient(): TextractClient {
   if (!client) {
-    client = new TextractClient({
-      region: process.env.AWS_REGION || "ap-southeast-2",
-    });
+    client = new TextractClient(getAwsRuntimeConfig());
   }
   return client;
 }

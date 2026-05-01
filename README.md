@@ -145,7 +145,13 @@ Create a `.env` file:
 DATABASE_URL=postgresql://...
 AUTH_SECRET=your-secret-here
 AUTH_URL=http://localhost:3000
+APP_AWS_REGION=ap-southeast-2
+APP_AWS_ACCESS_KEY_ID=...
+APP_AWS_SECRET_ACCESS_KEY=...
+S3_RECEIPTS_BUCKET=your-receipts-bucket
 ```
+
+Note: Some platforms reserve the `AWS_*` prefix. Freshcast prefers `APP_AWS_*` and also supports `AWS_*` as a fallback.
 
 Set up the database:
 

@@ -478,6 +478,7 @@ Generates a presigned S3 upload URL for receipt images.
 **Notes:**
 - Allowed content types: JPEG, PNG, WEBP
 - `key` is business-scoped and later passed to parse and save APIs
+- Requires `S3_RECEIPTS_BUCKET` and valid AWS credentials/role
 
 **Error codes:** `UNAUTHORIZED` (401), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
 
@@ -509,6 +510,10 @@ Runs OCR on an uploaded receipt image using Amazon Textract, then parses extract
 ```
 
 **Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
+
+**Environment variable naming note:**
+- Preferred: `APP_AWS_REGION`, `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`
+- Backward-compatible fallback: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 
 ---
 

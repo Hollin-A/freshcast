@@ -485,10 +485,14 @@ Settings accessible from dashboard header (⚙ Settings link).
 | `AUTH_SECRET` | Yes | Auth.js session encryption key |
 | `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.vercel.app`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
-| `AWS_REGION` | No | AWS region for SES/EventBridge integrations |
-| `AWS_ACCESS_KEY_ID` | No | AWS access key for SES client |
-| `AWS_SECRET_ACCESS_KEY` | No | AWS secret key for SES client |
+| `APP_AWS_REGION` | No | Preferred AWS region variable (use when `AWS_*` is reserved by hosting platform) |
+| `APP_AWS_ACCESS_KEY_ID` | No | Preferred AWS access key variable |
+| `APP_AWS_SECRET_ACCESS_KEY` | No | Preferred AWS secret key variable |
+| `AWS_REGION` | No | Backward-compatible fallback region variable |
+| `AWS_ACCESS_KEY_ID` | No | Backward-compatible fallback access key variable |
+| `AWS_SECRET_ACCESS_KEY` | No | Backward-compatible fallback secret key variable |
 | `SES_FROM_EMAIL` | No | Verified sender email for SES |
+| `S3_RECEIPTS_BUCKET` | No | S3 bucket for receipt image uploads and OCR parsing |
 | `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
 
 ---

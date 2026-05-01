@@ -1,5 +1,6 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import { logger } from "./logger";
+import { getAwsRuntimeConfig } from "./aws-config";
 
 let client: SESClient | null = null;
 
@@ -7,9 +8,7 @@ function getClient(): SESClient | null {
   // SES is available when running on AWS with IAM role, or with explicit credentials
   if (!client) {
     try {
-      client = new SESClient({
-        region: process.env.AWS_REGION || "ap-southeast-2",
-      });
+      client = new SESClient(getAwsRuntimeConfig());
     } catch {
       return null;
     }
