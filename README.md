@@ -111,6 +111,17 @@ This project was built with a spec-driven development approach:
 - **[Technical Design Document](docs/TDD.md)** — system architecture, data model, full API contracts, service algorithms
 - **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — 28+ phases with tasks, acceptance criteria, and completion tracking
 - **[Improvement Backlog](docs/BACKLOG.md)** — prioritized list of future enhancements and AWS integrations
+- **[Changelog](CHANGELOG.md)** — shipped changes by release
+
+### Documentation ownership
+
+To avoid duplication and stale docs:
+
+- Product scope and intent live in `docs/PRD.md`
+- Runtime architecture and technical details live in `docs/TDD.md`
+- API contracts live in `docs/API.md`
+- Execution history and phase tracking live in `docs/IMPLEMENTATION_PLAN.md`
+- Release deltas live in `CHANGELOG.md`
 
 ## Getting Started
 
@@ -168,62 +179,16 @@ Tests cover core business logic: sales parser, product matcher, prediction engin
 
 CI runs automatically on every push and PR via GitHub Actions — linting, type checking, and tests.
 
-## What I Built vs What I Deferred
+## Current Scope
 
-### Implemented (MVP + Post-MVP)
+Freshcast is production-ready for single-business usage with:
 
-- Email/password auth with password reset and email verification
-- Show/hide password toggle on all auth forms
-- 3-step onboarding with timezone auto-detection and emoji business type tiles
-- Dual-mode sales input (LLM parser with rule-based fallback + manual form)
-- Business-type-aware placeholder text in NL input
-- Unit normalization (50+ variations mapped to consistent values)
-- Ambiguous quantity detection ("few eggs" → clarification prompt)
-- Fuzzy product matching with inline product creation
-- Editable product names in confirmation screen with client-side re-matching
-- Multiple entries per day with original NL text saved
-- Date picker for logging past dates
-- Dashboard with forecast hero (sparklines, trends, prep list), week rhythm chart, top products, insights
-- Forecast detail drill-in with 14-day chart (past + forecast) and prediction breakdown
-- Holiday-aware predictions (AU-VIC public holidays with multipliers)
-- Multi-tier prediction progress bar (auto-hides at 30+ entries)
-- Prediction engine with confidence scoring and breakdown factors
-- LLM-powered insight generation (headline + description) with template fallback
-- AI chat interface (floating bubble) — ask business questions, get data-driven answers
-- Per-product analytics on products page (daily average, week-over-week trend)
-- Weekly summary email (opt-in, EventBridge scheduled)
-- Email delivery via Amazon SES (primary) with Resend fallback
-- Sentry error monitoring
-- Health endpoint (`/api/health`)
-- Input sanitization (XSS protection on text fields)
-- Versioned LLM prompts (`src/prompts/`)
-- Atomic database operations (transactions)
-- Product ownership verification (business isolation)
-- Timezone-aware date handling throughout
-- Structured logging, error boundaries, loading skeletons, splash screen
-- i18n architecture (externalized strings, next-intl)
-- Demo data loading for new users
-- Demo account protection (undeletable, password unchangeable)
-- PWA support (installable, offline fallback)
-- Rate limiting on auth, chat, and parse endpoints
-- CSV export of sales history
-- Account and data deletion
-- Settings page with email verification, holiday region, weekly email toggle
-- 52 unit tests (Vitest) with GitHub Actions CI
-- Docker support (multi-stage Dockerfile)
-- Dual deployment: Vercel + AWS Amplify
-- Warm editorial color theme (cream, terracotta, olive), mobile-first responsive design
+- Sales logging (natural language + manual)
+- Forecasting, insights, and AI chat grounded in business data
+- Privacy and safety controls (business isolation, rate limits, account safeguards)
+- Operational foundations (monitoring, health checks, CI, testing, dual deployment)
 
-### Deferred (Post-MVP)
-
-- Magic link (passwordless) authentication
-- Voice input, receipt/photo parsing (OCR via Textract planned)
-- ML-based advanced forecasting, seasonal patterns
-- Native mobile apps (iOS/Android)
-- Multi-user per business with role-based access
-- POS integrations, supplier management
-- Streaming chat responses
-- Push notifications (morning prep reminders)
+Planned and deferred work is tracked in `docs/BACKLOG.md` and `docs/IMPLEMENTATION_PLAN.md`.
 
 ## License
 
