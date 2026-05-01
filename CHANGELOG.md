@@ -39,7 +39,7 @@ All notable changes to Freshcast are documented here.
 
 ### Auth & Onboarding
 - Email/password authentication with JWT sessions
-- Password reset flow with email delivery (Resend)
+- Password reset flow with email delivery (Amazon SES primary, Resend fallback)
 - Email verification (optional)
 - 3-step onboarding with business type tiles and product setup
 
@@ -47,7 +47,7 @@ All notable changes to Freshcast are documented here.
 - Sales history with date grouping and NL quote display
 - CSV export of sales history
 - Per-product analytics (daily average, week-over-week trend)
-- Weekly summary email (opt-in, Vercel Cron)
+- Weekly summary email (opt-in, EventBridge scheduling with Vercel Cron fallback)
 
 ### Platform
 - PWA support (installable, offline fallback)
