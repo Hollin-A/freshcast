@@ -1,6 +1,7 @@
 type AwsCredentials = {
   accessKeyId: string;
   secretAccessKey: string;
+  sessionToken?: string;
 };
 
 type AwsRuntimeConfig = {
@@ -11,22 +12,23 @@ type AwsRuntimeConfig = {
 /**
  * Resolve AWS runtime config while supporting platforms that reserve `AWS_*` env vars.
  *
- * Preferred custom vars:
+ * Preferred explicit vars (optional):
  * - APP_AWS_REGION
  * - APP_AWS_ACCESS_KEY_ID
  * - APP_AWS_SECRET_ACCESS_KEY
+ * - APP_AWS_SESSION_TOKEN (required when using temporary STS credentials)
  *
- * Backward-compatible fallback:
- * - AWS_REGION
- * - AWS_ACCESS_KEY_ID
- * - AWS_SECRET_ACCESS_KEY
+ * Important:
+ * - If APP_AWS_ACCESS_KEY_ID / APP_AWS_SECRET_ACCESS_KEY are NOT set, we do not
+ *   force static credentials and let the AWS SDK provider chain resolve IAM role credentials.
+ * - This avoids accidentally pinning stale/invalid build-time AWS_* credentials.
  */
 export function getAwsRuntimeConfig(defaultRegion = "ap-southeast-2"): AwsRuntimeConfig {
   const region = process.env.APP_AWS_REGION || process.env.AWS_REGION || defaultRegion;
 
-  const accessKeyId = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey =
-    process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+  const accessKeyId = process.env.APP_AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.APP_AWS_SECRET_ACCESS_KEY;
+  const sessionToken = process.env.APP_AWS_SESSION_TOKEN;
 
   if (accessKeyId && secretAccessKey) {
     return {
@@ -34,6 +36,7 @@ export function getAwsRuntimeConfig(defaultRegion = "ap-southeast-2"): AwsRuntim
       credentials: {
         accessKeyId,
         secretAccessKey,
+        sessionToken,
       },
     };
   }
