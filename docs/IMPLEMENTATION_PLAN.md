@@ -56,7 +56,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 25 | Sales Input UX Improvements | ✅ Complete |
 | 26 | Production Foundations | ✅ Complete |
 | 27 | AWS Amplify Deployment | ✅ Complete |
-| 28 | AWS Email & Scheduling | 🔲 Not started |
+| 28 | AWS Email & Scheduling | 🟡 In progress |
 | 29 | Receipt Upload & OCR | 🔲 Not started |
 | 30 | Observability & API Maturity | 🔲 Not started |
 | 31 | Push Notifications | 🔲 Not started |

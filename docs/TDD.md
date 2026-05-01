@@ -64,8 +64,8 @@ This document describes the technical architecture, data model, API contracts, c
 └──────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────┐
-│    Resend (Email Delivery)                            │
-│    Password reset emails                              │
+│    Amazon SES + Resend Fallback                        │
+│    Auth and weekly summary emails                      │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -145,7 +145,7 @@ src/
 │   ├── prisma.ts                   # Prisma client singleton (PrismaPg adapter)
 │   ├── auth.ts                     # Auth.js config (Credentials, JWT)
 │   ├── claude.ts                   # Claude API client (generateText, generateJSON)
-│   ├── email.ts                    # Resend email utility
+│   ├── email.ts                    # SES-first email utility with Resend fallback
 │   ├── api-helpers.ts              # errorResponse, getBusinessId, getBusinessContext
 │   ├── dates.ts                    # Timezone-aware date utilities
 │   ├── logger.ts                   # Structured logging (color-coded, timestamped)
@@ -218,7 +218,7 @@ The complete Prisma schema is in `prisma/schema.prisma`. Key design decisions:
 ```
 Sign Up:    POST /api/auth/signup → validate → hash password → create User → redirect to /onboarding
 Login:      POST /api/auth/callback/credentials → verify password → issue JWT
-Reset:      POST /api/auth/forgot-password → generate token → send email via Resend
+Reset:      POST /api/auth/forgot-password → generate token → send email via SES (Resend fallback)
             POST /api/auth/reset-password → validate token → update password (atomic transaction)
 ```
 
@@ -423,7 +423,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 
 - Show/hide password toggle (`PasswordInput` component)
 - Email verification status in settings with resend option
-- Branded splash screen on initial load (app icon, teal background)
+- Branded splash screen on initial load (app icon, warm cream background)
 - Per-page loading skeletons (dashboard, chat, settings, sales, products)
 
 ### 7.5 i18n
@@ -433,9 +433,9 @@ Settings accessible from dashboard header (⚙ Settings link).
 - 8 namespaces: common, auth, onboarding, dashboard, sales, products, predictions, nav
 - Adding a language: create `src/messages/{locale}.json`, update `src/i18n/request.ts`
 
-### 7.4 PWA
+### 7.6 PWA
 
-- `src/app/manifest.ts` — app name, teal theme, standalone display, start URL `/dashboard`
+- `src/app/manifest.ts` — app name, warm theme, standalone display, start URL `/dashboard`
 - `public/sw.js` — network-first service worker with offline fallback
 - `src/app/offline/page.tsx` — "You're offline" page
 - Icons: 192x192, 512x512, 512x512 maskable, apple-touch-icon
@@ -466,7 +466,8 @@ Settings accessible from dashboard header (⚙ Settings link).
 | Neon | PostgreSQL (serverless) | Free tier |
 | Vercel | Hosting + deployment | Free tier |
 | Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat | ~$1-5/month at moderate usage |
-| Resend | Password reset emails | Free tier (3000/month) |
+| Amazon SES | Primary email delivery (auth + weekly summary) | Free tier/sandbox for portfolio use |
+| Resend | Fallback email delivery | Free tier (3000/month) |
 
 ---
 
@@ -478,7 +479,11 @@ Settings accessible from dashboard header (⚙ Settings link).
 | `AUTH_SECRET` | Yes | Auth.js session encryption key |
 | `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.vercel.app`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
-| `RESEND_API_KEY` | No | Resend API key (password reset falls back to console.log) |
+| `AWS_REGION` | No | AWS region for SES/EventBridge integrations |
+| `AWS_ACCESS_KEY_ID` | No | AWS access key for SES client |
+| `AWS_SECRET_ACCESS_KEY` | No | AWS secret key for SES client |
+| `SES_FROM_EMAIL` | No | Verified sender email for SES |
+| `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
 
 ---
 

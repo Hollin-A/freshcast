@@ -18,22 +18,22 @@ Freshcast targets small retail business owners with moderate digital literacy. W
 Options considered:
 
 1. **Email/password only** — universally understood, but password fatigue is real
-2. **Email/password + magic link** — familiar baseline with a passwordless option for convenience
+2. **Email/password + magic link** — familiar baseline with a passwordless option, but added MVP complexity
 3. **Social login (Google/Apple)** — convenient but adds OAuth complexity and may not suit all markets
 4. **Phone/OTP** — great for mobile-first, but requires SMS provider integration and cost per message
 5. **Social + email + OTP (full suite)** — maximum flexibility but significant MVP complexity
 
 ## Decision
 
-Email/password with optional magic link (passwordless) for MVP.
+Email/password authentication for MVP, with password reset and optional email verification. Magic link is deferred to a future phase.
 
 ## Rationale
 
 - Email/password is the most universally understood auth method across all digital literacy levels
-- Magic link adds a passwordless option without significant implementation overhead
+- Magic link is valuable but not required to validate the core MVP loop, so it is deferred to keep scope focused
 - Social login and OTP are deferred — they add integration complexity (OAuth providers, SMS services) without proportional MVP value
 - One account = one business keeps the auth model simple (no roles, no permissions)
-- Magic link also serves as the password reset mechanism, reducing separate flows
+- Token-based password reset provides a familiar recovery path without introducing passwordless auth during MVP
 
 ## Consequences
 

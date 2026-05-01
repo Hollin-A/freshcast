@@ -464,7 +464,7 @@ DemandForecast
 ## 13. MVP Scope & Timeline
 
 ### Week 1 — Foundation
-- Authentication (email/password + magic link)
+- Authentication (email/password)
 - Onboarding flow
 - Product model and management
 - Sales input (both modes)

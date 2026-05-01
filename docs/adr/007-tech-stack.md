@@ -27,7 +27,7 @@ Freshcast is a mobile-first web application that needs to be built quickly (4-we
 | Data Fetching | React Query (TanStack Query) |
 | Database | PostgreSQL (Neon) |
 | ORM | Prisma |
-| AI | OpenAI API (or equivalent) |
+| AI | Anthropic Claude API (Haiku) |
 | Localization | next-intl (or equivalent) |
 | Deployment | Vercel (natural fit for Next.js) |
 
@@ -57,17 +57,17 @@ Freshcast is a mobile-first web application that needs to be built quickly (4-we
 - Reduces boilerplate for data fetching in client components
 - Built-in support for loading/error states
 
-### OpenAI API
-- Used for AI insight generation (batch, not per-interaction)
-- Flexible model selection (can switch between GPT variants based on cost/quality)
-- Well-documented API with good SDK support
+### Anthropic Claude API
+- Used for NL parsing, AI insight generation, and chat responses
+- Haiku model offers a strong quality/cost tradeoff for a small-business app workload
+- Works with fallback logic so core features continue when AI is unavailable
 
 ## Consequences
 
 - Tied to the Vercel/Next.js ecosystem (acceptable for MVP, portable if needed)
 - Neon's serverless model means cold starts on first query (mitigated by connection pooling)
 - Prisma adds a build step for client generation
-- OpenAI API costs scale with number of businesses (mitigated by batch processing — ADR-005)
+- AI API costs scale with number of businesses (mitigated by caching, rate limits, and fallback logic)
 
 ## Alternatives Considered
 
