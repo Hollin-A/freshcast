@@ -31,11 +31,6 @@ export async function POST(request: Request) {
 
     const bucket = getReceiptsBucket();
     if (!bucket) {
-      logger.warn("receipts", "Receipt upload not configured", {
-        hasS3ReceiptsBucket: Boolean(process.env.S3_RECEIPTS_BUCKET),
-        nodeEnv: process.env.NODE_ENV,
-        vercelEnv: process.env.VERCEL_ENV ?? null,
-      });
       return errorResponse("SERVICE_UNAVAILABLE", "Receipt upload is not configured", 503);
     }
 

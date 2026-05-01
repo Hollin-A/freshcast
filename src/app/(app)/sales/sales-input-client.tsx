@@ -117,7 +117,13 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
         body: file,
       });
       if (!s3PutRes.ok) {
-        throw new Error("Failed to upload receipt image");
+        const s3ErrorBody = await s3PutRes.text().catch(() => "");
+        const shortError = s3ErrorBody.slice(0, 240).trim();
+        throw new Error(
+          shortError
+            ? `Failed to upload receipt image (${s3PutRes.status}): ${shortError}`
+            : `Failed to upload receipt image (${s3PutRes.status})`
+        );
       }
 
       const parseRes = await fetch("/api/receipts/parse", {
