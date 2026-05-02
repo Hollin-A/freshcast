@@ -63,6 +63,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 32 | Frontend Polish | 🔲 Not started |
 | 33 | Advanced AWS & Infrastructure | 🔲 Not started |
 | 34 | NL Parser Evaluation Framework | 🔲 Not started |
+| 35 | Voice Input (Amazon Transcribe) | 🔲 Not started |
 
 ---
 
@@ -1530,6 +1531,63 @@ Phase 25 complete (no AWS dependency). Can run in parallel with AWS phases.
 - `npm run eval` runs 20-30 golden inputs and reports accuracy
 - Both LLM and rule-based parsers are evaluated side by side
 - CI reports accuracy metrics on every PR
+
+---
+
+## Phase 35: Voice Input (Amazon Transcribe — Option B)
+Branch: `feat/phase-35-voice-transcribe`
+
+### Goal
+Let users log sales by speaking a short utterance. Audio is transcribed with **Amazon Transcribe using an async job + client polling** (Option B — avoids long-lived serverless requests). Transcript text is fed into the existing sales parse and confirmation flow.
+
+### Dependencies
+Phase 29 complete (S3 upload patterns, IAM, bucket). Requires Transcribe + S3 permissions on the deployment role.
+
+### Notes
+- **In scope:** batch/async transcription after the user stops recording.
+- **Out of scope:** Transcribe Streaming (live partial words while speaking) — separate future work if desired.
+
+---
+
+#### 35.1 Audio capture & upload
+
+##### Tasks
+- [ ] 35.1.1 Add voice record control on sales NL tab — start/stop, max duration (e.g. 30s), clear error states
+- [ ] 35.1.2 Upload audio to S3 — presigned PUT (reuse receipt bucket or dedicated `voice/` prefix + lifecycle)
+- [ ] 35.1.3 Validate MIME type, size, and duration server-side where possible
+
+##### Acceptance Criteria
+- User can record, stop, and upload without blocking the UI unreasonably
+- Oversized or too-long clips are rejected with a clear message
+
+---
+
+#### 35.2 Transcribe job (async)
+
+##### Tasks
+- [ ] 35.2.1 `POST /api/voice/transcribe` — accepts S3 key (or upload id), starts `StartTranscriptionJob`, returns `{ jobId }`
+- [ ] 35.2.2 `GET /api/voice/transcribe/:jobId` — returns status (`IN_PROGRESS` | `COMPLETED` | `FAILED`) and transcript text when ready
+- [ ] 35.2.3 Map Transcribe output (e.g. transcript file on S3) to plain text for the parser
+- [ ] 35.2.4 On success, client calls existing `POST /api/sales/parse` with transcript, then opens confirmation sheet (same as typed NL)
+
+##### Acceptance Criteria
+- API returns `jobId` immediately (no single request blocked until Transcribe finishes)
+- Polling works until completion or failure with user-visible states
+- Parsed line items match quality expectations for spoken sales phrasing
+
+---
+
+#### 35.3 UX, fallback, and ops
+
+##### Tasks
+- [ ] 35.3.1 Rate limit voice endpoints (per business) to control cost
+- [ ] 35.3.2 Graceful fallback when Transcribe unavailable — prompt user to type or use manual tab
+- [ ] 35.3.3 Document env/IAM needs (Transcribe, S3 read/write on audio + transcript objects); align with Amplify `next.config.ts` env surfacing if needed
+- [ ] 35.3.4 Update `docs/API.md`, `docs/TDD.md`, `CHANGELOG.md` when shipped
+
+##### Acceptance Criteria
+- Failed transcription does not strand the user — clear recovery path
+- Docs and backlog stay aligned with shipped behavior
 
 ---
 

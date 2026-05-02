@@ -60,14 +60,15 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 | 21 | Amazon Bedrock | Enterprise AI access (replaces direct Anthropic) | 🔲 Planned | 33 |
 | 22 | Amazon RDS/Aurora | Enterprise database (replaces Neon) | 🔲 Planned | — |
 | 23 | Amazon Cognito | MFA + social login (replaces Auth.js) | 🔲 Planned | — |
-| 24 | S3 + CloudFront | Receipt photo upload & storage | 🔲 Planned | 29 |
-| 25 | Amazon Textract | OCR receipt parsing | 🔲 Planned | 29 |
+| 24 | S3 + CloudFront | Receipt photo upload & storage | ✅ Done | 29 |
+| 25 | Amazon Textract | OCR receipt parsing | ✅ Done | 29 |
 | 26 | Amazon SNS | Morning prep push notifications | 🔲 Planned | 31 |
 | 27 | Amazon Translate | Auto-translate insights & chat | 🔲 Planned | 33 |
 | 28 | Amazon DynamoDB | Persistent chat history | 🔲 Planned | — |
 | 29 | AWS CloudWatch | Monitoring, metrics, alerting | 🔲 Planned | 30 |
 | 30 | AWS Secrets Manager | API key management | 🔲 Planned | 33 |
 | 31 | AWS Lambda | Background processing | 🔲 Planned | — |
+| 34 | Amazon Transcribe | Voice-to-text sales logging (Option B async; feeds existing parser pipeline) | 🔲 Planned | 35 |
 
 ## AWS Deployment
 
@@ -80,6 +81,32 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 
 ## Progress Summary
 
-- ✅ Completed: 9 of 33 items (1, 2, 10, 14, 17, 19, 20, 32, 33)
-- 🔲 Planned (in implementation plan): 18 items
+- ✅ Completed: 11 of 34 items (1, 2, 10, 14, 17, 19, 20, 24, 25, 32, 33)
+- 🔲 Planned (in implementation plan): 18 items (Phase 35 voice is in the plan when prioritized)
 - — Unplanned: 6 items (13, 22, 23, 28, 31 — low priority, no phase assigned)
+
+---
+
+## Voice Input Candidate (Amazon Transcribe — Option B)
+
+Chosen approach: **async transcription** (not live word-by-word streaming). Start a job, return `jobId` immediately, client polls until `COMPLETED`, then transcript is sent through the existing parse flow.
+
+- Record audio on the sales input screen (strict max duration on the client; validate on server)
+- Upload audio to S3 (reuse presigned-upload patterns from Phase 29 where sensible)
+- **Start** Amazon Transcribe job — API returns **`jobId` right away** (avoids serverless long-request timeouts)
+- Client **polls** status endpoint until job completes (or fails)
+- Feed final transcript text into existing `POST /api/sales/parse` pipeline (LLM primary, rule-based fallback)
+- Reuse the current confirmation/review screen before save (same flow as typed input)
+
+Suggested API shape:
+
+- `POST /api/voice/upload` (or presigned S3 upload, same as receipts) — store audio in S3
+- `POST /api/voice/transcribe` — start Transcribe job; response `{ jobId }`
+- `GET /api/voice/transcribe/:jobId` — poll job status; when complete, return transcript text (or S3 URI to transcript JSON)
+
+UX notes:
+
+- Keep typed/manual modes as fallback
+- Show clear states: recording → uploading → transcribing (poll) → ready to review
+- Enforce max recording duration (for cost/latency control)
+- **Not** in scope for this backlog item: Transcribe **Streaming** (live partial words while speaking); that would be a separate, heavier phase if ever needed
