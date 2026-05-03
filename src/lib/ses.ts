@@ -1,3 +1,4 @@
+import "server-only";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import { logger } from "./logger";
 import { getAwsRuntimeConfig } from "./aws-config";

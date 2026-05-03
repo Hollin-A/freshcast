@@ -1,3 +1,5 @@
+import "server-only";
+
 type AwsCredentials = {
   accessKeyId: string;
   secretAccessKey: string;

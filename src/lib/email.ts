@@ -1,3 +1,4 @@
+import "server-only";
 import { Resend } from "resend";
 import { logger } from "./logger";
 import { sendEmailViaSES } from "./ses";

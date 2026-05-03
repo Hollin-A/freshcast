@@ -14,6 +14,12 @@ All notable changes to Freshcast are documented here.
 - Receipt-to-sales pipeline integration with confirmation review before save
 - Sales history "From receipt" badge for OCR-origin entries
 
+### Security
+- Removed all entries from `next.config.ts` `env` (per ADR-017). The field inlines values into the client JavaScript bundle regardless of `NEXT_PUBLIC_` semantics, which had been exposing server secrets in production builds.
+- Routed Amplify Console env vars through `amplify.yml` into `.env.production` before `next build` so SSR can read them at runtime without inlining server values into the client.
+- Added `import "server-only"` guards to lib modules that read secret env vars (`prisma`, `email`, `ses`, `claude`, `s3`, `aws-config`, `env`) so any future client-side import fails the build.
+- Operators must rotate every secret previously listed in `next.config.ts` `env` (`AUTH_SECRET`, Neon DB password, `CRON_SECRET`, `RESEND_API_KEY`, `ANTHROPIC_API_KEY`); rotating `AUTH_SECRET` invalidates existing sessions.
+
 ---
 
 ## v0.1.0 — MVP + Post-MVP
