@@ -479,6 +479,8 @@ Settings accessible from dashboard header (⚙ Settings link).
 
 ## 10. Environment Variables
 
+### Variables
+
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
@@ -494,6 +496,18 @@ Settings accessible from dashboard header (⚙ Settings link).
 | `SES_FROM_EMAIL` | No | Verified sender email for SES |
 | `S3_RECEIPTS_BUCKET` | No | S3 bucket for receipt image uploads and OCR parsing |
 | `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
+| `CRON_SECRET` | No | Shared secret for invoking cron-triggered routes (e.g. weekly summary) |
+| `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN — intentionally exposed to the browser; the only `NEXT_PUBLIC_*` value in the app |
+
+### Loading mechanism (Amplify SSR)
+
+Per **ADR-017**, no environment variables are listed under `next.config.ts` `env` — that field inlines literals into the JavaScript bundle regardless of `NEXT_PUBLIC_` semantics, which historically leaked server secrets into the browser.
+
+Amplify Hosting injects Console env vars into the **build container** but does not propagate them to the **SSR Lambda**. To bridge the gap, `amplify.yml` writes the relevant Console vars into `.env.production` immediately before `next build`, where Next.js's native `.env` loader picks them up for both the build and the SSR runtime. Server-only vars stay server-side; only `NEXT_PUBLIC_*` cross into the client bundle.
+
+Server-only modules that read secret env vars (`src/lib/{prisma,env,email,ses,claude,s3,aws-config}.ts`) carry an `import "server-only"` guard so that any future client-side import fails the build instead of silently leaking values into a client chunk.
+
+True secrets (DB URL, auth keys, vendor API keys) are scheduled for runtime resolution from AWS Secrets Manager in **Phase 33.1.1**, which removes the residual plaintext-in-build-artifact risk that `.env.production` still has.
 
 ---
 
@@ -514,3 +528,5 @@ Settings accessible from dashboard header (⚙ Settings link).
 | Timezones | Business timezone stored, all dates TZ-aware | 013 |
 | Daily entries | Multiple per day, no unique constraint | 014 |
 | Holidays | Region-based holiday multipliers on predictions | 015 |
+| Editorial rebrand | Warm palette, serif headings | 016 |
+| Env on Amplify | No `next.config` `env`; route via `amplify.yml` → `.env.production` | 017 |
