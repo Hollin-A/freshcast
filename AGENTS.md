@@ -6,6 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Workflow and Documentation Rules
 
+- **Only make code or repo changes when explicitly asked.** Treat planning and discussion turns as read-only. Phrases like "can we…?", "should we…?", "what do you think about…?", "give me a plan", or "any insights?" are invitations to discuss, not approval to implement. Wait for an explicit go-ahead such as "go", "do it", "implement", "make the change", or "yes, proceed" before editing files, creating branches, running migrations, or making commits. When in doubt, ask first.
 - Before making changes, suggest branching from `main`:
   - `feat/{short-description}`
   - `fix/{short-description}`
