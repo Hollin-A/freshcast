@@ -6,6 +6,7 @@ import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
 const schema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     });
 
     // Send password reset email
-    const resetUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    const resetUrl = `${env.AUTH_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
     const sent = await sendEmail(
       email,

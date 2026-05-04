@@ -7,6 +7,7 @@ import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
+import { env } from "@/lib/env";
 
 const signupSchema = z.object({
   name: z.string().min(1).max(100),
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       await prisma.verificationToken.create({
         data: { identifier: `verify:${email}`, token, expires },
       });
-      const verifyUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+      const verifyUrl = `${env.AUTH_URL}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
       await sendEmail(
         email,
         "Welcome to Freshcast — Verify your email",
