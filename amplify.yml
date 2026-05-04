@@ -10,7 +10,7 @@ frontend:
         # See docs/adr/017-next-config-no-env.md.
         # Server-only vars (no NEXT_PUBLIC_ prefix → never inlined into the client bundle by Next.js).
         - |
-          env | grep -E '^(DATABASE_URL|AUTH_SECRET|AUTH_URL|APP_AWS_REGION|APP_AWS_ACCESS_KEY_ID|APP_AWS_SECRET_ACCESS_KEY|APP_AWS_SESSION_TOKEN|SES_FROM_EMAIL|S3_RECEIPTS_BUCKET|RESEND_API_KEY|CRON_SECRET)=' >> .env.production || true
+          env | grep -E '^(DATABASE_URL|AUTH_SECRET|AUTH_URL|APP_AWS_REGION|APP_AWS_ACCESS_KEY_ID|APP_AWS_SECRET_ACCESS_KEY|APP_AWS_SESSION_TOKEN|SES_FROM_EMAIL|S3_RECEIPTS_BUCKET|RESEND_API_KEY)=' >> .env.production || true
         # Public vars (NEXT_PUBLIC_*) — intentionally inlined into the client bundle.
         - env | grep -E '^NEXT_PUBLIC_' >> .env.production || true
         - npx prisma generate
