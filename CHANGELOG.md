@@ -19,6 +19,8 @@ All notable changes to Freshcast are documented here.
 - Routed Amplify Console env vars through `amplify.yml` into `.env.production` before `next build` so SSR can read them at runtime without inlining server values into the client.
 - Added `import "server-only"` guards to lib modules that read secret env vars (`prisma`, `email`, `ses`, `claude`, `s3`, `aws-config`, `env`) so any future client-side import fails the build.
 - Operators must rotate every secret previously listed in `next.config.ts` `env` (`AUTH_SECRET`, Neon DB password, `CRON_SECRET`, `RESEND_API_KEY`, `ANTHROPIC_API_KEY`); rotating `AUTH_SECRET` invalidates existing sessions.
+- Migrated `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, and `CRON_SECRET` to **AWS Secrets Manager** with a hybrid env→SM resolver in `src/lib/secrets.ts` (per ADR-018). `DATABASE_URL` and `AUTH_SECRET` remain in `.env.production` due to documented framework constraints. Resolution is env-first so local dev continues to work without any AWS calls; the SM path becomes load-bearing once the env entries are pruned from the Amplify Console.
+- Hardened `AUTH_URL` to be required at startup. The three auth routes (`signup`, `forgot-password`, `send-verification`) no longer fall back to `http://localhost:3000` if `AUTH_URL` is missing; they now fail loudly via `requireEnv("AUTH_URL")`. Prevents the silent failure mode where a missing env var would cause production password-reset emails to ship localhost links.
 
 ---
 
