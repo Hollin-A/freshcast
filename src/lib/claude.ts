@@ -1,16 +1,21 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { logger } from "./logger";
+import { getSecret } from "./secrets";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
 let client: Anthropic | null = null;
+let initialized = false;
 
-function getClient(): Anthropic | null {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  if (!client) {
-    client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  }
+async function getClient(): Promise<Anthropic | null> {
+  if (initialized) return client;
+  initialized = true;
+
+  const apiKey = await getSecret("ANTHROPIC_API_KEY", "freshcast/anthropic-api-key");
+  if (!apiKey) return null;
+
+  client = new Anthropic({ apiKey });
   return client;
 }
 
@@ -22,9 +27,9 @@ export async function generateText(
   userMessage: string,
   maxTokens = 1024
 ): Promise<string | null> {
-  const anthropic = getClient();
+  const anthropic = await getClient();
   if (!anthropic) {
-    logger.debug("claude", "No ANTHROPIC_API_KEY set, skipping LLM call");
+    logger.debug("claude", "No Anthropic API key resolved, skipping LLM call");
     return null;
   }
 

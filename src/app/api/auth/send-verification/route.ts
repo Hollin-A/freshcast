@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
+import { env } from "@/lib/env";
 
 function buildVerificationEmail(verifyUrl: string): string {
   return `
@@ -58,7 +59,7 @@ export async function POST() {
       },
     });
 
-    const verifyUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(session.user.email)}`;
+    const verifyUrl = `${env.AUTH_URL}/api/auth/verify-email?token=${token}&email=${encodeURIComponent(session.user.email)}`;
 
     const sent = await sendEmail(
       session.user.email,

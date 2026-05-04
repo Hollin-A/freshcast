@@ -505,9 +505,23 @@ Per **ADR-017**, no environment variables are listed under `next.config.ts` `env
 
 Amplify Hosting injects Console env vars into the **build container** but does not propagate them to the **SSR Lambda**. To bridge the gap, `amplify.yml` writes the relevant Console vars into `.env.production` immediately before `next build`, where Next.js's native `.env` loader picks them up for both the build and the SSR runtime. Server-only vars stay server-side; only `NEXT_PUBLIC_*` cross into the client bundle.
 
-Server-only modules that read secret env vars (`src/lib/{prisma,env,email,ses,claude,s3,aws-config}.ts`) carry an `import "server-only"` guard so that any future client-side import fails the build instead of silently leaking values into a client chunk.
+Server-only modules that read secret env vars (`src/lib/{prisma,env,email,ses,claude,s3,aws-config,secrets}.ts`) carry an `import "server-only"` guard so that any future client-side import fails the build instead of silently leaking values into a client chunk.
 
-True secrets (DB URL, auth keys, vendor API keys) are scheduled for runtime resolution from AWS Secrets Manager in **Phase 33.1.1**, which removes the residual plaintext-in-build-artifact risk that `.env.production` still has.
+### Secrets Manager (hybrid resolver)
+
+Per **ADR-018**, three secrets are sourced from **AWS Secrets Manager** at runtime via `src/lib/secrets.ts`:
+
+| SM secret ID | Reads as env | Consumer |
+|---|---|---|
+| `freshcast/anthropic-api-key` | `ANTHROPIC_API_KEY` | `src/lib/claude.ts` |
+| `freshcast/resend-api-key` | `RESEND_API_KEY` | `src/lib/email.ts` |
+| `freshcast/cron-secret` | `CRON_SECRET` | `src/app/api/email/weekly-summary/route.ts` |
+
+Resolution order is **env first, SM second**: when the env var is set the resolver returns it without touching SM (used by local dev, preview branches, and as a manual rollback). When unset, SM is fetched once per warm Lambda container and cached for the rest of its lifetime. On SM error the resolver returns `null` so callers degrade gracefully (chat skipped, weekly-summary route returns 401 if no secret is resolved).
+
+`DATABASE_URL` and `AUTH_SECRET` are explicit carve-outs and stay in `.env.production` due to Prisma's synchronous client construction and Auth.js's package-init env read, respectively. See ADR-018 for the full rationale and the cutover sequence (env entries are removed from Amplify Console + `amplify.yml` per-secret, after verifying each SM path works in production).
+
+The Amplify SSR Lambda execution role has a least-privilege inline policy granting `secretsmanager:GetSecretValue` on those three specific secret ARNs only.
 
 ---
 
@@ -530,3 +544,4 @@ True secrets (DB URL, auth keys, vendor API keys) are scheduled for runtime reso
 | Holidays | Region-based holiday multipliers on predictions | 015 |
 | Editorial rebrand | Warm palette, serif headings | 016 |
 | Env on Amplify | No `next.config` `env`; route via `amplify.yml` → `.env.production` | 017 |
+| Secrets at runtime | Hybrid env→Secrets Manager resolver for vendor API keys and cron secret | 018 |

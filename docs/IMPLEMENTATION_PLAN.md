@@ -1485,17 +1485,21 @@ Phase 27 complete (needs IAM role).
 #### 33.1 Security & AI
 
 ##### Tasks
-- [ ] 33.1.1 Migrate API keys to AWS Secrets Manager — pull at runtime instead of env vars (closes the residual plaintext-in-build-artifact gap left by ADR-017's `.env.production` approach; touches `src/lib/{prisma,env,email,ses,claude}.ts`)
+- [x] 33.1.1 Migrate `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `CRON_SECRET` to AWS Secrets Manager via a hybrid env-first resolver in `src/lib/secrets.ts` (ADR-018). `DATABASE_URL` and `AUTH_SECRET` remain in `.env.production` per the ADR's documented framework carve-outs. Pulled forward and shipped out of phase order as the close-out for ADR-017's residual build-artifact risk.
 - [ ] 33.1.2 Add Amazon Bedrock as alternative to direct Anthropic API — toggle via feature flag
 - [ ] 33.1.3 Add Amazon Translate — auto-translate LLM-generated insights and chat responses for multilingual users
 
 ##### Acceptance Criteria
-- API keys are fetched from Secrets Manager on the Amplify deployment (no longer present in `.env.production` or build artifacts)
+- `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, and `CRON_SECRET` resolve from AWS Secrets Manager at runtime via `getSecret()`; `DATABASE_URL` and `AUTH_SECRET` remain in `.env.production` per ADR-018's carve-outs
+- Local development continues to work from `.env.local` with no AWS calls (hybrid resolver, env-first)
+- Amplify SSR Lambda has least-privilege IAM (`secretsmanager:GetSecretValue` on three specific secret ARNs)
 - Bedrock can be enabled via feature flag as an alternative AI provider
 - Insights can be translated to a second language
 
-##### Predecessor
-- **ADR-017** — removes `next.config.ts` `env`, routes all env vars through `amplify.yml` → `.env.production`, and adds `'server-only'` guards on lib modules. Closes the bundle-leak surface; this Phase 33.1.1 work closes the remaining build-artifact surface for true secrets.
+##### Predecessor and follow-up
+- **ADR-017** — removed `next.config.ts` `env`, routed all env vars through `amplify.yml` → `.env.production`, added `'server-only'` guards on lib modules. Closed the bundle-leak surface.
+- **ADR-018** — adds the hybrid SM resolver and migrates three secrets. Closes 33.1.1.
+- After cutover, the env-var entries for the three migrated secrets must be pruned from the Amplify Console and from `amplify.yml`'s server-only regex; until that step the env-first path remains the active source of truth (intentional zero-risk rollout).
 
 ---
 

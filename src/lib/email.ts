@@ -2,12 +2,19 @@ import "server-only";
 import { Resend } from "resend";
 import { logger } from "./logger";
 import { sendEmailViaSES } from "./ses";
+import { getSecret } from "./secrets";
 
 let resend: Resend | null = null;
+let initialized = false;
 
-function getResend(): Resend | null {
-  if (!process.env.RESEND_API_KEY) return null;
-  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
+async function getResend(): Promise<Resend | null> {
+  if (initialized) return resend;
+  initialized = true;
+
+  const apiKey = await getSecret("RESEND_API_KEY", "freshcast/resend-api-key");
+  if (!apiKey) return null;
+
+  resend = new Resend(apiKey);
   return resend;
 }
 
@@ -27,9 +34,9 @@ export async function sendEmail(
 
   // Fall back to Resend
   try {
-    const client = getResend();
+    const client = await getResend();
     if (!client) {
-      logger.warn("email", "No email provider available (SES failed, RESEND_API_KEY not set)", { to, subject });
+      logger.warn("email", "No email provider available (SES failed, no Resend API key resolved)", { to, subject });
       return false;
     }
 
