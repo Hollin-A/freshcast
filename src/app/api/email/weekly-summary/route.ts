@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { getSecret } from "@/lib/secrets";
 import { sendWeeklySummary } from "@/services/weekly-email";
 
-// Called by Vercel Cron or manually
+// Called by EventBridge Scheduler (Amplify) or Vercel Cron (fallback) or manually.
 export async function POST(request: NextRequest) {
   try {
-    // Verify cron secret if set (for Vercel Cron security)
     const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
+    const cronSecret = await getSecret("CRON_SECRET", "freshcast/cron-secret");
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return errorResponse("UNAUTHORIZED", "Invalid cron secret", 401);
     }
