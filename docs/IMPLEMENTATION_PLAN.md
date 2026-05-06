@@ -64,6 +64,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 33 | Advanced AWS & Infrastructure | 🔲 Not started |
 | 34 | NL Parser Evaluation Framework | 🔲 Not started |
 | 35 | Voice Input (Amazon Transcribe) | 🔲 Not started |
+| 36 | Receipt OCR Hardening | 🔲 Not started |
 
 ---
 
@@ -1595,6 +1596,69 @@ Phase 29 complete (S3 upload patterns, IAM, bucket). Requires Transcribe + S3 pe
 ##### Acceptance Criteria
 - Failed transcription does not strand the user — clear recovery path
 - Docs and backlog stay aligned with shipped behavior
+
+---
+
+## Phase 36: Receipt OCR Hardening
+Branch: `feat/phase-36-receipt-ocr-hardening`
+
+### Goal
+Close the gap exposed during Phase 29: when the LLM is unavailable, the receipt parse path falls through to the chat-style rule-based parser, which produces unusable output on Textract receipt text. Phase 36 stops the bad fallback in the short term and migrates Textract to a receipt-shaped API in the medium term so the input pipeline is structurally appropriate to the task.
+
+### Reference
+ADR-019 — Receipt OCR Hardening (LLM-only fallback policy + AnalyzeExpense migration).
+
+### Dependencies
+Phase 29 complete. No data model changes required for 36.1; 36.2 introduces an SDK client swap and a new internal mapping type but no Prisma migrations.
+
+---
+
+#### 36.1 LLM-only fallback policy (immediate)
+
+##### Tasks
+- [ ] 36.1.1 Update `POST /api/receipts/parse` to short-circuit when `llmParseSalesInput` returns `null` — return `SERVICE_UNAVAILABLE` (503) with the new copy ("Receipt reading needs our AI service, which is temporarily unavailable. Please try again in a few minutes, or type your sale on the Log tab — that still works.")
+- [ ] 36.1.2 Update the receipt upload UI to surface the new error via toast and route the user to the Log tab when appropriate
+- [ ] 36.1.3 Replace `lines.join(", ")` with `"\n"` in `extractReceiptTextFromS3` so receipt structure is preserved as semantic line breaks rather than collapsed into the parser's tokenizer boundary
+- [ ] 36.1.4 Add structured logging on receipt-route `parseMethod` (`llm | error`) so the rate at which the fallback is exercised is observable
+- [ ] 36.1.5 Audit confirmation-screen mass deletion — confirm the user can clear all parsed rows in one or two interactions if any future fallback ever produces noise; tighten if not
+- [ ] 36.1.6 Update `docs/API.md` — drop `parseMethod: "rule-based"` from `POST /api/receipts/parse` response shape, document the new 503 error contract
+- [ ] 36.1.7 Add a `## Unreleased` entry to `CHANGELOG.md` in user-facing language
+
+##### Acceptance Criteria
+- When the Anthropic API key is missing or Claude returns an error, `POST /api/receipts/parse` returns 503 with the new copy and no parsed items
+- The confirmation screen no longer ever shows nonsense rows derived from receipt OCR text
+- Textract line joining uses `"\n"`; commas in product descriptions are no longer treated as item separators
+- Logs show whether each receipt parse went via LLM or hit the error path; ratio is observable in the logging backend
+- The Log/NL tab's existing rule-based fallback behaviour is unchanged
+
+---
+
+#### 36.2 Migrate Textract to `AnalyzeExpense` (medium term)
+
+##### Tasks
+- [ ] 36.2.1 Replace `DetectDocumentTextCommand` with `AnalyzeExpenseCommand` in `src/lib/textract.ts`
+- [ ] 36.2.2 Define an internal `ReceiptLineItem` type carrying `description`, `quantity`, `unit?`, `unitPrice?`, `total?` and map AWS `LineItemFields` onto it
+- [ ] 36.2.3 Update `llmParseSalesInput` (or introduce a receipt-specific variant) to consume structured line items instead of raw text — prompt shrinks; the LLM only has to map descriptions to known products and resolve abbreviations
+- [ ] 36.2.4 Build a receipt-specific rule-based path that bypasses `parseSalesInput` entirely: for each line item, call `matchProduct(description, products)` and use the AWS-provided quantity directly
+- [ ] 36.2.5 Decide and implement the policy for the new structured fallback — keep LLM-only by default, expose behind a feature flag, or re-enable the structured fallback unconditionally; record the decision in a brief follow-up note in ADR-019 if it changes
+- [ ] 36.2.6 Track `AnalyzeExpense` cost via the existing AWS billing tags / CloudWatch (Phase 30.2 surfaces this if landed; otherwise note for manual review)
+- [ ] 36.2.7 Update `docs/TDD.md` — receipts go via `AnalyzeExpense`; the Log/NL tab pipeline is unchanged
+- [ ] 36.2.8 Update `docs/API.md` — `POST /api/receipts/parse` response may include a `lineItems` array alongside `extractedText`
+- [ ] 36.2.9 `## Unreleased` entry in `CHANGELOG.md`
+
+##### Acceptance Criteria
+- Receipt photos are parsed via `AnalyzeExpense` end-to-end; `DetectDocumentTextCommand` is no longer used on the receipt path
+- The LLM path receives structured line items and the prompt is correspondingly simpler
+- A structured-fallback path exists and works (tested with a stub LLM client returning null), even if it remains disabled by policy
+- Per-receipt Textract cost is observable; spend delta is within expectations (~10× DetectDocumentText, still pennies per business per month at expected volumes)
+- Existing tests pass; new tests cover the AWS line-item mapping and the structured-fallback matcher path
+
+---
+
+### Phase 36 Acceptance Criteria (Overall)
+- LLM outage on the receipt path produces a clear, transient-sounding error rather than nonsense parsed items
+- Textract is invoked via the receipt-shaped API; downstream parsing operates on structured line items rather than raw OCR text
+- ADR-019 references the shipped behaviour; `docs/API.md` and `docs/TDD.md` reflect the new pipeline; `CHANGELOG.md` carries user-facing entries for both sub-phases
 
 ---
 
