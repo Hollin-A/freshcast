@@ -24,6 +24,7 @@ This directory contains the architectural decisions made for Freshcast.
 | [016](016-editorial-rebrand.md) | Editorial Rebrand — Warm Palette & Serif Typography | Accepted |
 | [017](017-next-config-no-env.md) | No Runtime Env in `next.config` (Amplify SSR via `.env.production`) | Accepted |
 | [018](018-secrets-manager.md) | Secrets in AWS Secrets Manager (Hybrid Resolver) | Accepted |
+| [019](019-receipt-ocr-hardening.md) | Receipt OCR Hardening — LLM-Only Fallback & AnalyzeExpense Migration | Accepted |
 
 ## Format
 

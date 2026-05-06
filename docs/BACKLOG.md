@@ -41,6 +41,7 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 | 14 | Prompt versioning — separate versioned files | P0 | ✅ Done | 26 |
 | 15 | LLM cost tracking — log token usage, expose summary | P1 | 🔲 Planned | 30 |
 | 16 | Evaluation framework — golden test inputs for NL parser | P1 | 🔲 Planned | 34 |
+| 35 | Receipt OCR hardening — LLM-only fallback + AnalyzeExpense migration (ADR-019) | P0 | 🔲 Planned | 36 |
 
 ## Shipping & Documentation
 
@@ -81,8 +82,8 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 
 ## Progress Summary
 
-- ✅ Completed: 11 of 34 items (1, 2, 10, 14, 17, 19, 20, 24, 25, 32, 33)
-- 🔲 Planned (in implementation plan): 18 items (Phase 35 voice is in the plan when prioritized)
+- ✅ Completed: 11 of 35 items (1, 2, 10, 14, 17, 19, 20, 24, 25, 32, 33)
+- 🔲 Planned (in implementation plan): 19 items (Phase 35 voice and Phase 36 receipt OCR hardening are in the plan when prioritized)
 - — Unplanned: 6 items (13, 22, 23, 28, 31 — low priority, no phase assigned)
 
 ---
