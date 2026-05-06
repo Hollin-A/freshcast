@@ -3,7 +3,6 @@ import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
-import { parseSalesInput } from "@/services/sales-parser";
 import { llmParseSalesInput } from "@/services/llm-sales-parser";
 import { extractReceiptTextFromS3 } from "@/lib/textract";
 import { getReceiptsBucket } from "@/lib/s3";
@@ -62,19 +61,28 @@ export async function POST(request: Request) {
     });
 
     const llmResult = await llmParseSalesInput(extractedText, products);
-    if (llmResult) {
-      return NextResponse.json({
-        ...llmResult,
-        source: "receipt",
+    if (!llmResult) {
+      logger.warn("receipts", "Receipt parse hit error path", {
         key,
-        extractedText,
+        parseMethod: "error",
+        extractedTextLength: extractedText.length,
       });
+      return errorResponse(
+        "SERVICE_UNAVAILABLE",
+        "Receipt reading needs our AI service, which is temporarily unavailable. Please try again in a few minutes, or type your sale on the Log tab — that still works.",
+        503
+      );
     }
 
-    const parsed = parseSalesInput(extractedText, products);
+    logger.info("receipts", "Receipt parsed", {
+      key,
+      parseMethod: "llm",
+      itemCount: llmResult.parsed.length,
+      unmatchedCount: llmResult.unmatched.length,
+    });
+
     return NextResponse.json({
-      ...parsed,
-      parseMethod: "rule-based",
+      ...llmResult,
       source: "receipt",
       key,
       extractedText,

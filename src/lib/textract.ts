@@ -34,5 +34,5 @@ export async function extractReceiptTextFromS3(
       .map((b) => b.Text?.trim())
       .filter((t): t is string => Boolean(t)) ?? [];
 
-  return lines.join(", ");
+  return lines.join("\n");
 }

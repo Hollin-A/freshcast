@@ -13,6 +13,11 @@ All notable changes to Freshcast are documented here.
 - Receipt photo upload flow (presigned S3 upload + OCR parsing)
 - Receipt-to-sales pipeline integration with confirmation review before save
 - Sales history "From receipt" badge for OCR-origin entries
+- Remove (×) button on unmatched items in the sales confirmation screen — every parsed row is now recoverable in one tap regardless of match status
+
+### Changed
+- Receipt parsing is now AI-only (per ADR-019). When the AI service is temporarily unavailable, the receipt path returns a clear error pointing the user to typing or manual entry, instead of falling back to the chat-style parser that produces unusable results on receipt OCR text. The rule-based parser continues to back the typed Log/NL tab where it was designed to work.
+- Textract line joining now preserves layout (`\n`) instead of collapsing to commas, which is cleaner signal for the AI parser and avoids misleading tokenization.
 
 ### Security
 - Removed all entries from `next.config.ts` `env` (per ADR-017). The field inlines values into the client JavaScript bundle regardless of `NEXT_PUBLIC_` semantics, which had been exposing server secrets in production builds.

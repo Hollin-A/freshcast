@@ -486,7 +486,7 @@ Generates a presigned S3 upload URL for receipt images.
 
 ### `POST /api/receipts/parse`
 
-Runs OCR on an uploaded receipt image using Amazon Textract, then parses extracted text through the existing sales parser pipeline (LLM first, rule-based fallback).
+Runs OCR on an uploaded receipt image using Amazon Textract, then parses extracted text through the LLM sales parser. Receipts are LLM-only by policy (ADR-019); the rule-based parser is not used on this path because Textract output is structurally incompatible with the chat-style parser. When the LLM is unavailable, the route returns 503 rather than producing low-quality parsed items.
 
 **Auth required:** Yes
 
@@ -502,14 +502,24 @@ Runs OCR on an uploaded receipt image using Amazon Textract, then parses extract
 {
   "parsed": [...],
   "unmatched": [...],
-  "parseMethod": "llm | rule-based",
+  "parseMethod": "llm",
   "source": "receipt",
   "key": "receipts/<businessId>/<...>.jpg",
   "extractedText": "..."
 }
 ```
 
-**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
+**Response `503` — LLM unavailable:**
+```json
+{
+  "error": {
+    "code": "SERVICE_UNAVAILABLE",
+    "message": "Receipt reading needs our AI service, which is temporarily unavailable. Please try again in a few minutes, or type your sale on the Log tab — that still works."
+  }
+}
+```
+
+**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503 — Textract failure, no extracted text, or LLM unavailable), `INTERNAL_ERROR` (500)
 
 **Environment variable naming note:**
 - Preferred: `APP_AWS_REGION`, `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`
