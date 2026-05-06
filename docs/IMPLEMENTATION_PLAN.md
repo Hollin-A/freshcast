@@ -64,7 +64,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 33 | Advanced AWS & Infrastructure | 🔲 Not started |
 | 34 | NL Parser Evaluation Framework | 🔲 Not started |
 | 35 | Voice Input (Amazon Transcribe) | 🔲 Not started |
-| 36 | Receipt OCR Hardening | 🔲 Not started |
+| 36 | Receipt OCR Hardening | 🟡 In progress |
 
 ---
 
@@ -1616,13 +1616,13 @@ Phase 29 complete. No data model changes required for 36.1; 36.2 introduces an S
 #### 36.1 LLM-only fallback policy (immediate)
 
 ##### Tasks
-- [ ] 36.1.1 Update `POST /api/receipts/parse` to short-circuit when `llmParseSalesInput` returns `null` — return `SERVICE_UNAVAILABLE` (503) with the new copy ("Receipt reading needs our AI service, which is temporarily unavailable. Please try again in a few minutes, or type your sale on the Log tab — that still works.")
-- [ ] 36.1.2 Update the receipt upload UI to surface the new error via toast and route the user to the Log tab when appropriate
-- [ ] 36.1.3 Replace `lines.join(", ")` with `"\n"` in `extractReceiptTextFromS3` so receipt structure is preserved as semantic line breaks rather than collapsed into the parser's tokenizer boundary
-- [ ] 36.1.4 Add structured logging on receipt-route `parseMethod` (`llm | error`) so the rate at which the fallback is exercised is observable
-- [ ] 36.1.5 Audit confirmation-screen mass deletion — confirm the user can clear all parsed rows in one or two interactions if any future fallback ever produces noise; tighten if not
-- [ ] 36.1.6 Update `docs/API.md` — drop `parseMethod: "rule-based"` from `POST /api/receipts/parse` response shape, document the new 503 error contract
-- [ ] 36.1.7 Add a `## Unreleased` entry to `CHANGELOG.md` in user-facing language
+- [x] 36.1.1 Update `POST /api/receipts/parse` to short-circuit when `llmParseSalesInput` returns `null` — return `SERVICE_UNAVAILABLE` (503) with the new copy ("Receipt reading needs our AI service, which is temporarily unavailable. Please try again in a few minutes, or type your sale on the Log tab — that still works.")
+- [x] 36.1.2 Verified: receipt upload UI's existing catch handler already surfaces `body.error.message` via `toast.error`, so the new 503 copy renders to the user without code changes
+- [x] 36.1.3 Replace `lines.join(", ")` with `"\n"` in `extractReceiptTextFromS3` so receipt structure is preserved as semantic line breaks rather than collapsed into the parser's tokenizer boundary
+- [x] 36.1.4 Add structured logging on receipt-route `parseMethod` (`llm | error`) so the rate at which the fallback is exercised is observable
+- [x] 36.1.5 Audited confirmation-screen mass deletion — added a `×` remove button to unmatched parsed items so every row is recoverable in one tap regardless of match status (previously unmatched rows only had an "Add" button)
+- [x] 36.1.6 Update `docs/API.md` — drop `parseMethod: "rule-based"` from `POST /api/receipts/parse` response shape, document the new 503 error contract
+- [x] 36.1.7 Add a `## Unreleased` entry to `CHANGELOG.md` in user-facing language
 
 ##### Acceptance Criteria
 - When the Anthropic API key is missing or Claude returns an error, `POST /api/receipts/parse` returns 503 with the new copy and no parsed items

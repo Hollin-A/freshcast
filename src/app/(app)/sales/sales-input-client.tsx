@@ -375,11 +375,16 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
                 placeholder={item.status === "ambiguous" ? "?" : "0"}
               />
               <span className="min-w-[40px] text-xs text-muted-warm">{item.unit || ""}</span>
-              {!item.matched ? (
+              {!item.matched && (
                 <button onClick={() => handleAddUnmatched(item)} className="text-xs font-semibold text-terra">Add</button>
-              ) : (
-                <button onClick={() => removeParsedItem(index)} className="text-lg text-mute2">×</button>
               )}
+              <button
+                onClick={() => removeParsedItem(index)}
+                className="text-lg text-mute2"
+                aria-label={`Remove ${item.product}`}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
