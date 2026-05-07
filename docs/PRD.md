@@ -1,10 +1,12 @@
 # Freshcast — Product Requirements Document (PRD)
 
+> **How to read this document.** This PRD is a living document describing the Freshcast product as it currently exists, plus the principles and non-goals that should guide future changes. Historical decisions live in [`docs/adr/`](./adr/README.md); shipped behaviour by release lives in [`CHANGELOG.md`](../CHANGELOG.md); phase-by-phase delivery lives in [`docs/IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). Update this document when product scope, requirements, or non-goals change.
+
 ## 1. Overview
 
 ### Product Summary
 
-Freshcast is a mobile-first AI assistant for small retail businesses that helps owners quickly log daily sales and receive actionable insights, trends, and demand predictions — without requiring complex inventory or POS systems.
+Freshcast is a mobile-first AI assistant for small retail businesses that helps owners quickly log daily sales and receive actionable insights, trends, and demand predictions — without requiring complex inventory or POS systems. It runs as an installable PWA, accepts sales as typed natural language, manual form input, or photographed receipts, and uses Claude Haiku to keep the input experience forgiving and the dashboard insights conversational.
 
 ### Problem Statement
 
@@ -21,12 +23,14 @@ Existing solutions (POS/ERP systems) are too complex, require heavy setup, and a
 
 Freshcast provides:
 
-- Ultra-simple sales input (natural language + manual form)
-- Quantity-focused demand prediction (core differentiator)
-- Lightweight trend analysis and business insights
-- Proactive daily forecasts on the dashboard
+- Three input modes for sales — natural language, manual form, or receipt photo (OCR-extracted)
+- Quantity-focused demand prediction with weekday + recent-trend blending and holiday-aware adjustments (core differentiator)
+- Lightweight trend analysis and AI-generated business insights, cached daily and refreshed on dashboard open
+- Proactive next-day forecast on the dashboard with demand spike alerts
+- An AI chat assistant grounded in the user's own data
+- An opt-in weekly summary email with the week's totals and the week-ahead forecast
 
-All without requiring full inventory, catalog setup, or ERP integration.
+All without requiring full inventory, catalog setup, or ERP integration. Price/revenue tracking is intentionally out of scope (see §4).
 
 ---
 
@@ -39,7 +43,7 @@ All without requiring full inventory, catalog setup, or ERP integration.
 3. Help users make better stocking decisions through demand prediction
 4. Create a product users return to daily
 
-### Success Metrics (MVP)
+### Success Metrics
 
 | Metric | Target |
 |---|---|
@@ -71,16 +75,16 @@ All without requiring full inventory, catalog setup, or ERP integration.
 
 ---
 
-## 4. Non-Goals (MVP Boundaries)
+## 4. Non-Goals
 
-Freshcast will NOT:
+Freshcast intentionally does NOT:
 
 - Replace POS systems
 - Manage inventory lifecycle
 - Handle suppliers or purchase orders
 - Require full product catalog setup
 - Provide cross-business comparisons or competitor insights
-- Track pricing or revenue (quantity-only in MVP)
+- Track pricing or revenue (quantity-only by design)
 
 ---
 
@@ -95,28 +99,26 @@ Freshcast will NOT:
 
 ---
 
-## 6. Core Features (MVP)
+## 6. Core Features
 
 ### 6.1 Authentication
 
 **Description:** Simple account creation and login, one account per business.
 
-**Approach:** Email/password authentication with password reset (token-based, email delivery via Resend). Optional email verification on signup.
+**Approach:** Email/password authentication with password reset (token-based, email delivery via Amazon SES with Resend fallback). Optional email verification on signup.
 
 **Requirements:**
 - Sign up with email and password
 - Login with email/password
-- Password reset flow (email with reset link)
-- Email verification (optional, sent on signup, status shown in settings)
+- Password reset flow (email with reset link, token deleted atomically before password update)
+- Email verification (optional, sent on signup, resendable from settings, status shown there)
 - Show/hide password toggle on all password fields
-- Session persistence (stay logged in on device)
-- One account = one business (no multi-user support in MVP)
+- Session persistence via JWT (7-day expiry)
+- One account = one business (no multi-user support)
+- Rate limiting on signup (10/IP/hr) and forgot-password (3/email/hr, silently drops excess to prevent enumeration)
+- Demo account is undeletable and password-immutable (`User.isDemo`)
 
-**Constraints:**
-- No magic link in MVP
-- No social login in MVP
-- Email verification is non-compulsory
-- No multi-user or role-based access in MVP
+**Out of scope (today):** magic link, social login, MFA, multi-user / role-based access. See `docs/BACKLOG.md` for candidates.
 
 ---
 
@@ -125,25 +127,24 @@ Freshcast will NOT:
 **Description:** Minimal onboarding to get users started quickly.
 
 **Requirements:**
-- User provides:
-  - Business name
-  - Business type (select from predefined list + "Other")
-  - 3–5 core products (free text input)
-- System creates initial product list from onboarding input
-- Locale/language preference selection
+- 3-step wizard:
+  - Step 1: Business name + type (tile selector — Retail Vendor, Butcher, Produce Seller, Market Stall, Grocery, Café, Takeaway, Other)
+  - Step 2: 3–5 core products (free text + optional default unit)
+  - Step 3: Locale preference (default `"en"`); timezone auto-detected from the browser and validated server-side as a real IANA identifier
+- Region defaults to `AU-VIC` for holiday-aware predictions; can be changed in settings later
+- After completion, user lands on `/dashboard` with empty-state guidance
 
 **Constraints:**
 - Must complete in < 2 minutes
-- No full catalog required
-- Skip option for non-essential fields
+- No full catalog required — products grow organically as sales are logged
 
 ---
 
-### 6.3 Sales Input — Dual Mode (Core Feature)
+### 6.3 Sales Input — Three Modes
 
-**Description:** Users log daily sales through their preferred method.
+**Description:** Users log daily sales through whichever input mode suits the moment. All three modes route into the same confirmation screen and the same persistence path.
 
-#### Mode A: Natural Language Input
+#### Mode A: Natural Language
 
 A large text input field where users type sales in plain language.
 
@@ -152,50 +153,50 @@ A large text input field where users type sales in plain language.
 - "12 chickens, 5kg lamb"
 
 **Functional Requirements:**
-- Large, prominent text input field
-- LLM-powered parser (Claude Haiku) with rule-based fallback to extract structured data
-- Unit normalization across both parsers (e.g., "Litre", "L", "liter" all become "liters")
-- Ambiguous quantity detection ("few eggs" → flagged with clarification prompt)
-- Match input against existing product list
-- Detect new/unknown products and prompt user to confirm addition
-- Confirmation screen before saving (editable parsed results)
+- LLM-primary (Claude Haiku) with rule-based fallback (`services/sales-parser.ts`)
+- Unit normalization across both paths (e.g., "Litre", "L", "liter" all become `"liters"`); 50+ variations mapped
+- Ambiguous quantity detection ("few eggs", "a couple") with a clarification prompt before saving
+- Business-type-aware placeholder text (a butcher sees beef/chicken examples; a café sees coffee/sandwich examples)
+- Date picker above the tabs — defaults to today, max is today, lets users backfill missed days
+- Editable parsed results on the confirmation screen, including inline product-name editing for new (unmatched) items
 
-**Parsed Output Format:**
-```json
-[
-  { "product": "Eggs", "quantity": 20 },
-  { "product": "Minced beef", "quantity": 30, "unit": "kg" },
-  { "product": "Milk bottles", "quantity": 10 }
-]
-```
+#### Mode B: Manual Form
 
-#### Mode B: Manual Form Input
-
-A structured form listing the user's existing products.
+A structured form listing the user's existing products, with quantity steppers and optional unit selectors.
 
 **Functional Requirements:**
-- List all products from the user's product catalog
-- Quantity input field per product (number stepper or direct input)
-- Optional unit selector per product
-- "Add new product" option inline
-- Confirm and save
+- Lists all active products from the catalogue
+- Inline "Add new product" option (with unit normalization on save)
+- Same confirmation screen as Mode A
 
-**UX Notes:**
-- Both modes accessible from the same screen (tab or toggle)
-- Natural language input is the default/promoted mode
-- Manual form is the fallback for users who prefer structured input
+#### Mode C: Receipt Photo (Receipt OCR)
+
+User uploads a photo of a supplier or POS receipt; the system extracts line items via Amazon Textract `AnalyzeExpense`, the LLM maps them to known products, and the user confirms before saving.
+
+**Functional Requirements:**
+- Presigned S3 upload (no image data flows through the SSR Lambda)
+- Textract `AnalyzeExpense` returns pre-structured line items (description, quantity, unit price, total) — see [ADR-019](./adr/019-receipt-ocr-hardening.md)
+- Receipt-specific LLM prompt resolves abbreviations (`MNCD BEEF` → `Minced Beef`, `CHKN BRST` → `Chicken Breast`, `FR EGGS 12PK` → `Free Range Eggs` with unit `packs`)
+- Original `receiptKey` (S3 object key) is persisted on the resulting `SalesEntry` for audit
+- Sales history shows a "From receipt" badge for OCR-origin entries
+- When the LLM is unavailable on this path, the route returns a clear 503 pointing the user to the typed Log/NL tab; the chat-style rule-based parser is **not** used as the receipt-path fallback (per ADR-019). An opt-in structured rule-based fallback exists (`RECEIPT_FALLBACK=structured`) for graceful-degradation windows during sustained outages.
+
+**UX (all modes):**
+- All three modes accessible from the same screen (tab toggle)
+- Mode A is the default/promoted mode
+- Every parsed item on the confirmation screen has a remove (×) button regardless of match status
 
 ---
 
 ### 6.4 AI-Assisted Product Expansion
 
-**Description:** The system grows the product list dynamically as users log sales.
+**Description:** The product list grows organically as users log sales rather than requiring upfront catalogue setup.
 
 **Behavior:**
-- Match input against known products (fuzzy matching)
-- Detect unknown items from natural language input
-- Prompt user to confirm new products before adding
-- Suggest unit type for new products based on product category
+- Fuzzy-match input against the catalogue (exact → normalized plural → substring → Levenshtein ≤2 → unmatched)
+- Unmatched items are flagged on the confirmation screen with an "Add" button to promote them to the catalogue
+- Default unit is suggested based on the parsed unit (or inferred from receipt suffixes like `500G` → `g`)
+- Product names can be edited inline on the confirmation screen before saving
 
 ---
 
@@ -203,45 +204,39 @@ A structured form listing the user's existing products.
 
 **Description:** Structured storage of daily sales data.
 
-**Data Captured:**
-- Date
-- Product
-- Quantity
-- Unit (optional, e.g., kg, liters, pieces)
-- Input method used (NL or manual)
+**Data Captured:** Date · Product · Quantity · Unit (optional) · Input method (`NATURAL_LANGUAGE | MANUAL`) · `rawInput` (original NL or Textract `rawText`) · `receiptKey` (S3 key for OCR-origin entries)
 
 **Requirements:**
-- Multiple sales entries per day supported (morning + afternoon logging)
-- Date picker to log sales for past dates (defaults to today, max is today)
-- Ability to edit today's sales entries
-- Ability to delete any sales entry
-- View historical sales log (list view, grouped by date with timestamps)
-- Original NL text saved for audit trail
+- Multiple entries per day (morning + afternoon, etc.) — no unique constraint on `(businessId, date)` per [ADR-014](./adr/014-multiple-daily-entries.md)
+- Date picker for past-date entries (max: today)
+- Edit today's entries (atomic transaction, timezone-aware per [ADR-013](./adr/013-timezone-aware-dates.md))
+- Delete any entry (cascade to items via DB)
+- View history (list view grouped by date with timestamps; "From receipt" badge for OCR entries)
 - CSV export of sales history
 
 ---
 
 ### 6.6 Dashboard (Home Screen)
 
-**Description:** The primary screen users see after login, showing business insights at a glance.
+**Description:** The primary screen users see after login.
 
-**MVP Content:**
+**Sections:**
 
 | Section | Content |
 |---|---|
-| Tomorrow's Forecast | Predicted quantities for top products (proactive, always visible, holiday-adjusted) |
-| Today's Summary | Products sold today with quantities |
-| This Week | Trend overview, comparison with previous week |
-| Top Products | Most sold items (by quantity) |
-| AI Insights | Auto-generated natural language summaries (LLM-powered with template fallback) |
-| Demand Spike Alert | Highlighted when tomorrow's forecast is >30% above average |
-| Prediction Progress | Multi-tier progress bar showing data quality (hidden at 30+ entries) |
+| Tomorrow's Forecast | Per-product predictions with sparklines and trend %, holiday-adjusted; proactive and always visible |
+| Demand Spike Alert | Surfaced when tomorrow's forecast is >30% above average for any product |
+| Today's Summary | Products sold today, aggregated across all entries for today |
+| Week Rhythm | 7-day bar chart with peak-day highlight |
+| Top Products | Top 3 by quantity with coloured progress bars |
+| AI Insights | 3–5 LLM-generated headline + description pairs, cached daily, fallback to template insights |
+| Prediction Progress | Multi-tier progress bar (0–4 / 5–14 / 15–29 / 30+); auto-hides at 30+ entries |
+| Forecast Detail | Drill-in screen with 14-day chart and per-prediction breakdown |
 
-**Requirements:**
-- Insights generated via daily batch processing (not real-time)
-- Dashboard refreshes when user opens the app (pulls latest batch)
-- Clean, card-based layout
-- Mobile-optimized single-column design
+**Behaviour:**
+- Aggregated single-call API (`GET /api/dashboard`) avoids waterfall fetches on a slow connection
+- Card-based layout, single-column on mobile
+- React Query handles refresh on focus and on save
 
 ---
 
@@ -254,21 +249,18 @@ A structured form listing the user's existing products.
 1. **Next Day Forecast** — "You may need ~25 eggs tomorrow"
    - Most actionable; vendors prep stock the night before
    - Shown proactively on dashboard
-
-2. **Next Week Overview** — "Fridays are your strongest beef days"
+2. **Next Week Overview** — per-day breakdown for the next 7 days
    - Planning view for bulk purchasing
-   - Weekday-level breakdown
 
-**Approach (MVP):**
-- Trend-based logic using historical sales data
-- Simple moving averages
-- Weekday pattern detection (e.g., Fridays vs. Mondays)
-- Holiday-aware adjustments (region-based, default AU-VIC)
-- No heavy ML required — rule-based statistical methods with holiday multipliers
+**Algorithm (per [ADR-006](./adr/006-demand-prediction-approach.md) + [ADR-015](./adr/015-holiday-aware-predictions.md)):**
+- Weighted blend of weekday pattern (60%) + recent trend (40%)
+- Weekday signal: average of the last 4 same-weekday occurrences
+- Recent signal: average of the last 7 days
+- Holiday multiplier applied last: closed (0.3), low (0.6), pre-holiday (1.2), post-holiday (1.1)
+- Confidence scoring derived from data volume (5/15/30 thresholds) adjusted by coefficient of variation
+- Holiday data is region-based, default `AU-VIC`, sourced from `src/data/holidays.ts`
 
-**Minimum Data Required:**
-- Predictions begin after 5–7 days of sales entries
-- Accuracy improves with more data; communicate this to users
+**Minimum Data:** predictions activate at 5+ entries; quality improves at 15 and 30. The prediction progress bar communicates this until 30+ entries.
 
 ---
 
@@ -283,17 +275,17 @@ A structured form listing the user's existing products.
 - "Wednesday is your slowest day"
 
 **Requirements:**
-- Generated via daily batch processing (LLM-powered with template fallback)
-- Based solely on user's own data
-- Natural language format, easy to scan
-- Refreshed daily
-- Cached in database to avoid redundant LLM calls
+- LLM-primary (Claude Haiku) with five template fallback types: TREND, COMPARISON, TOP_PRODUCTS, weekly SUMMARY, weekday SUMMARY
+- Generated once per business per day; `@@unique([businessId, date, type])` prevents duplicates on concurrent requests
+- Cached in `DailyInsight`; `generationMethod` records `"llm"` or `"template"` for observability
+- Refreshed when the dashboard detects stale data (>24h)
+- Constrained to the user's own data — no benchmarking or cross-business inference
 
 ---
 
 ### 6.9 AI Chat
 
-**Description:** Users can ask business-related questions in natural language and get answers based on their own data.
+**Description:** Users can ask business-related questions in natural language and get answers grounded in their own data ([ADR-012](./adr/012-ai-chat-implemented.md)).
 
 **Example Queries:**
 - "What sold best this week?"
@@ -301,10 +293,36 @@ A structured form listing the user's existing products.
 - "How are my sales trending?"
 
 **Requirements:**
-- Responses constrained to user's own data (no external assumptions)
-- Suggested questions for discoverability
-- Conversation history within session
-- Graceful fallback when AI is unavailable
+- Responses constrained to the user's own data via a structured context block (`services/chat-context.ts`) — today's sales, weekly totals by product, previous week comparison, weekday patterns, product list
+- Suggested starter questions for discoverability
+- Conversation history within session (last 8 messages, ephemeral — no persistence)
+- Rate-limited (20/hr per business) per [ADR-011](./adr/011-llm-integration-claude.md) cost guidance
+- Graceful fallback when the LLM is unavailable
+
+---
+
+### 6.10 Weekly Summary Email (Opt-In)
+
+**Description:** A weekly digest email with last week's totals and the week-ahead forecast, sent to businesses that opt in.
+
+**Requirements:**
+- Toggle in settings (`PATCH /api/business { weeklyEmailEnabled }`)
+- Sent via Amazon SES (primary) with Resend fallback
+- Scheduled by Amazon EventBridge (production) with Vercel Cron as a mirror
+- Cron auth via `Bearer <CRON_SECRET>` (resolved env→Secrets Manager per [ADR-018](./adr/018-secrets-manager.md))
+- Per-business send failures are logged but do not block the rest of the fan-out
+
+---
+
+### 6.11 PWA & Offline
+
+**Description:** Freshcast is installable as a Progressive Web App.
+
+**Requirements:**
+- Manifest with warm theme, standalone display, start URL `/dashboard`
+- Network-first service worker with offline fallback page (`/offline`)
+- Icons (192, 512, 512 maskable, apple-touch-icon)
+- Branded splash screen on initial load
 
 ---
 
@@ -317,7 +335,7 @@ Each business's data is private and completely isolated.
 ### Rules
 
 - No data sharing between businesses
-- No benchmarking or aggregation in MVP
+- No benchmarking or aggregation across businesses
 - No competitor insights
 - AI insights and predictions based only on the user's own data
 - Clear privacy messaging in the app
@@ -330,19 +348,18 @@ Each business's data is private and completely isolated.
 
 ## 8. Localization
 
-### MVP Approach
+### Current State
 
-- English as the default language
-- Architecture designed with localization in mind from day one
-- All user-facing strings externalized (not hardcoded)
-- Date, number, and unit formatting respects locale
-- RTL layout support considered in component design
+- English-only (`en`)
+- All user-facing strings externalized via `next-intl` (~150 keys across 8 namespaces in `src/messages/en.json`)
+- Date, number, and unit formatting respects locale via `Intl.*`
+- Component design considers RTL even though no RTL locale is shipped today
 
-### Future Phases
+### Future Direction
 
-- Additional language packs based on target market research
-- Locale-specific unit defaults (e.g., kg vs. lbs)
-- Localized AI insight generation
+- Additional language packs based on target-market research (add a new `src/messages/{locale}.json` and update `src/i18n/request.ts`)
+- Locale-specific unit defaults (e.g. kg vs. lbs)
+- Localized LLM prompts for insight generation and chat
 
 ---
 
@@ -350,97 +367,116 @@ Each business's data is private and completely isolated.
 
 ### Platform
 
-Mobile-first responsive web application.
+Mobile-first responsive PWA.
 
 ### UX Requirements
 
-- Single-column layout
+- Single-column layout, mobile-first
+- Bottom tab bar (Home · Log Sales · Ask AI · History · Products); Settings via dashboard header
 - Large, touch-friendly inputs and buttons
-- Minimal typing required
-- Fast interactions (< 200ms perceived response)
-- Clean, uncluttered interface
-- Card-based dashboard design
-- Clear visual hierarchy
+- Minimal typing required (NL parsing, manual stepper, receipt photo all available)
+- Fast perceived response — React Query, aggregated dashboard endpoint, optimistic UI on save where safe
+- Clean, uncluttered interface; clear visual hierarchy
 
-### Design Tokens
+### Design System (per [ADR-016](./adr/016-editorial-rebrand.md))
 
-- Consistent spacing, typography, and color system
-- Accessible color contrast (WCAG AA minimum)
-- Support for system dark/light mode preference
+Editorial rebrand replaces the original utility palette with a warm, magazine-inspired system:
+
+- **Palette:** cream backgrounds (`#FAF7F2`), terracotta accents (`#C44827`), deep ink for body, sage and ochre for chart accents. WCAG AA on body and CTA contrasts.
+- **Typography:** Fraunces (serif headings) · Inter (body) · JetBrains Mono (numerics in dashboard cards)
+- **Motion:** restrained — `prefers-reduced-motion` is honoured; no decorative animation on critical actions
+- **Components:** shadcn/ui as the primitive layer, themed via Tailwind v4 CSS variables; per-page loading skeletons match real card layouts
+- **Branded splash:** app icon on warm cream background during first load
+
+Dark mode is not currently shipped; dark-mode-respectful design tokens are in place for a future phase.
 
 ---
 
 ## 10. Technical Architecture
 
+The full technical architecture lives in [`docs/TDD.md`](./TDD.md). This section is a high-level summary intended for product readers.
+
 ### Frontend
-- Next.js (App Router)
-- Tailwind CSS
-- shadcn/ui
-- React Query
+- Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict)
+- Tailwind CSS v4 + shadcn/ui (warm editorial theme)
+- React Query (TanStack Query) for server state; react-hook-form + Zod for forms
+- next-intl for externalized strings (~150 keys across 8 namespaces)
+- PWA manifest + network-first service worker + offline fallback page
 
 ### Backend
-- Next.js API routes
+- Next.js API routes (REST), proxy-based route protection (replaces middleware in Next.js 16)
+- Auth.js v5 (Credentials, JWT) with rate limiting on auth, chat, and parse routes
+- Server-only guards (`import "server-only"`) on every lib that reads secrets, per [ADR-017](./adr/017-next-config-no-env.md)
 
 ### Database
-- PostgreSQL (Neon)
-- Prisma ORM
+- PostgreSQL (Neon serverless)
+- Prisma v7 ORM with PrismaPg adapter (ESM, Rust-free)
+- All queries scoped to `businessId` from session; product ownership verified before SalesItem inserts
 
 ### AI Layer
-- Claude API (Anthropic Haiku) — used for insight generation, NL sales parsing, and AI chat
+- Claude Haiku 4.5 (Anthropic) — NL sales parsing, receipt line-item mapping, daily insights, AI chat
+- LLM-primary with template/rule-based fallback for insights and the typed Log/NL tab; LLM-only for receipts (per [ADR-019](./adr/019-receipt-ocr-hardening.md))
 
-### Localization
-- next-intl or equivalent i18n library
-- Externalized string resources
+### AWS Integrations
+- Amazon SES — auth + weekly summary email delivery (Resend fallback)
+- Amazon EventBridge — weekly summary scheduler
+- Amazon S3 — receipt image storage with presigned PUT
+- Amazon Textract `AnalyzeExpense` — structured receipt OCR
+- AWS Secrets Manager — vendor API keys + cron secret (hybrid env→SM resolver per [ADR-018](./adr/018-secrets-manager.md))
+- AWS Amplify — primary hosting (SSR + Console env vars routed through `amplify.yml`); Vercel as a mirror
+
+### Operations
+- Sentry error tracking
+- Structured logger (color-coded, timestamped) on every API route
+- Liveness probe at `GET /api/health` (DB + last-insight signal)
+- 72 unit tests in CI (lint + typecheck + tests on every PR)
 
 ---
 
-## 11. Data Model (Simplified)
+## 11. Data Model
+
+The authoritative schema lives in `prisma/schema.prisma`; this section is a reader-friendly summary of the persisted models. Full per-model field semantics live in [`docs/API.md` § Data Models](./API.md#data-models).
 
 ```
-Business
-├── id
-├── name
-├── type
-├── locale
-├── timezone
-├── createdAt
+User
+├── id, email (unique), emailVerified?
+├── passwordHash? (bcrypt cost 12; nullable for future OAuth)
+├── name?, image?
+├── isDemo  (demo account is undeletable + password-immutable)
+└── createdAt, updatedAt
+
+Business  (1:1 with User)
+├── id, name, type (enum), locale (default "en")
+├── timezone (IANA, default "UTC", validated server-side)
+├── region (default "AU-VIC", drives holiday-aware predictions)
+├── weeklyEmailEnabled (toggled via PATCH /api/business)
+├── onboarded
+└── createdAt, updatedAt
 
 Product
-├── id
-├── name
-├── defaultUnit
-├── businessId → Business
+├── id, name (unique per business), defaultUnit?, isActive
+└── businessId → Business
 
-SalesEntry
-├── id
-├── businessId → Business
-├── date
-├── inputMethod
-├── rawInput (original NL text, nullable)
+SalesEntry  (no unique on businessId+date — multiple entries/day allowed)
+├── id, date (@db.Date), inputMethod (NL | MANUAL)
+├── rawInput?  (original NL text, or Textract rawText for receipts)
+├── receiptKey? (S3 object key for receipt-origin entries)
+└── businessId → Business, items: SalesItem[]
 
 SalesItem
-├── id
+├── id, quantity, unit?
 ├── salesEntryId → SalesEntry
-├── productId → Product
-├── quantity
-├── unit
+└── productId → Product
 
-DailyInsight
-├── id
-├── businessId → Business
-├── date
-├── type (trend | comparison | top_products | summary)
-├── content (natural language text)
-├── generationMethod (template | llm)
+DailyInsight  (unique on businessId+date+type)
+├── id, date, type (TREND | COMPARISON | TOP_PRODUCTS | SUMMARY)
+├── content (insight text), metadata? (JSON)
+├── generationMethod  ("template" | "llm")
+└── businessId → Business
 
-DemandForecast
-├── id
-├── businessId → Business
-├── productId → Product
-├── forecastDate
-├── predictedQuantity
-├── confidence
-├── generatedAt
+DemandForecast  (unique on businessId+productId+forecastDate)
+├── id, forecastDate, predictedQuantity, confidence, generatedAt
+└── businessId → Business, productId → Product
 ```
 
 ---
@@ -461,34 +497,11 @@ DemandForecast
 
 ---
 
-## 13. MVP Scope & Timeline
+## 13. Delivery Status
 
-### Week 1 — Foundation
-- Authentication (email/password)
-- Onboarding flow
-- Product model and management
-- Sales input (both modes)
-- Rule-based NL parser
-- Data storage
+The MVP shipped and was followed by post-MVP enhancements (PWA, editorial rebrand, AI chat, receipt OCR, AWS migration, Secrets Manager, OCR hardening). Phase-by-phase delivery and current status live in [`docs/IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md); user-visible changes by release live in [`CHANGELOG.md`](../CHANGELOG.md).
 
-### Week 2 — Intelligence
-- Dashboard with daily summary
-- Sales analytics and trend calculation
-- Demand prediction engine (next day + weekly)
-- AI insight generation (batch)
-
-### Week 3 — Polish
-- Product suggestion/expansion logic
-- UI refinement and mobile optimization
-- Localization architecture setup
-- Empty states and onboarding guidance
-
-### Week 4 — Launch Prep
-- Seed/demo data for presentation
-- Error handling and edge cases
-- Performance optimization
-- Deployment
-- Documentation
+This PRD describes the product as it stands today. Architectural decisions taken along the way are recorded as ADRs in [`docs/adr/`](./adr/README.md) and are intentionally frozen — they record what was decided and why, at the time.
 
 ---
 
@@ -504,42 +517,22 @@ DemandForecast
 
 ---
 
-## 15. Future Phases (Post-MVP)
+## 15. Future Direction
 
-### Phase 2 — Enhanced Input
-- Voice input for hands-free logging
-- Receipt/photo parsing via OCR
+The prioritized list of candidate enhancements lives in [`docs/BACKLOG.md`](./BACKLOG.md). Themes worth flagging at the product level:
 
-### Phase 3 — Advanced Intelligence
-- Advanced forecasting models (ML-based)
-- Seasonal pattern detection
-- Anomaly detection (unusual sales spikes/drops)
+- **Enhanced input** — voice logging via Amazon Transcribe (async, [BACKLOG #34](./BACKLOG.md))
+- **Operational maturity** — observability (LLM cost tracking, request logging), evaluation harness for the NL parser
+- **Frontend polish** — optimistic updates, offline support beyond the basic PWA shell, accessibility audit
+- **Authentication upgrades** — Amazon Cognito for MFA + social login
+- **Platform expansion** — native mobile, multi-user per business, multi-branch
+- **Ecosystem** — POS integrations, supplier/purchase-order management, opt-in anonymized benchmarking
+- **Pricing & revenue** — explicitly excluded from the current product (see §4); a future phase could add optional price-per-product if user research justifies it
 
-### Phase 4 — Platform Expansion
-- Native mobile apps (iOS/Android)
-- Multi-user support per business (owner + employees)
-- Role-based access control
-- Weekly summary email notifications
-
-### Phase 5 — Ecosystem
-- POS system integrations
-- Supplier/purchase order management
-- Multi-branch business support
-- Aggregated anonymous insights (opt-in benchmarking)
-
-### Authentication Upgrades (Future)
-- Magic link (passwordless) authentication
-- Social login (Google, Apple)
-- Phone number / OTP authentication
-- Multi-factor authentication
-
-### Pricing & Revenue Tracking (Future)
-- Optional price per product
-- Revenue metrics and dashboards
-- Profit margin tracking (if cost data added)
+Architectural decisions for any of the above will be captured as ADRs at the time they are made; this PRD will be updated when the *product* changes.
 
 ---
 
-## 16. Final Product Statement
+## 16. Product Statement
 
-> **Freshcast** is a lightweight AI assistant that helps small retail businesses turn daily sales quantities into meaningful insights and smarter stocking decisions — without the complexity of traditional systems. Its core differentiator is quantity-based demand prediction that tells vendors exactly what to prepare for tomorrow.
+> **Freshcast** is a lightweight AI assistant that helps small retail businesses turn daily sales quantities into meaningful insights and smarter stocking decisions — without the complexity of traditional systems. Its core differentiator is quantity-based demand prediction that tells vendors what to prepare for tomorrow, made accessible via three forgiving input modes (typed NL, manual form, receipt photo) and a calm, editorial dashboard.

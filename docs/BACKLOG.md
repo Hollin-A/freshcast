@@ -41,7 +41,7 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 | 14 | Prompt versioning — separate versioned files | P0 | ✅ Done | 26 |
 | 15 | LLM cost tracking — log token usage, expose summary | P1 | 🔲 Planned | 30 |
 | 16 | Evaluation framework — golden test inputs for NL parser | P1 | 🔲 Planned | 34 |
-| 35 | Receipt OCR hardening — LLM-only fallback + AnalyzeExpense migration (ADR-019) | P0 | 🔲 Planned | 36 |
+| 35 | Receipt OCR hardening — LLM-only fallback + AnalyzeExpense migration (ADR-019) | P0 | ✅ Done | 36 |
 
 ## Shipping & Documentation
 
@@ -67,7 +67,7 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 | 27 | Amazon Translate | Auto-translate insights & chat | 🔲 Planned | 33 |
 | 28 | Amazon DynamoDB | Persistent chat history | 🔲 Planned | — |
 | 29 | AWS CloudWatch | Monitoring, metrics, alerting | 🔲 Planned | 30 |
-| 30 | AWS Secrets Manager | API key management | 🔲 Planned | 33 |
+| 30 | AWS Secrets Manager | API key management (hybrid env→SM resolver, ADR-018) | ✅ Done | 33 |
 | 31 | AWS Lambda | Background processing | 🔲 Planned | — |
 | 34 | Amazon Transcribe | Voice-to-text sales logging (Option B async; feeds existing parser pipeline) | 🔲 Planned | 35 |
 
@@ -82,9 +82,9 @@ Priority: P0 (do first) → P1 (high value) → P2 (nice to have)
 
 ## Progress Summary
 
-- ✅ Completed: 11 of 35 items (1, 2, 10, 14, 17, 19, 20, 24, 25, 32, 33)
-- 🔲 Planned (in implementation plan): 19 items (Phase 35 voice and Phase 36 receipt OCR hardening are in the plan when prioritized)
-- — Unplanned: 6 items (13, 22, 23, 28, 31 — low priority, no phase assigned)
+- ✅ Completed: 13 of 35 items (1, 2, 10, 14, 17, 19, 20, 24, 25, 30, 32, 33, 35)
+- 🔲 Planned (in implementation plan): 17 items (Phase 35 voice is in the plan when prioritized)
+- — Unplanned: 5 items (13, 22, 23, 28, 31 — low priority, no phase assigned)
 
 ---
 

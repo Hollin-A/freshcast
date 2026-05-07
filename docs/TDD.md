@@ -10,7 +10,7 @@ This document describes the technical architecture, data model, API contracts, c
 |-----|----------|
 | [001](adr/001-authentication-strategy.md) | Email/password via Auth.js |
 | [002](adr/002-sales-input-dual-mode.md) | Dual-mode sales input (NL + manual form) |
-| [003](adr/003-rule-based-nl-parser.md) | Rule-based NL parser (now fallback — superseded by 011) |
+| [003](adr/003-rule-based-nl-parser.md) | Rule-based NL parser (now fallback for the typed Log/NL tab; superseded by 011 as primary; receipt-path scope clarified by 019) |
 | [004](adr/004-quantity-only-tracking.md) | Quantity-only tracking, no pricing |
 | [005](adr/005-batch-processing-over-realtime.md) | Daily batch processing for insights |
 | [006](adr/006-demand-prediction-approach.md) | Statistical demand prediction |
@@ -21,6 +21,11 @@ This document describes the technical architecture, data model, API contracts, c
 | [012](adr/012-ai-chat-implemented.md) | AI chat interface |
 | [013](adr/013-timezone-aware-dates.md) | Timezone-aware date handling |
 | [014](adr/014-multiple-daily-entries.md) | Multiple sales entries per day |
+| [015](adr/015-holiday-aware-predictions.md) | Region-based holiday multipliers on predictions |
+| [016](adr/016-editorial-rebrand.md) | Editorial rebrand (warm palette, serif headings) |
+| [017](adr/017-next-config-no-env.md) | No `next.config` `env`; route via `amplify.yml` → `.env.production` |
+| [018](adr/018-secrets-manager.md) | Hybrid env→Secrets Manager resolver for vendor API keys + cron secret |
+| [019](adr/019-receipt-ocr-hardening.md) | Receipt OCR is LLM-only by default; Textract migrated to `AnalyzeExpense` |
 
 ---
 
@@ -35,7 +40,7 @@ This document describes the technical architecture, data model, API contracts, c
 └───────────────────────┬─────────────────────────────┘
                         │ HTTPS
 ┌───────────────────────▼─────────────────────────────┐
-│               Next.js Server (Vercel)                │
+│       Next.js SSR (AWS Amplify primary, Vercel mirror)│
 │  ┌──────────────┐  ┌──────────────────────────────┐ │
 │  │  App Router   │  │   API Routes (/api/*)        │ │
 │  │  (SSR/RSC)    │  │   REST endpoints             │ │
@@ -43,9 +48,10 @@ This document describes the technical architecture, data model, API contracts, c
 │                                │                     │
 │  ┌──────────────┐  ┌──────────▼───────────────────┐ │
 │  │   Auth.js v5  │  │   Business Logic Services    │ │
-│  │  (JWT)        │  │   Parser · Analytics ·       │ │
-│  └──────┬───────┘  │   Predictions · Insights ·   │ │
-│         │          │   Chat Context               │ │
+│  │  (JWT)        │  │   Parser · Receipt parser ·  │ │
+│  └──────┬───────┘  │   Analytics · Predictions ·  │ │
+│         │          │   Insights · Chat Context ·  │ │
+│         │          │   Weekly Email               │ │
 │         │          └──────────┬───────────────────┘ │
 │  ┌──────▼─────────────────────▼───────────────────┐ │
 │  │         Prisma v7 ORM (PrismaPg adapter)        │ │
@@ -59,13 +65,18 @@ This document describes the technical architecture, data model, API contracts, c
 
 ┌──────────────────────────────────────────────────────┐
 │    Claude API (Anthropic Haiku 4.5)                   │
-│    Insights · NL Parsing · AI Chat                    │
-│    Fallback: templates (insights) / rule-based (parse)│
+│    Insights · NL Parsing · Receipt mapping · AI Chat  │
+│    Fallback: templates (insights), rule-based (NL),   │
+│    503 (receipts — see ADR-019)                       │
 └──────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────┐
-│    Amazon SES + Resend Fallback                        │
-│    Auth and weekly summary emails                      │
+│    AWS                                                │
+│    SES — auth + weekly summary email (Resend fallback)│
+│    EventBridge — weekly summary scheduler             │
+│    S3 — receipt image storage (presigned PUT)         │
+│    Textract `AnalyzeExpense` — structured receipt OCR │
+│    Secrets Manager — Anthropic, Resend, cron secret   │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -114,9 +125,11 @@ src/
 │   │   │   ├── [...nextauth]/route.ts
 │   │   │   ├── signup/route.ts
 │   │   │   ├── forgot-password/route.ts
-│   │   │   └── reset-password/route.ts
+│   │   │   ├── reset-password/route.ts
+│   │   │   ├── send-verification/route.ts
+│   │   │   └── verify-email/route.ts
 │   │   ├── account/route.ts        # DELETE account
-│   │   ├── business/route.ts       # POST (onboarding) + GET
+│   │   ├── business/route.ts       # POST (onboarding) + GET + PATCH (toggles)
 │   │   ├── products/route.ts       # GET + POST + PATCH
 │   │   ├── sales/
 │   │   │   ├── route.ts            # POST (create) + GET (list)
@@ -130,6 +143,9 @@ src/
 │   │   ├── predictions/route.ts    # GET (?horizon=day|week)
 │   │   ├── insights/route.ts       # GET
 │   │   ├── chat/route.ts           # POST
+│   │   ├── email/
+│   │   │   └── weekly-summary/route.ts  # POST (cron-triggered, EventBridge primary / Vercel Cron mirror)
+│   │   ├── health/route.ts         # GET (DB + last-insight liveness probe)
 │   │   └── demo/route.ts           # POST (seed demo data)
 │   ├── offline/page.tsx            # PWA offline fallback
 │   ├── manifest.ts                 # PWA manifest
@@ -149,23 +165,37 @@ src/
 │   ├── auth.ts                     # Auth.js config (Credentials, JWT)
 │   ├── claude.ts                   # Claude API client (generateText, generateJSON)
 │   ├── email.ts                    # SES-first email utility with Resend fallback
+│   ├── ses.ts                      # AWS SES client (server-only)
+│   ├── s3.ts                       # AWS S3 client + presigned PUT helper (server-only)
+│   ├── textract.ts                 # AWS Textract AnalyzeExpense wrapper + line-item mapping
+│   ├── secrets.ts                  # Hybrid env→Secrets Manager resolver (ADR-018)
+│   ├── aws-config.ts               # Shared AWS SDK runtime config (region + credentials)
 │   ├── api-helpers.ts              # errorResponse, getBusinessId, getBusinessContext
 │   ├── dates.ts                    # Timezone-aware date utilities
 │   ├── logger.ts                   # Structured logging (color-coded, timestamped)
 │   ├── rate-limit.ts               # In-memory rate limiter
 │   ├── unit-normalizer.ts          # Unit string normalization (50+ variations)
+│   ├── sanitize.ts                 # Text input sanitization (XSS protection)
 │   ├── constants.ts                # Business types, known units, thresholds
 │   ├── env.ts                      # Environment variable validation
 │   ├── query-client.ts             # React Query defaults
 │   └── utils.ts                    # cn() utility (tailwind-merge)
+├── prompts/
+│   ├── parser.ts                   # NL sales parser system prompt (versioned)
+│   ├── receipt-parser.ts           # Receipt line-item parser system prompt (ADR-019)
+│   ├── chat.ts                     # AI chat system prompt
+│   └── insights.ts                 # Insight generator system prompt
 ├── services/
-│   ├── sales-parser.ts             # Rule-based NL parser (fallback)
+│   ├── sales-parser.ts             # Rule-based NL parser (fallback for typed Log/NL tab)
 │   ├── llm-sales-parser.ts         # Claude-powered NL parser (primary, with ambiguous detection)
+│   ├── llm-receipt-parser.ts       # Claude-powered receipt line-item parser (consumes structured Textract output)
+│   ├── rule-based-receipt-parser.ts # Receipt-shaped rule-based fallback (opt-in, RECEIPT_FALLBACK=structured)
 │   ├── product-matcher.ts          # Fuzzy matching (Levenshtein, substring)
 │   ├── prediction-engine.ts        # Demand prediction (moving avg + weekday + holidays)
 │   ├── insight-generator.ts        # LLM insights with template fallback
 │   ├── analytics.ts                # Trend calculations, period comparisons
-│   └── chat-context.ts             # Business data context builder for AI chat
+│   ├── chat-context.ts             # Business data context builder for AI chat
+│   └── weekly-email.ts             # Weekly summary email composer + sender
 ├── data/
 │   └── holidays.ts                 # Public holiday data by region (AU-VIC default)
 ├── hooks/
@@ -200,9 +230,12 @@ The complete Prisma schema is in `prisma/schema.prisma`. Key design decisions:
 
 | Model | Field | Purpose |
 |-------|-------|---------|
+| User | `isDemo` | Flags the seeded demo account; demo accounts are undeletable and password-immutable (Phase 23) |
+| User | `image` | Reserved for future avatar support (currently unused) |
 | Business | `timezone` | IANA timezone for date calculations (auto-detected from browser) |
 | Business | `region` | Region code for holiday-aware predictions (default: AU-VIC) |
-| SalesEntry | `rawInput` | Original NL text for audit trail (nullable, only for NL entries) |
+| Business | `weeklyEmailEnabled` | Opt-in flag toggled via `PATCH /api/business`; drives the recipient list of `POST /api/email/weekly-summary` |
+| SalesEntry | `rawInput` | Original NL text for audit trail (also Textract `rawText` for receipt-origin entries) |
 | SalesEntry | `receiptKey` | S3 object key for receipt-origin entries (nullable) |
 | DailyInsight | `generationMethod` | `"template"` or `"llm"` — tracks which method produced the insight |
 
@@ -304,6 +337,9 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 |--------|----------|-------------|
 | DELETE | `/api/account` | Delete account + all data (cascade transaction) |
 | POST | `/api/demo` | Load 14 days of demo data (empty accounts only) |
+| PATCH | `/api/business` | Update mutable business fields (currently `weeklyEmailEnabled`) |
+| GET | `/api/health` | DB + last-insight liveness probe (always returns 200; body indicates `healthy` / `degraded`) |
+| POST | `/api/email/weekly-summary` | Cron-triggered weekly summary fan-out; auth via `Bearer <CRON_SECRET>` (resolved env→Secrets Manager) |
 
 
 ---
@@ -331,12 +367,13 @@ Two parsers with automatic fallback:
 - Users can log sales for any past date they missed
 - Selected date shown on the confirmation screen before saving
 
-**Rule-Based Parser** (`services/sales-parser.ts`) — Fallback
+**Rule-Based Parser** (`services/sales-parser.ts`) — Fallback for the typed Log/NL tab only (per ADR-019)
 - Tokenizes by commas and "and"
 - Extracts quantity (number), unit (word-boundary regex), product name (remainder)
 - Fuzzy matches against product catalog via `product-matcher.ts`
 - Handles: "a dozen" → 12, "half kg" → 0.5, duplicate merging
 - Unit regex uses word boundaries to avoid matching inside product names
+- **Not** used as the receipt-path fallback — receipts are too noisy for chat-style tokenization to produce usable output. The receipt path uses the structured rule-based parser below, opt-in only.
 
 **Product Matcher** (`services/product-matcher.ts`)
 - Priority: exact → normalized (strip plural) → substring → Levenshtein (≤2) → unmatched
@@ -383,7 +420,41 @@ Two parsers with automatic fallback:
 
 Includes: today's sales, weekly totals by product, previous week comparison, weekday patterns, product list. Sent as the user message alongside the conversation history.
 
-### 6.6 Date Utilities (ADR-013)
+### 6.6 Receipt Parser (ADR-019)
+
+Two parsers, both consuming AWS Textract `AnalyzeExpense` output (structured `LineItems` with separate description, quantity, unit price, and total fields). The chat-style `sales-parser.ts` is **not** in this pipeline — see ADR-019 for why.
+
+**Textract wrapper** (`lib/textract.ts`)
+- `extractReceiptFromS3(bucket, key)` runs `AnalyzeExpenseCommand` against an S3-hosted image and returns `{ lineItems: ReceiptLineItem[], rawText: string }`
+- `mapAnalyzeExpenseResponse(response)` is a pure mapping helper exported for unit tests
+- Field extraction filters `Type.Text` values: `ITEM`, `QUANTITY`, `UNIT_PRICE`, `PRICE`, `EXPENSE_ROW`
+
+**LLM Receipt Parser** (`services/llm-receipt-parser.ts`) — Primary
+- Sends structured line items + product list to Claude with `RECEIPT_PARSER_SYSTEM_PROMPT` (`prompts/receipt-parser.ts`)
+- Claude resolves abbreviations (`MNCD` → `Minced`, `CHKN BRST` → `Chicken Breast`, `FR` → `Free Range`), infers units from suffixes (`500G` → `g`, `12PK` → `packs`), and filters obvious non-sales rows
+- Returns `null` on API failure so the route can decide between 503 and structured fallback
+
+**Structured Rule-Based Parser** (`services/rule-based-receipt-parser.ts`) — Opt-in fallback
+- Gated by `RECEIPT_FALLBACK=structured` env var (off by default per ADR-019)
+- Per line item: filter via `NOISE_DESCRIPTION` regex (`TOTAL|GST|EFTPOS|...`), run `matchProduct(description, products)`, infer unit via `inferUnitFromDescription`, use AWS-provided quantity verbatim (default to 1 if absent)
+- Distinct from the chat-style `sales-parser.ts` — bypasses tokenization, quantity-extraction, and unit-extraction entirely (those steps are what broke on raw receipt text)
+
+**Route** (`/api/receipts/parse`)
+- LLM first → if null and `RECEIPT_FALLBACK=structured`, structured rule-based → otherwise 503 (`SERVICE_UNAVAILABLE`) with a user-facing pointer to the typed Log/NL tab
+- Response always includes the AWS-structured `lineItems` alongside the matched `parsed` items (transparency + future reconciliation flows)
+
+### 6.7 Weekly Summary Email
+
+`services/weekly-email.ts` composes a per-business weekly digest (last week's totals + week-ahead forecast) and sends via `lib/email.ts` (SES primary, Resend fallback). Triggered by `POST /api/email/weekly-summary`, which fans out across every business with `weeklyEmailEnabled: true`.
+
+**Scheduling**
+- Production: Amazon EventBridge invokes the route weekly with `Authorization: Bearer <CRON_SECRET>`
+- Mirror: Vercel Cron invokes the same route on the Vercel deployment as a safety net
+- Manual: operators can `curl` the route with the same bearer token for backfills
+
+The route never throws on per-business failure; it logs and continues, returning a `{ sent, failed, total }` summary so a single bad recipient doesn't block the rest.
+
+### 6.8 Date Utilities (ADR-013)
 
 `lib/dates.ts` — All date operations use the business timezone.
 
@@ -453,15 +524,19 @@ Settings accessible from dashboard header (⚙ Settings link).
 - Passwords: bcrypt cost factor 12
 - Sessions: JWT via Auth.js (7-day expiry)
 - CSRF: Auth.js built-in
-- Rate limiting: in-memory sliding window on auth endpoints
+- Rate limiting: in-memory sliding window on auth endpoints (signup 10/IP/hr, forgot-password 3/email/hr), AI chat (20/hr), and `/api/sales/parse` (30/hr) per Phase 23
 - Input validation: Zod schemas on all API inputs
+- Input sanitization: `src/lib/sanitize.ts` strips control chars + clamps length on user-facing text (business name, product name)
 - SQL injection: Prisma parameterized queries
-- XSS: React default escaping
+- XSS: React default escaping + sanitization above
 - Data isolation: every query scoped to `businessId` from session
 - Product ownership: verified before creating SalesItems
 - Timezone validation: IANA string validated server-side via `Intl.DateTimeFormat`
 - Atomic operations: sales updates wrapped in `$transaction`
 - Token security: password reset tokens deleted atomically before password update
+- Server-only guards: every lib module that reads secrets carries `import "server-only"` so accidental client imports fail the build (per ADR-017)
+- Cron auth: weekly summary route requires `Bearer <CRON_SECRET>` matching the value resolved by `getSecret()` (env→Secrets Manager)
+- Demo account: undeletable and password-immutable (`User.isDemo`)
 
 ---
 
@@ -470,10 +545,16 @@ Settings accessible from dashboard header (⚙ Settings link).
 | Service | Purpose | Cost |
 |---------|---------|------|
 | Neon | PostgreSQL (serverless) | Free tier |
-| Vercel | Hosting + deployment | Free tier |
-| Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat | ~$1-5/month at moderate usage |
+| AWS Amplify | Hosting + deployment (primary) | Free tier (build minutes + SSR Lambda invocations) |
+| Vercel | Hosting + deployment (mirror) | Free tier |
+| Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat, receipt mapping | ~$1-5/month at moderate usage |
 | Amazon SES | Primary email delivery (auth + weekly summary) | Free tier/sandbox for portfolio use |
+| Amazon EventBridge | Weekly summary scheduler | Free tier (under 14M scheduled invocations/month) |
+| Amazon S3 | Receipt image storage (presigned PUT) | Pennies/month at expected receipt volumes |
+| Amazon Textract `AnalyzeExpense` | Structured receipt OCR | ~$0.01/page (≈10× `DetectDocumentText`); pennies/business/month at expected receipt volumes |
+| AWS Secrets Manager | Vendor API keys + cron secret (3 secrets) | ~$0.40/month/secret + per-call charges |
 | Resend | Fallback email delivery | Free tier (3000/month) |
+| Sentry | Error tracking | Free developer tier |
 
 ---
 
@@ -546,3 +627,4 @@ The Amplify SSR Lambda execution role has a least-privilege inline policy granti
 | Editorial rebrand | Warm palette, serif headings | 016 |
 | Env on Amplify | No `next.config` `env`; route via `amplify.yml` → `.env.production` | 017 |
 | Secrets at runtime | Hybrid env→Secrets Manager resolver for vendor API keys and cron secret | 018 |
+| Receipt OCR fallback | LLM-only by default; Textract migrated to `AnalyzeExpense`; structured rule-based fallback opt-in via `RECEIPT_FALLBACK=structured` | 019 |
