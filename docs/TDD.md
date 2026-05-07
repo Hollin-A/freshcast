@@ -125,7 +125,7 @@ src/
 │   │   │   └── export/route.ts     # GET (CSV download)
 │   │   ├── receipts/
 │   │   │   ├── upload/route.ts     # POST (presigned S3 upload URL)
-│   │   │   └── parse/route.ts      # POST (Textract OCR -> parser pipeline)
+│   │   │   └── parse/route.ts      # POST (Textract AnalyzeExpense -> LLM receipt parser, structured fallback opt-in)
 │   │   ├── dashboard/route.ts      # GET (aggregated)
 │   │   ├── predictions/route.ts    # GET (?horizon=day|week)
 │   │   ├── insights/route.ts       # GET
@@ -287,7 +287,7 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 | POST | `/api/sales/parse` | Parse NL text (LLM first, rule-based fallback) |
 | GET | `/api/sales/export` | Download CSV |
 | POST | `/api/receipts/upload` | Generate presigned S3 upload URL for receipt image |
-| POST | `/api/receipts/parse` | OCR receipt via Textract, then parse into sales items |
+| POST | `/api/receipts/parse` | OCR receipt via Textract `AnalyzeExpense` (structured line items), map to sales items via the LLM receipt parser; receipt-shaped rule-based fallback is opt-in via `RECEIPT_FALLBACK=structured` (ADR-019) |
 
 ### 5.5 Dashboard & Intelligence
 
@@ -497,6 +497,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 | `S3_RECEIPTS_BUCKET` | No | S3 bucket for receipt image uploads and OCR parsing |
 | `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
 | `CRON_SECRET` | No | Shared secret for invoking cron-triggered routes (e.g. weekly summary) |
+| `RECEIPT_FALLBACK` | No | Set to `structured` to enable the structured rule-based fallback on `/api/receipts/parse` when the LLM is unavailable. Off by default per ADR-019 — see Phase 32.1.3 for the broader feature-flag plan. |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN — intentionally exposed to the browser; the only `NEXT_PUBLIC_*` value in the app |
 
 ### Loading mechanism (Amplify SSR)

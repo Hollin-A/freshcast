@@ -18,6 +18,12 @@ All notable changes to Freshcast are documented here.
 ### Changed
 - Receipt parsing is now AI-only (per ADR-019). When the AI service is temporarily unavailable, the receipt path returns a clear error pointing the user to typing or manual entry, instead of falling back to the chat-style parser that produces unusable results on receipt OCR text. The rule-based parser continues to back the typed Log/NL tab where it was designed to work.
 - Textract line joining now preserves layout (`\n`) instead of collapsing to commas, which is cleaner signal for the AI parser and avoids misleading tokenization.
+- Receipt OCR now uses Amazon Textract `AnalyzeExpense` (the receipt/invoice-shaped API) instead of `DetectDocumentText` (raw line OCR). AWS now returns pre-structured line items with separate description, quantity, and price fields, so the AI parser only has to map descriptions to known products and resolve abbreviations — no more discovering line items in receipt noise. Accuracy improves and the prompt is materially smaller.
+- Receipt parse responses now include the AWS-structured `lineItems` alongside the existing `parsed` items, for transparency and future reconciliation flows.
+
+### Operator notes
+- New optional env var `RECEIPT_FALLBACK=structured` opts into a receipt-shaped rule-based fallback when the LLM is unavailable. Off by default per ADR-019. Pending the broader feature-flag system in Phase 32.1.3.
+- `AnalyzeExpense` is roughly 10× per-page cost of `DetectDocumentText` (still pennies per business per month at expected receipt volumes). Worth surfacing in CloudWatch once Phase 30.2 lands.
 
 ### Security
 - Removed all entries from `next.config.ts` `env` (per ADR-017). The field inlines values into the client JavaScript bundle regardless of `NEXT_PUBLIC_` semantics, which had been exposing server secrets in production builds.
