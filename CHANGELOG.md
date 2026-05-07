@@ -24,6 +24,7 @@ All notable changes to Freshcast are documented here.
 ### Operator notes
 - New optional env var `RECEIPT_FALLBACK=structured` opts into a receipt-shaped rule-based fallback when the LLM is unavailable. Off by default per ADR-019. Pending the broader feature-flag system in Phase 32.1.3.
 - `AnalyzeExpense` is roughly 10× per-page cost of `DetectDocumentText` (still pennies per business per month at expected receipt volumes). Worth surfacing in CloudWatch once Phase 30.2 lands.
+- **IAM:** the Amplify SSR Lambda execution role must grant `textract:AnalyzeExpense` (a different action from the `textract:DetectDocumentText` granted in Phase 29). If the policy was scoped to `DetectDocumentText` only, receipt parsing will fail in production with `AccessDeniedException`. Verify before next deploy.
 
 ### Security
 - Removed all entries from `next.config.ts` `env` (per ADR-017). The field inlines values into the client JavaScript bundle regardless of `NEXT_PUBLIC_` semantics, which had been exposing server secrets in production builds.

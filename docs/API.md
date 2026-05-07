@@ -18,7 +18,9 @@ All API routes are prefixed with `/api`. Authenticated routes require a valid JW
 - [Receipts (S3 + OCR)](#receipts-s3--ocr)
 - [Analytics & Insights](#analytics--insights)
 - [AI Chat](#ai-chat)
+- [Email (Cron)](#email-cron)
 - [Demo Data](#demo-data)
+- [Health](#health)
 - [Data Models](#data-models)
 - [Security Notes](#security-notes)
 
@@ -211,7 +213,36 @@ Returns the authenticated user's business profile.
 }
 ```
 
+Note: `timezone`, `region`, and `weeklyEmailEnabled` are persisted on the model but currently not returned by `GET /api/business` (they are read directly from the session-scoped business in the routes that need them). If these become part of the public API contract, this section should be updated alongside the route.
+
 **Error codes:** `UNAUTHORIZED` (401), `NOT_FOUND` (404), `INTERNAL_ERROR` (500)
+
+---
+
+### `PATCH /api/business`
+
+Updates mutable fields on the authenticated user's business. Currently only `weeklyEmailEnabled` is exposed; future toggles (e.g. region, timezone) will be added here.
+
+**Auth required:** Yes
+
+**Request body:**
+```json
+{
+  "weeklyEmailEnabled": true
+}
+```
+
+All fields are optional; the body is treated as a partial update.
+
+**Response `200`:**
+```json
+{
+  "id": "string",
+  "weeklyEmailEnabled": true
+}
+```
+
+**Error codes:** `UNAUTHORIZED` (401), `NOT_FOUND` (404 — no business for this user), `VALIDATION_ERROR` (400), `INTERNAL_ERROR` (500)
 
 ---
 
@@ -671,6 +702,35 @@ Up to 10 prior messages may be included in `history`.
 
 ---
 
+## Email (Cron)
+
+### `POST /api/email/weekly-summary`
+
+Triggers weekly summary emails for every business with `weeklyEmailEnabled: true`. Designed to be invoked on a schedule by Amazon EventBridge (production) or Vercel Cron (mirror), but can also be invoked manually with the cron secret.
+
+**Auth required:** No session — instead, a shared secret is required when one is configured.
+
+**Authorization:**
+- If a `CRON_SECRET` is resolvable (env first, then AWS Secrets Manager `freshcast/cron-secret`), the request must include `Authorization: Bearer <CRON_SECRET>`. Requests without a matching bearer token are rejected with 401.
+- If no `CRON_SECRET` is configured (e.g. local dev), the route accepts the request without auth.
+
+**Request body:** None
+
+**Response `200`:**
+```json
+{
+  "sent": 4,
+  "failed": 0,
+  "total": 4
+}
+```
+
+`sent` and `failed` partition the businesses that were processed; `total` is the number of businesses with `weeklyEmailEnabled: true`. Per-business send results are logged via the structured logger but not returned in the response.
+
+**Error codes:** `UNAUTHORIZED` (401 — invalid bearer token), `INTERNAL_ERROR` (500)
+
+---
+
 ## Demo Data
 
 ### `POST /api/demo`
@@ -692,6 +752,37 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 
 ---
 
+## Health
+
+### `GET /api/health`
+
+Lightweight liveness/readiness probe. Suitable for uptime monitors, load-balancer health checks, and post-deploy smoke tests.
+
+**Auth required:** No
+
+**Response `200`:**
+```json
+{
+  "status": "healthy",
+  "uptime": 3421,
+  "database": "ok",
+  "lastInsightGeneration": "2026-05-06T19:14:02.000Z",
+  "version": "0.1.0",
+  "timestamp": "2026-05-07T08:42:11.123Z"
+}
+```
+
+Field semantics:
+- `status` — `"healthy"` if the database probe succeeds, `"degraded"` if it fails. The route always returns 200; the body indicates degradation.
+- `uptime` — seconds since the SSR Lambda warmed up (resets per cold start).
+- `database` — `"ok"` or `"error"`. Determined by a `SELECT 1` against the Prisma client.
+- `lastInsightGeneration` — `createdAt` of the most recent `DailyInsight` row across all businesses, or `null` if none exist.
+- `version` — `npm_package_version` if available, otherwise `"0.1.0"`.
+
+**Error codes:** none — this route never returns a non-200 status.
+
+---
+
 ## Data Models
 
 ### User
@@ -699,10 +790,13 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 |-------|------|-------|
 | `id` | string | CUID |
 | `email` | string | Unique |
-| `emailVerified` | datetime? | Null until verified |
-| `passwordHash` | string | bcrypt, 12 rounds |
+| `emailVerified` | datetime? | Null until verified via `GET /api/auth/verify-email` |
+| `passwordHash` | string? | bcrypt, 12 rounds. Nullable to support OAuth providers in future. |
 | `name` | string? | |
+| `image` | string? | Reserved for future avatar support |
+| `isDemo` | boolean | `true` for the seeded demo account; demo accounts are undeletable and password-immutable (see Phase 23) |
 | `createdAt` | datetime | |
+| `updatedAt` | datetime | |
 
 ### Business
 | Field | Type | Notes |
@@ -710,10 +804,14 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 | `id` | string | CUID |
 | `name` | string | |
 | `type` | enum | See business types below |
-| `locale` | string | e.g. `"en"` |
-| `timezone` | string | IANA timezone |
-| `region` | string? | |
-| `onboarded` | boolean | |
+| `locale` | string | e.g. `"en"`, default `"en"` |
+| `timezone` | string | IANA timezone, default `"UTC"`, validated server-side via `Intl.DateTimeFormat` |
+| `region` | string | Default `"AU-VIC"`. Drives holiday-aware predictions (`src/data/holidays.ts`). |
+| `weeklyEmailEnabled` | boolean | Default `false`. Toggled via `PATCH /api/business`. Drives `POST /api/email/weekly-summary` recipient list. |
+| `onboarded` | boolean | Default `false`; set to `true` when onboarding completes |
+| `userId` | string | Unique FK → User (one business per user) |
+| `createdAt` | datetime | |
+| `updatedAt` | datetime | |
 
 **Business types:** `RETAIL_VENDOR`, `BUTCHER`, `PRODUCE_SELLER`, `MARKET_STALL`, `GROCERY`, `CAFE`, `TAKEAWAY`, `OTHER`
 
@@ -730,11 +828,15 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | string | CUID |
-| `date` | date | Local business date |
+| `date` | date | Local business date (`@db.Date`, no time component) |
 | `inputMethod` | enum | `NATURAL_LANGUAGE \| MANUAL` |
-| `rawInput` | string? | Original NL text |
+| `rawInput` | string? | Original NL text (or Textract `rawText` for receipt-origin entries) — kept for audit |
 | `receiptKey` | string? | S3 object key when entry originated from a receipt upload |
 | `businessId` | string | FK → Business |
+| `createdAt` | datetime | |
+| `updatedAt` | datetime | |
+
+Note: there is intentionally **no** unique constraint on `(businessId, date)` — businesses log multiple entries per day (morning + afternoon, etc.) per ADR-014.
 
 ### SalesItem
 | Field | Type | Notes |
@@ -751,10 +853,13 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 | `id` | string | CUID |
 | `date` | date | |
 | `type` | enum | `TREND \| COMPARISON \| TOP_PRODUCTS \| SUMMARY` |
-| `content` | string | AI-generated text |
-| `metadata` | JSON | Supporting data |
-| `generationMethod` | string | |
+| `content` | string | Insight text shown on the dashboard |
+| `metadata` | JSON? | Supporting data (e.g. percentage change, product references) |
+| `generationMethod` | string | `"template"` or `"llm"` — tracks whether the LLM or the template fallback produced the row. Default `"template"`. |
 | `businessId` | string | FK → Business |
+| `createdAt` | datetime | |
+
+Indexed on `(businessId, date)`; uniquely constrained on `(businessId, date, type)` to prevent duplicate inserts on concurrent requests.
 
 ### DemandForecast
 | Field | Type | Notes |
@@ -763,8 +868,11 @@ Populates the account with 14 days of realistic sample sales data. Only availabl
 | `forecastDate` | date | |
 | `predictedQuantity` | float | |
 | `confidence` | float | 0–1 |
+| `generatedAt` | datetime | |
 | `businessId` | string | FK → Business |
 | `productId` | string | FK → Product |
+
+Indexed on `(businessId, forecastDate)`; uniquely constrained on `(businessId, productId, forecastDate)`.
 
 ---
 
