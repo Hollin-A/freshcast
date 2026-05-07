@@ -486,7 +486,7 @@ Generates a presigned S3 upload URL for receipt images.
 
 ### `POST /api/receipts/parse`
 
-Runs OCR on an uploaded receipt image using Amazon Textract, then parses extracted text through the LLM sales parser. Receipts are LLM-only by policy (ADR-019); the rule-based parser is not used on this path because Textract output is structurally incompatible with the chat-style parser. When the LLM is unavailable, the route returns 503 rather than producing low-quality parsed items.
+Runs OCR on an uploaded receipt image using **Amazon Textract `AnalyzeExpense`** (the receipt/invoice-shaped API), then maps the structured line items through the LLM receipt parser. Receipts are LLM-only by default per ADR-019; the structured rule-based fallback can be opted into via `RECEIPT_FALLBACK=structured`. When neither path produces a result, the route returns 503 rather than emitting low-quality parsed items.
 
 **Auth required:** Yes
 
@@ -502,14 +502,26 @@ Runs OCR on an uploaded receipt image using Amazon Textract, then parses extract
 {
   "parsed": [...],
   "unmatched": [...],
-  "parseMethod": "llm",
+  "parseMethod": "llm | rule-based-structured",
   "source": "receipt",
   "key": "receipts/<businessId>/<...>.jpg",
-  "extractedText": "..."
+  "extractedText": "...",
+  "lineItems": [
+    {
+      "description": "FREE RANGE EGGS 12PK",
+      "quantity": 1,
+      "unit": null,
+      "unitPrice": 9.50,
+      "total": 9.50,
+      "rawRow": "FREE RANGE EGGS 12PK    $9.50"
+    }
+  ]
 }
 ```
 
-**Response `503` — LLM unavailable:**
+`lineItems` is the AWS-structured intermediate representation, returned alongside `parsed` for transparency and to support future reconciliation flows. `parseMethod` is always `"llm"` unless the operator has explicitly enabled the structured fallback.
+
+**Response `503` — LLM unavailable (structured fallback disabled):**
 ```json
 {
   "error": {
@@ -519,11 +531,22 @@ Runs OCR on an uploaded receipt image using Amazon Textract, then parses extract
 }
 ```
 
-**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503 — Textract failure, no extracted text, or LLM unavailable), `INTERNAL_ERROR` (500)
+**Response `503` — no readable line items detected:**
+```json
+{
+  "error": {
+    "code": "SERVICE_UNAVAILABLE",
+    "message": "No readable line items were detected in the receipt image."
+  }
+}
+```
+
+**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503 — Textract failure, no detected line items, or LLM unavailable with the structured fallback disabled), `INTERNAL_ERROR` (500)
 
 **Environment variable naming note:**
 - Preferred: `APP_AWS_REGION`, `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`
 - Backward-compatible fallback: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+- `RECEIPT_FALLBACK=structured` (optional) — opt into the structured rule-based fallback when the LLM is unavailable. Off by default per ADR-019; pending the broader feature-flag system in Phase 32.1.3.
 
 ---
 

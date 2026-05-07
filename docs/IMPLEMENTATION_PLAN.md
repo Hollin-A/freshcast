@@ -64,7 +64,7 @@ References: [PRD](./PRD.md) · [TDD](./TDD.md) · [ADRs](./adr/README.md)
 | 33 | Advanced AWS & Infrastructure | 🔲 Not started |
 | 34 | NL Parser Evaluation Framework | 🔲 Not started |
 | 35 | Voice Input (Amazon Transcribe) | 🔲 Not started |
-| 36 | Receipt OCR Hardening | 🟡 In progress |
+| 36 | Receipt OCR Hardening | ✅ Complete |
 
 ---
 
@@ -1636,15 +1636,15 @@ Phase 29 complete. No data model changes required for 36.1; 36.2 introduces an S
 #### 36.2 Migrate Textract to `AnalyzeExpense` (medium term)
 
 ##### Tasks
-- [ ] 36.2.1 Replace `DetectDocumentTextCommand` with `AnalyzeExpenseCommand` in `src/lib/textract.ts`
-- [ ] 36.2.2 Define an internal `ReceiptLineItem` type carrying `description`, `quantity`, `unit?`, `unitPrice?`, `total?` and map AWS `LineItemFields` onto it
-- [ ] 36.2.3 Update `llmParseSalesInput` (or introduce a receipt-specific variant) to consume structured line items instead of raw text — prompt shrinks; the LLM only has to map descriptions to known products and resolve abbreviations
-- [ ] 36.2.4 Build a receipt-specific rule-based path that bypasses `parseSalesInput` entirely: for each line item, call `matchProduct(description, products)` and use the AWS-provided quantity directly
-- [ ] 36.2.5 Decide and implement the policy for the new structured fallback — keep LLM-only by default, expose behind a feature flag, or re-enable the structured fallback unconditionally; record the decision in a brief follow-up note in ADR-019 if it changes
-- [ ] 36.2.6 Track `AnalyzeExpense` cost via the existing AWS billing tags / CloudWatch (Phase 30.2 surfaces this if landed; otherwise note for manual review)
-- [ ] 36.2.7 Update `docs/TDD.md` — receipts go via `AnalyzeExpense`; the Log/NL tab pipeline is unchanged
-- [ ] 36.2.8 Update `docs/API.md` — `POST /api/receipts/parse` response may include a `lineItems` array alongside `extractedText`
-- [ ] 36.2.9 `## Unreleased` entry in `CHANGELOG.md`
+- [x] 36.2.1 Replace `DetectDocumentTextCommand` with `AnalyzeExpenseCommand` in `src/lib/textract.ts`
+- [x] 36.2.2 Defined the internal `ReceiptLineItem` type (`description`, `quantity`, `unit`, `unitPrice`, `total`, `rawRow`) and added `mapAnalyzeExpenseResponse` for unit-test friendly mapping over AWS `LineItemFields`
+- [x] 36.2.3 Introduced a receipt-specific LLM parser (`src/services/llm-receipt-parser.ts`) and prompt (`src/prompts/receipt-parser.ts`) that consume structured line items rather than raw OCR text — the prompt shrinks from "find the line items in the noise" to "map these descriptions to known products"
+- [x] 36.2.4 Built `src/services/rule-based-receipt-parser.ts` — iterates AWS line items, applies a small noise filter for footer rows (TOTAL/GST/EFTPOS/etc.), runs `matchProduct(description, products)`, uses AWS-provided quantity verbatim (defaults to 1 when missing), infers unit from suffixes like `500G`/`2L`, falls back to the matched product's default unit
+- [x] 36.2.5 Decision: structured rule-based fallback is **feature-flagged off by default**. Operators opt in via `RECEIPT_FALLBACK=structured` env var. Recorded as a closing note in ADR-019. The single-knob env flag is a temporary mechanism pending the broader feature-flag scaffold in Phase 32.1.3
+- [x] 36.2.6 `AnalyzeExpense` cost is observable in the existing receipt-route logs (`parseMethod`, `lineItemCount`, etc.); CloudWatch dashboards land in Phase 30.2 and will surface this surface naturally
+- [x] 36.2.7 Updated `docs/TDD.md` — receipts route comment, API table row, and env table now reflect AnalyzeExpense and the new `RECEIPT_FALLBACK` knob
+- [x] 36.2.8 Updated `docs/API.md` — `POST /api/receipts/parse` response shape documents `lineItems`, `parseMethod` extended with `"rule-based-structured"`, and the new 503 cause for empty line-item detection
+- [x] 36.2.9 Added `## Unreleased` entries to `CHANGELOG.md` covering the AnalyzeExpense migration, the structured `lineItems` field, and the operator opt-in for the rule-based fallback
 
 ##### Acceptance Criteria
 - Receipt photos are parsed via `AnalyzeExpense` end-to-end; `DetectDocumentTextCommand` is no longer used on the receipt path

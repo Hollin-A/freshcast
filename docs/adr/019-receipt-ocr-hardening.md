@@ -80,10 +80,24 @@ These are small and should ship with 36.1 to harden the receipt path regardless 
 - **Move receipts entirely to AnalyzeExpense without changing the fallback policy.** Considered — the structural fix alone would make the rule-based fallback actually viable on receipts, and the LLM-only policy could be skipped. Rejected as the immediate fix because the AnalyzeExpense migration carries more code and operational change than the fallback policy, and Decision 1 is shippable independently in ~20 lines while the structural work is scoped and prepared.
 - **Split this into two ADRs (one per decision).** Considered. Rejected because the two decisions share the same root cause analysis, Decision 1 is intentionally a bridge to Decision 2, and a single ADR keeps the migration plan auditable in one place. Future supersession (e.g. if Decision 2 is later abandoned) is straightforward via a follow-up ADR.
 
+## Closing notes (post-implementation)
+
+Both decisions shipped. Decision 1 landed via Phase 36.1 (PR #6); Decision 2 via Phase 36.2.
+
+A small policy point arose during 36.2.5 that this ADR should record explicitly: **the structured rule-based fallback is shipped but disabled by default.** The route checks `process.env.RECEIPT_FALLBACK === "structured"` before invoking it; with the flag unset (production default), the LLM-only behaviour from Decision 1 is unchanged.
+
+Reasoning for the off-by-default policy:
+
+- **The LLM path is the supported and correct path.** Even with structured input, the rule-based fallback can produce unmatched rows for descriptions the matcher's Levenshtein-2 threshold cannot bridge (`MNCD BEEF` → `Minced Beef` is on the boundary). The LLM handles abbreviations comfortably; falling through to the matcher would degrade UX silently in cases where users would prefer the clear "AI service unavailable, please retry" message established in 36.1.
+- **Off-by-default preserves rollout safety.** The 36.2 change is purely additive at the user-facing layer; behaviour is identical to 36.1 unless an operator explicitly opts in. If a future incident makes the LLM unavailable for a sustained period, an operator can flip `RECEIPT_FALLBACK=structured` in the deployment environment for a graceful-degradation window without code changes.
+- **The single-env-knob feature flag is a placeholder.** Phase 32.1.3 is scoped to introduce a proper feature-flag scaffold (`src/lib/feature-flags.ts`); when that lands, this knob will move into it without changing the policy or the runtime contract.
+
+The flag's existence does not require any further ADR. If the policy is ever flipped (default-on, or removed entirely), a follow-up ADR should record that change and the data behind it (e.g. observed match-rate parity between LLM and structured rule-based on real receipts).
+
 ## References
 
 - ADR-003 — Rule-Based Natural Language Parser for MVP. Defines the parser's intended input shape (chat sentences). This ADR narrows that scope.
 - ADR-011 — LLM Integration with Claude Haiku. Establishes the LLM-primary, rule-based-fallback pattern that this ADR refines for receipts.
-- Implementation Plan — Phase 29 (Receipt Upload & OCR, complete) and Phase 36 (Receipt OCR Hardening, opened by this ADR).
+- Implementation Plan — Phase 29 (Receipt Upload & OCR, complete) and Phase 36 (Receipt OCR Hardening, both sub-phases shipped).
 - AWS Textract docs: [`AnalyzeExpense` API reference](https://docs.aws.amazon.com/textract/latest/dg/API_AnalyzeExpense.html).
 - AWS Textract pricing: [pricing page](https://aws.amazon.com/textract/pricing/) — `AnalyzeExpense` vs `DetectDocumentText` per-page cost comparison.
