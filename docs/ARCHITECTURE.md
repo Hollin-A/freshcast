@@ -1,8 +1,8 @@
-# Freshcast — Technical Design Document (TDD)
+# Freshcast — Architecture
 
 ## 1. Document Overview
 
-This document describes the technical architecture, data model, API contracts, component structure, and implementation details for Freshcast. It is informed by the [PRD](./PRD.md) and the [Architecture Decision Records](./adr/README.md).
+This is the canonical technical reference for Freshcast: system architecture, data model, core service algorithms, frontend structure, security, and operational concerns. Endpoint-level request/response contracts live in the [API Reference](./API.md); the decisions behind the architecture are recorded in the [Architecture Decision Records](./adr/README.md).
 
 ### Referenced ADRs
 
@@ -217,7 +217,7 @@ src/
 
 ## 3. Data Model
 
-The complete Prisma schema is in `prisma/schema.prisma`. Key design decisions:
+The complete Prisma schema is in `prisma/schema.prisma`, and the full field-by-field reference for every model lives in the [API Reference → Data Models](./API.md#data-models). This section records only the design decisions behind the schema:
 
 - **Prisma v7** with `prisma-client` generator (ESM, Rust-free) and `PrismaPg` adapter
 - **`@db.Date`** for sales dates — stores calendar date only, no time component
@@ -273,6 +273,8 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 
 ## 5. API Contracts
 
+The full endpoint catalogue — request/response shapes, query parameters, status codes, and error bodies for every route — lives in the [API Reference](./API.md). This section records only the cross-cutting conventions every endpoint follows.
+
 ### Conventions
 
 - Base path: `/api/*`
@@ -281,66 +283,6 @@ In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
 - Business scoping: `businessId` from session, never from request body
 - Error format: `{ error: { code, message, details? } }`
 - Status codes: 200, 201, 400, 401, 404, 409, 422, 429, 500, 503
-
-### 5.1 Auth
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/signup` | Create account (rate limited) |
-| POST | `/api/auth/[...nextauth]` | Auth.js handler (login) |
-| POST | `/api/auth/forgot-password` | Request password reset email (rate limited) |
-| POST | `/api/auth/reset-password` | Set new password with token (atomic) |
-| POST | `/api/auth/send-verification` | Send email verification link |
-| GET | `/api/auth/verify-email` | Verify email via token (redirects to settings) |
-
-### 5.2 Business
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/business` | Complete onboarding (name, type, timezone, products) |
-| GET | `/api/business` | Get business profile |
-
-### 5.3 Products
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products?active=true` | List products |
-| POST | `/api/products` | Add product (duplicate check) |
-| PATCH | `/api/products` | Update product (name, unit, deactivate) |
-
-### 5.4 Sales
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/sales` | Create sales entry (product ownership verified) |
-| GET | `/api/sales?from=&to=&limit=&offset=` | List entries (paginated, date range) |
-| GET | `/api/sales/[id]` | Get single entry |
-| PUT | `/api/sales/[id]` | Update today's entry (atomic transaction, timezone-aware) |
-| DELETE | `/api/sales/[id]` | Delete entry (cascade via DB) |
-| POST | `/api/sales/parse` | Parse NL text (LLM first, rule-based fallback) |
-| GET | `/api/sales/export` | Download CSV |
-| POST | `/api/receipts/upload` | Generate presigned S3 upload URL for receipt image |
-| POST | `/api/receipts/parse` | OCR receipt via Textract `AnalyzeExpense` (structured line items), map to sales items via the LLM receipt parser; receipt-shaped rule-based fallback is opt-in via `RECEIPT_FALLBACK=structured` (ADR-019) |
-
-### 5.5 Dashboard & Intelligence
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard` | Aggregated dashboard (single call, includes forecasts + insights) |
-| GET | `/api/predictions?horizon=day\|week` | Demand forecasts |
-| GET | `/api/insights` | AI-generated insights |
-| POST | `/api/chat` | AI chat (message + history → Claude response) |
-
-### 5.6 Other
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| DELETE | `/api/account` | Delete account + all data (cascade transaction) |
-| POST | `/api/demo` | Load 14 days of demo data (empty accounts only) |
-| PATCH | `/api/business` | Update mutable business fields (currently `weeklyEmailEnabled`) |
-| GET | `/api/health` | DB + last-insight liveness probe (always returns 200; body indicates `healthy` / `degraded`) |
-| POST | `/api/email/weekly-summary` | Cron-triggered weekly summary fan-out; auth via `Bearer <CRON_SECRET>` (resolved env→Secrets Manager) |
-
 
 ---
 

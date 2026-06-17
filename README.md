@@ -42,23 +42,11 @@ Freshcast helps small business owners (market vendors, butchers, cafés) track w
 
 ## How it works
 
-### Sales Parser
+- **Sales parsing** is LLM-primary with a rule-based fallback. Typed input goes to Claude Haiku (raw text + the user's product catalogue) to extract structured `{product, quantity, unit}` items; if the LLM is unavailable, a rule-based parser tokenizes and fuzzy-matches against the catalogue. Receipts take a separate path — AWS Textract `AnalyzeExpense` returns structured line items that an LLM maps to known products (per [ADR-019](docs/adr/019-receipt-ocr-hardening.md)). Everything flows through the same unit normalizer and confirmation screen before saving.
+- **Demand prediction** blends a weekday pattern with a recent-trend signal, applies holiday-aware adjustments, and scores confidence by data volume and variance. Predictions begin after 5 days of data.
+- **Insights** are LLM-generated (Claude Haiku) with a template fallback, computed on-demand when dashboard data is stale and cached to avoid redundant LLM calls.
 
-LLM-primary, rule-based fallback. The primary path sends raw input + the user's product catalogue to Claude Haiku, which extracts structured `{product, quantity, unit}` items and flags ambiguous quantities ("a few", "some") for clarification. If the LLM is unavailable, a rule-based parser tokenizes input by commas and "and", extracts quantities and units (kg, g, liters, dozen), and fuzzy-matches product names against the catalogue using Levenshtein distance, substring matching, and plural normalization. Both paths flow through the same unit normalizer (50+ variations → canonical units) and the same confirmation screen before saving.
-
-Receipts take a different path: AWS Textract `AnalyzeExpense` returns structured line items, which a receipt-specific LLM prompt maps to known products. When the LLM is unavailable on this path, the route returns a clear 503 (per [ADR-019](docs/adr/019-receipt-ocr-hardening.md)) — receipts are too noisy for the chat-style fallback to produce usable output.
-
-### Prediction Engine
-
-Uses a weighted blend of two signals:
-- **Weekday pattern** (60%) — averages the last 4 occurrences of the same weekday
-- **Recent trend** (40%) — averages the last 7 days
-
-Confidence scoring adjusts based on data volume and variance. Predictions start after 5 days of data.
-
-### Insight Generator
-
-LLM-powered insight generation (Claude Haiku) with template-based fallback. Produces headline + description pairs for the dashboard. Computes per-product trends, week-over-week comparisons, top product concentration, and weekday patterns. Generated on-demand when the dashboard detects stale data (>24 hours), cached in the database to avoid redundant LLM calls.
+Full algorithms, weights, and service contracts are documented in [Architecture](docs/ARCHITECTURE.md).
 
 ## Tech Stack
 
@@ -120,25 +108,19 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
 ## Project Documentation
 
-This project was built with a spec-driven development approach:
-
-- **[Product Requirements Document](docs/PRD.md)** — features, user stories, success metrics
+- **[Architecture](docs/ARCHITECTURE.md)** — system architecture, data model, service algorithms, security, and operations
+- **[API Reference](docs/API.md)** — request/response shapes, error codes, and data models for every endpoint
 - **[Architecture Decision Records](docs/adr/README.md)** — 19 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, env loading on Amplify, secrets management, receipt OCR hardening, and more
-- **[Technical Design Document](docs/TDD.md)** — system architecture, data model, full API contracts, service algorithms
-- **[API Reference](docs/API.md)** — request/response shapes and error codes for every endpoint
-- **[Implementation Plan](docs/IMPLEMENTATION_PLAN.md)** — 36 phases with tasks, acceptance criteria, and completion tracking
-- **[Improvement Backlog](docs/BACKLOG.md)** — prioritized list of future enhancements and AWS integrations
 - **[Changelog](CHANGELOG.md)** — shipped changes by release
-- **[Contributing Guide](docs/CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
+- **[Contributing Guide](CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
 
 ### Documentation ownership
 
-To avoid duplication and stale docs:
+To avoid duplication and stale docs, each topic has a single home:
 
-- Product scope and intent live in `docs/PRD.md`
-- Runtime architecture and technical details live in `docs/TDD.md`
-- API contracts live in `docs/API.md`
-- Execution history and phase tracking live in `docs/IMPLEMENTATION_PLAN.md`
+- Architecture, runtime details, and the data model live in `docs/ARCHITECTURE.md`
+- Endpoint contracts live in `docs/API.md`
+- Architectural decisions live in `docs/adr/`
 - Release deltas live in `CHANGELOG.md`
 
 ## Getting Started
@@ -221,7 +203,7 @@ Freshcast is production-ready for single-business usage with:
 - Privacy and safety controls (business isolation, rate limits, account safeguards)
 - Operational foundations (monitoring, health checks, CI, testing, dual deployment)
 
-Planned and deferred work is tracked in `docs/BACKLOG.md` and `docs/IMPLEMENTATION_PLAN.md`.
+Planned and deferred work is tracked in the project's internal backlog and implementation plan.
 
 ## License
 

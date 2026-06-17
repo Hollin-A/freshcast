@@ -70,7 +70,7 @@ These are small and should ship with 36.1 to harden the receipt path regardless 
 - **`AnalyzeExpense` increases per-receipt Textract spend** (~10×). Tracked via the structured logging added in 36.1. Worth flagging in cost monitoring (Phase 30.2) once that lands.
 - **No data migration is required.** Existing `SalesEntry.receiptKey` and `rawInput` fields continue to mean what they mean. The change is in how new receipt parses are computed, not in the data model.
 - **`docs/API.md` updates are deferred to ship-time.** When 36.1 ships, the `POST /api/receipts/parse` documentation drops `parseMethod: "rule-based"` from the response shape and adds the new error contract. When 36.2 ships, the response may grow a `lineItems` field carrying AWS-structured items alongside `extractedText`. Both updates ship with the corresponding sub-phase, not with this ADR.
-- **`docs/TDD.md` will reflect the new pipeline shape** when 36.2 ships — receipts go via `AnalyzeExpense`, the Log/NL tab continues to use the existing pipeline. Documented at ship-time, not at decision-time, to match the convention used for ADR-018.
+- **`docs/ARCHITECTURE.md` will reflect the new pipeline shape** when 36.2 ships — receipts go via `AnalyzeExpense`, the Log/NL tab continues to use the existing pipeline. Documented at ship-time, not at decision-time, to match the convention used for ADR-018.
 - **Tests follow the same pattern.** Rule-based parser tests are unchanged (its scope narrows but its contract for chat input is identical). New tests cover the receipt route's LLM-null error path (36.1) and, later, the `AnalyzeExpense` line-item mapping (36.2).
 
 ## Alternatives considered
