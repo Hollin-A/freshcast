@@ -62,10 +62,8 @@ When code changes behavior, update matching docs in the same PR.
 | File | Update when |
 |---|---|
 | `README.md` | Entrypoint-level feature list, setup, stack, or links change |
-| `docs/PRD.md` | Product scope, requirements, or non-goals change |
-| `docs/TDD.md` | Architecture, services, data model, or runtime flow changes |
+| `docs/ARCHITECTURE.md` | Architecture, services, data model, or runtime flow changes |
 | `docs/API.md` | API routes, request/response contracts, or auth requirements change |
-| `docs/IMPLEMENTATION_PLAN.md` | Phase/task completion status changes |
 | `docs/adr/` | A significant architectural decision is made |
 | `CHANGELOG.md` | User-visible shipped behavior changes |
 

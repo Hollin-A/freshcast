@@ -12,11 +12,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `fix/{short-description}`
   - `docs/{short-description}`
 - Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `style:`, `test:`) with short imperative subjects.
-- Keep docs in sync when behavior changes:
-  - `docs/PRD.md` for scope/requirements changes
-  - `docs/TDD.md` for architecture/runtime/service changes
-  - `docs/API.md` for endpoint/contract changes
-  - `docs/IMPLEMENTATION_PLAN.md` for phase/task status changes
-  - `docs/adr/` for significant architecture decisions (next sequential ADR)
-  - `README.md` for top-level setup/feature/stack changes
-  - `CHANGELOG.md` for user-visible shipped changes
+- Keep docs in sync when behavior changes. See the documentation-sync table in [`CONTRIBUTING.md`](./CONTRIBUTING.md#documentation-sync-requirements) for which file to update; the canonical homes are `README.md` (entrypoint), `docs/ARCHITECTURE.md` (architecture/services/data model), `docs/API.md` (endpoint contracts), `docs/adr/` (decisions), and `CHANGELOG.md` (shipped changes).
