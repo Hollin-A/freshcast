@@ -6,6 +6,8 @@ All notable changes to Freshcast are documented here.
 
 ## Unreleased
 
+## v1.1.0 — 2026-06-17 — Receipt OCR Hardening & Secrets Management
+
 ### Added
 - Business-type-aware placeholder text in NL sales input
 - Editable product names in sales confirmation screen
