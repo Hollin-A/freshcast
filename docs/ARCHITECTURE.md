@@ -490,7 +490,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 | AWS Amplify | Hosting + deployment (primary) | Free tier (build minutes + SSR Lambda invocations) |
 | Vercel | Hosting + deployment (mirror) | Free tier |
 | Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat, receipt mapping | ~$1-5/month at moderate usage |
-| Amazon SES | Primary email delivery (auth + weekly summary) | Free tier/sandbox for portfolio use |
+| Amazon SES | Primary email delivery (auth + weekly summary) | Free tier (sandbox mode: verified recipients only) |
 | Amazon EventBridge | Weekly summary scheduler | Free tier (under 14M scheduled invocations/month) |
 | Amazon S3 | Receipt image storage (presigned PUT) | Pennies/month at expected receipt volumes |
 | Amazon Textract `AnalyzeExpense` | Structured receipt OCR | ~$0.01/page (≈10× `DetectDocumentText`); pennies/business/month at expected receipt volumes |
