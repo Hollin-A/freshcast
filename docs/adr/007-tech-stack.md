@@ -1,7 +1,7 @@
 # ADR-007: Technical Stack Selection
 
 ## Status
-Accepted
+Accepted — partially superseded by [ADR-020](020-dedicated-nestjs-backend.md) (backend moves from Next.js API routes to a dedicated NestJS service)
 
 ## Date
 2026-03-29

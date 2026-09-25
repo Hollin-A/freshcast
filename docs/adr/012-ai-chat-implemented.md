@@ -18,7 +18,7 @@ Implement the AI chat interface using the same Claude Haiku model, with a data c
 
 - The Claude client from ADR-011 was already built and tested
 - The analytics services already computed all the data the chat needs
-- Chat is a high-value portfolio feature that demonstrates the full AI integration
+- Chat lets owners ask open-ended questions about their own data that fixed dashboard cards and insights cannot anticipate
 - The data context builder pattern (query relevant data → format as text → send to LLM) is clean and extensible
 
 ## Implementation

@@ -110,7 +110,7 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
 - **[Architecture](docs/ARCHITECTURE.md)** — system architecture, data model, service algorithms, security, and operations
 - **[API Reference](docs/API.md)** — request/response shapes, error codes, and data models for every endpoint
-- **[Architecture Decision Records](docs/adr/README.md)** — 19 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, env loading on Amplify, secrets management, receipt OCR hardening, and more
+- **[Architecture Decision Records](docs/adr/README.md)** — 20 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, env loading on Amplify, secrets management, receipt OCR hardening, the planned NestJS backend migration, and more
 - **[Changelog](CHANGELOG.md)** — shipped changes by release
 - **[Contributing Guide](CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
 
