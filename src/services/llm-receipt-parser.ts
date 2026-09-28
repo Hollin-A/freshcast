@@ -3,7 +3,7 @@ import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { RECEIPT_PARSER_SYSTEM_PROMPT } from "@/prompts/receipt-parser";
 import type { ReceiptLineItem } from "@/lib/textract";
-import type { ParsedItem } from "./sales-parser";
+import type { ParsedItem } from "@/schemas";
 
 type ProductRecord = {
   id: string;

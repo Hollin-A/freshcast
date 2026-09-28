@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
 import { getProductDailyHistory } from "@/services/analytics";
+import { productInputSchema, updateProductSchema } from "@/schemas";
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,11 +43,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const addProductSchema = z.object({
-  name: z.string().min(1).max(100),
-  defaultUnit: z.string().max(20).optional(),
-});
-
 export async function POST(request: Request) {
   try {
     const businessId = await getBusinessId();
@@ -56,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const result = addProductSchema.safeParse(body);
+    const result = productInputSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
@@ -86,13 +81,6 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
-
-const updateProductSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1).max(100).optional(),
-  defaultUnit: z.string().max(20).optional(),
-  isActive: z.boolean().optional(),
-});
 
 export async function PATCH(request: Request) {
   try {

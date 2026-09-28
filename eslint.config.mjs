@@ -28,6 +28,40 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // UI code reaches the backend through the API and shares types via
+  // src/schemas, not by importing services directly.
+  {
+    files: ["src/app/**/*.tsx", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            { group: ["@/services", "@/services/*"], message: "UI code must not import services; use types from @/schemas." },
+          ],
+        },
+      ],
+    },
+  },
+  // Schemas are shared by API routes and client forms (and become
+  // packages/shared), so they must stay client-safe.
+  {
+    files: ["src/schemas/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "server-only", message: "Schemas are imported by client code and must stay client-safe." },
+          ],
+          patterns: [
+            { regex: "^@/(?!lib/constants$)", message: "Schemas may only import zod, sibling schemas and @/lib/constants." },
+            { group: ["next", "next/*", "react", "react-dom"], message: "Schemas must not depend on Next.js or React." },
+          ],
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

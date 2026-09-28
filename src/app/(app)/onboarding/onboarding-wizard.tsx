@@ -4,13 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { BUSINESS_TYPES } from "@/lib/constants";
+import { businessDetailsFormSchema, type BusinessDetailsFormValues } from "@/schemas";
 
 const TOTAL_STEPS = 3;
 
@@ -114,18 +114,12 @@ function BusinessTypeTile({
   );
 }
 
-const step1Schema = z.object({
-  name: z.string().min(1, { error: "Business name is required" }).max(100),
-  type: z.enum(BUSINESS_TYPES, { error: "Please select a business type" }),
-});
-
-type Step1Values = z.infer<typeof step1Schema>;
 type ProductEntry = { name: string; defaultUnit: string };
 
 export function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [businessInfo, setBusinessInfo] = useState<Step1Values | null>(null);
+  const [businessInfo, setBusinessInfo] = useState<BusinessDetailsFormValues | null>(null);
   const [products, setProducts] = useState<ProductEntry[]>([
     { name: "", defaultUnit: "" },
     { name: "", defaultUnit: "" },
@@ -133,8 +127,8 @@ export function OnboardingWizard() {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const step1Form = useForm<Step1Values>({
-    resolver: zodResolver(step1Schema),
+  const step1Form = useForm<BusinessDetailsFormValues>({
+    resolver: zodResolver(businessDetailsFormSchema),
   });
 
   function handleStep1() {

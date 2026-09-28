@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import {
   GetObjectCommand,
   PutObjectCommand,
@@ -9,11 +8,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getReceiptsBucket, getS3Client } from "@/lib/s3";
-
-const uploadSchema = z.object({
-  fileName: z.string().min(1).max(255),
-  contentType: z.string().min(1).max(100),
-});
+import { receiptUploadSchema } from "@/schemas";
 
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/jpeg",
@@ -35,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const result = uploadSchema.safeParse(body);
+    const result = receiptUploadSchema.safeParse(body);
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid upload request", 400);
     }

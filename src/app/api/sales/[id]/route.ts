@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
+import { updateSalesItemsSchema } from "@/schemas";
 
 export async function GET(
   _req: NextRequest,
@@ -38,19 +38,6 @@ export async function GET(
   }
 }
 
-const updateItemsSchema = z.object({
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        quantity: z.number().positive(),
-        unit: z.string().optional().nullable(),
-      })
-    )
-    .min(1)
-    .max(50),
-});
-
 export async function PUT(
   request: NextRequest,
   ctx: { params: Promise<{ id: string }> }
@@ -80,7 +67,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const result = updateItemsSchema.safeParse(body);
+    const result = updateSalesItemsSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {

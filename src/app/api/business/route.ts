@@ -1,28 +1,11 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
-import { BUSINESS_TYPES } from "@/lib/constants";
-
-const createBusinessSchema = z.object({
-  name: z.string().min(1).max(100),
-  type: z.enum(BUSINESS_TYPES),
-  locale: z.string().min(2).max(10).default("en"),
-  timezone: z.string().min(1).max(50).default("UTC"),
-  products: z
-    .array(
-      z.object({
-        name: z.string().min(1).max(100),
-        defaultUnit: z.string().max(20).optional(),
-      })
-    )
-    .min(1)
-    .max(10),
-});
+import { createBusinessSchema, updateBusinessSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
@@ -117,10 +100,6 @@ export async function GET() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
-
-const updateBusinessSchema = z.object({
-  weeklyEmailEnabled: z.boolean().optional(),
-});
 
 export async function PATCH(request: Request) {
   try {

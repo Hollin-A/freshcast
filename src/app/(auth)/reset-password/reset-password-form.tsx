@@ -5,25 +5,12 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { resetPasswordFormSchema, type ResetPasswordFormValues } from "@/schemas";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/shared/auth-shell";
-
-const schema = z.object({
-  password: z.string().min(8, { error: "Password must be at least 8 characters" }),
-  confirmPassword: z.string().min(1, { error: "Please confirm your password" }),
-}).check(
-  (ctx) => {
-    if (ctx.value.password !== ctx.value.confirmPassword) {
-      ctx.issues.push({ code: "custom", input: ctx.value.confirmPassword, message: "Passwords don't match", path: ["confirmPassword"] });
-    }
-  }
-);
-
-type FormValues = z.infer<typeof schema>;
 
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -36,7 +23,7 @@ export function ResetPasswordForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<ResetPasswordFormValues>({ resolver: zodResolver(resetPasswordFormSchema) });
 
   if (!token || !email) {
     return (
@@ -52,7 +39,7 @@ export function ResetPasswordForm() {
     );
   }
 
-  async function onSubmit(data: FormValues) {
+  async function onSubmit(data: ResetPasswordFormValues) {
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth/reset-password", {

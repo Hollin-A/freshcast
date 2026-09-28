@@ -10,18 +10,6 @@ declare module "next-auth" {
   }
 }
 
-// Parsed sales item from NL parser
-export type ParsedSalesItem = {
-  rawText: string;
-  product: string;
-  productId: string | null;
-  quantity: number;
-  unit: string | null;
-  matched: boolean;
-};
-
-// API response types
-export type ParseResponse = {
-  parsed: ParsedSalesItem[];
-  unmatched: string[];
-};
+// Keep this file a module so the declaration above augments next-auth
+// rather than replacing it.
+export {};

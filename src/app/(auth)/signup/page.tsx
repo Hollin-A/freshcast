@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { signupFormSchema, type SignupFormValues } from "@/schemas";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -14,25 +14,17 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/shared/auth-shell";
 
-const signupSchema = z.object({
-  name: z.string().min(1, { error: "Name is required" }),
-  email: z.email({ error: "Please enter a valid email" }),
-  password: z.string().min(8, { error: "Password must be at least 8 characters" }),
-});
-
-type SignupValues = z.infer<typeof signupSchema>;
-
 export default function SignupPage() {
   const router = useRouter();
   const t = useTranslations("auth");
   const tc = useTranslations("common");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<SignupValues>({
-    resolver: zodResolver(signupSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupFormSchema),
   });
 
-  async function onSubmit(data: SignupValues) {
+  async function onSubmit(data: SignupFormValues) {
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth/signup", {

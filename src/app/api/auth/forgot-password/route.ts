@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
@@ -7,15 +6,12 @@ import { logger } from "@/lib/logger";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
-
-const schema = z.object({
-  email: z.email({ error: "Please enter a valid email" }),
-});
+import { forgotPasswordSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const result = schema.safeParse(body);
+    const result = forgotPasswordSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid email", 400);

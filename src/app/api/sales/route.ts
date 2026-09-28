@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { sanitizeText } from "@/lib/sanitize";
-
-const createSalesSchema = z.object({
-  date: z.string().date(),
-  inputMethod: z.enum(["NATURAL_LANGUAGE", "MANUAL"]),
-  rawInput: z.string().max(1000).optional().nullable(),
-  receiptKey: z.string().max(1024).optional().nullable(),
-  items: z
-    .array(
-      z.object({
-        productId: z.string().min(1),
-        quantity: z.number().positive(),
-        unit: z.string().optional().nullable(),
-      })
-    )
-    .min(1)
-    .max(50),
-});
+import { createSalesSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
