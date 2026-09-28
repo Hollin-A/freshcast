@@ -8,7 +8,7 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
-const DEMO_EMAIL = "demo@freshcast.app";
+const DEMO_EMAIL = "demo@freshcast.site";
 const DEMO_PASSWORD = "demo1234";
 
 const PRODUCTS = [
