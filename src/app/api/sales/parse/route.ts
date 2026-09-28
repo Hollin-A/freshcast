@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseSalesInput } from "@/services/sales-parser";
 import { llmParseSalesInput } from "@/services/llm-sales-parser";
-
-const parseSchema = z.object({
-  text: z.string().min(1).max(1000),
-});
+import { parseSalesSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const result = parseSchema.safeParse(body);
+    const result = parseSalesSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400);

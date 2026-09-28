@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
@@ -7,10 +6,7 @@ import { llmParseReceiptLineItems } from "@/services/llm-receipt-parser";
 import { ruleBasedReceiptParse } from "@/services/rule-based-receipt-parser";
 import { extractReceiptFromS3 } from "@/lib/textract";
 import { getReceiptsBucket } from "@/lib/s3";
-
-const parseReceiptSchema = z.object({
-  key: z.string().min(1).max(1024),
-});
+import { parseReceiptSchema } from "@/schemas";
 
 /**
  * Whether to use the structured rule-based fallback when the LLM is

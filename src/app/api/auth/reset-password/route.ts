@@ -1,20 +1,14 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
-
-const schema = z.object({
-  email: z.email({ error: "Invalid email" }),
-  token: z.string().min(1),
-  password: z.string().min(8, { error: "Password must be at least 8 characters" }),
-});
+import { resetPasswordRequestSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const result = schema.safeParse(body);
+    const result = resetPasswordRequestSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {

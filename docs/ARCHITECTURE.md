@@ -196,6 +196,14 @@ src/
 │   ├── analytics.ts                # Trend calculations, period comparisons
 │   ├── chat-context.ts             # Business data context builder for AI chat
 │   └── weekly-email.ts             # Weekly summary email composer + sender
+├── schemas/                        # Zod request schemas + shared types (client-safe; used by routes and forms)
+│   ├── auth.ts                     # Signup, login, forgot/reset password (API + form variants)
+│   ├── business.ts                 # Create/update business, onboarding details form
+│   ├── products.ts                 # Product input and update
+│   ├── sales.ts                    # Create/update sales, parse request, ParsedItem type
+│   ├── receipts.ts                 # Receipt upload and parse requests
+│   ├── chat.ts                     # Chat request
+│   └── index.ts
 ├── data/
 │   └── holidays.ts                 # Public holiday data by region (AU-VIC default)
 ├── hooks/
@@ -208,7 +216,7 @@ src/
 ├── messages/
 │   └── en.json                     # Externalized English strings (~150 keys)
 ├── types/
-│   └── index.ts                    # NextAuth type extensions, ParsedItem
+│   └── index.ts                    # NextAuth type extensions
 └── proxy.ts                        # Route protection (replaces middleware in Next.js 16)
 ```
 

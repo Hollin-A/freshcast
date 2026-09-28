@@ -1,25 +1,11 @@
 import { NextResponse } from "next/server";
-import * as z from "zod";
 import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
 import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat";
-
-const chatSchema = z.object({
-  message: z.string().min(1).max(500),
-  history: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string(),
-      })
-    )
-    .max(10)
-    .optional()
-    .default([]),
-});
+import { chatSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {

@@ -1,22 +1,12 @@
 import { matchProduct } from "./product-matcher";
 import { KNOWN_UNITS } from "@/lib/constants";
 import { normalizeUnit } from "@/lib/unit-normalizer";
+import type { ParsedItem } from "@/schemas";
 
 type ProductRecord = {
   id: string;
   name: string;
   defaultUnit: string | null;
-};
-
-export type ParsedItem = {
-  rawText: string;
-  product: string;
-  productId: string | null;
-  quantity: number;
-  unit: string | null;
-  matched: boolean;
-  status?: "ok" | "ambiguous";
-  clarification?: string;
 };
 
 const FILLER_WORDS = /\b(i|sold|today|about|around|approximately|roughly|some|of)\b/gi;

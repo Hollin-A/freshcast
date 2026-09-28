@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProducts, useAddProduct } from "@/hooks/use-products";
 import { useParseSales, useSaveSales } from "@/hooks/use-sales";
-import type { ParsedItem } from "@/services/sales-parser";
+import type { ParsedItem } from "@/schemas";
 
 type ManualItem = {
   productId: string;

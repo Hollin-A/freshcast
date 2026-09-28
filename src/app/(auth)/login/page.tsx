@@ -6,7 +6,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { loginFormSchema, type LoginFormValues } from "@/schemas";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -15,23 +15,16 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { AuthShell } from "@/components/shared/auth-shell";
 
-const loginSchema = z.object({
-  email: z.email({ error: "Please enter a valid email" }),
-  password: z.string().min(1, { error: "Password is required" }),
-});
-
-type LoginValues = z.infer<typeof loginSchema>;
-
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslations("auth");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
   });
 
-  async function onSubmit(data: LoginValues) {
+  async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     try {
       const result = await signIn("credentials", {

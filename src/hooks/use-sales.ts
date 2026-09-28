@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ParsedItem } from "@/services/sales-parser";
+import type { ParsedItem } from "@/schemas";
 
 type SalesEntry = {
   id: string;

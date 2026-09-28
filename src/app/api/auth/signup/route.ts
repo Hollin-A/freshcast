@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import * as z from "zod";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
-
-const signupSchema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.email({ error: "Please enter a valid email" }),
-  password: z
-    .string()
-    .min(8, { error: "Password must be at least 8 characters" }),
-});
+import { signupRequestSchema } from "@/schemas";
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const result = signupSchema.safeParse(body);
+    const result = signupRequestSchema.safeParse(body);
 
     if (!result.success) {
       return errorResponse(

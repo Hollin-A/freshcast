@@ -1,7 +1,7 @@
 import { matchProduct } from "./product-matcher";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import type { ReceiptLineItem } from "@/lib/textract";
-import type { ParsedItem } from "./sales-parser";
+import type { ParsedItem } from "@/schemas";
 
 type ProductRecord = {
   id: string;
