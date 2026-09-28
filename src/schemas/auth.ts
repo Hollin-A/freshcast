@@ -11,9 +11,12 @@ export const signupRequestSchema = z.object({
   password: newPasswordSchema,
 });
 
-// Signup form. Unlike the API, the form does not cap `name` at 100 chars.
+// Signup form. Same limits as the API, with user-facing messages.
 export const signupFormSchema = z.object({
-  name: z.string().min(1, { error: "Name is required" }),
+  name: z
+    .string()
+    .min(1, { error: "Name is required" })
+    .max(100, { error: "Name must be 100 characters or fewer" }),
   email: z.email({ error: "Please enter a valid email" }),
   password: newPasswordSchema,
 });
