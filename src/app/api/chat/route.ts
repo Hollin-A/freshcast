@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "@/lib/claude";
@@ -50,7 +49,7 @@ export async function POST(request: Request) {
       messageLength: message.length,
     });
 
-    return NextResponse.json({ response });
+    return ok({ response });
   } catch (err) {
     logger.error("chat", "POST /api/chat failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

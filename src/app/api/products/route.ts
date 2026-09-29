@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ products: enriched });
+    return ok(enriched);
   } catch (err) {
     logger.error("products", "GET /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     });
 
     logger.info("products", "Product created", { productId: product.id, name });
-    return NextResponse.json(product, { status: 201 });
+    return ok(product, { status: 201 });
   } catch (err) {
     logger.error("products", "POST /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -128,7 +128,7 @@ export async function PATCH(request: Request) {
       select: { id: true, name: true, defaultUnit: true, isActive: true },
     });
 
-    return NextResponse.json(product);
+    return ok(product);
   } catch (err) {
     logger.error("products", "PATCH /api/products failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

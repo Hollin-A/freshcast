@@ -1,11 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
 import {
   GetObjectCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getReceiptsBucket, getS3Client } from "@/lib/s3";
 import { receiptUploadSchema } from "@/schemas";
@@ -73,7 +72,7 @@ export async function POST(request: Request) {
       contentType,
     });
 
-    return NextResponse.json({
+    return ok({
       key,
       uploadUrl,
       previewUrl,

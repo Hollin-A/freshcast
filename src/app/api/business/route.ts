@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
     });
 
     logger.info("business", "Business created", { businessId: business.id });
-    return NextResponse.json(business, { status: 201 });
+    return ok(business, { status: 201 });
   } catch (err) {
     logger.error("business", "POST /api/business failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -94,7 +93,7 @@ export async function GET() {
       return errorResponse("NOT_FOUND", "No business found", 404);
     }
 
-    return NextResponse.json(business);
+    return ok(business);
   } catch (err) {
     logger.error("business", "GET /api/business failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -130,7 +129,7 @@ export async function PATCH(request: Request) {
       select: { id: true, weeklyEmailEnabled: true },
     });
 
-    return NextResponse.json(updated);
+    return ok(updated);
   } catch (err) {
     logger.error("business", "PATCH /api/business failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

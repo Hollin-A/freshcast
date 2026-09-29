@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 export type DashboardData = {
   hasAnySales: boolean;
@@ -63,9 +64,9 @@ export function useDashboard() {
   return useQuery<DashboardData>({
     queryKey: ["dashboard"],
     queryFn: async () => {
-      const res = await fetch("/api/dashboard");
-      if (!res.ok) throw new Error("Failed to fetch dashboard");
-      return res.json();
+      return apiFetch<DashboardData>("/api/dashboard", undefined, {
+        fallbackMessage: "Failed to fetch dashboard",
+      });
     },
   });
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { ok } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 
 const startTime = Date.now();
@@ -21,7 +21,7 @@ export async function GET() {
     dbStatus = "error";
   }
 
-  return NextResponse.json({
+  return ok({
     status: dbStatus === "ok" ? "healthy" : "degraded",
     uptime: Math.round((Date.now() - startTime) / 1000),
     database: dbStatus,

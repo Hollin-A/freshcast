@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { getTodaySummary, getWeekSummary, getTopProducts, getProductDailyHistory } from "@/services/analytics";
@@ -35,7 +34,7 @@ export async function GET() {
     const tomorrowDate = toUTCDate(todayStr);
     tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
 
-    return NextResponse.json({
+    return ok({
       hasAnySales: totalEntries > 0,
       totalEntries,
       todaySummary,

@@ -6,6 +6,13 @@ All notable changes to Freshcast are documented here.
 
 ## Unreleased
 
+### Changed
+- All JSON API routes now return a standard envelope: `{ data, meta? }` on success, and the existing `{ error: { code, message, details? } }` on failure. `GET /api/products` returns the product array as `data`; `GET /api/sales` returns entries as `data` with pagination in `meta`. Frontend calls go through a shared `apiFetch` client helper. See `docs/API.md`.
+- Zod request schemas are consolidated in `src/schemas/`, shared by API routes and forms.
+
+### Fixed
+- The signup form now limits the name to 100 characters, matching the API, and shows a field message instead of a generic error.
+
 ## v1.1.0 — 2026-06-17 — Receipt OCR Hardening & Secrets Management
 
 ### Added

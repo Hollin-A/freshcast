@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
@@ -40,7 +39,7 @@ export async function POST() {
     });
 
     if (user?.emailVerified) {
-      return NextResponse.json({ message: "Email already verified" });
+      return ok({ message: "Email already verified" });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
@@ -72,7 +71,7 @@ export async function POST() {
     }
 
     logger.info("auth", "Verification email sent", { email: session.user.email });
-    return NextResponse.json({ message: "Verification email sent" });
+    return ok({ message: "Verification email sent" });
   } catch (err) {
     logger.error("auth", "POST /api/auth/send-verification failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

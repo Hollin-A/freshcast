@@ -2,21 +2,23 @@ import { NextResponse } from "next/server";
 import { auth } from "./auth";
 import { prisma } from "./prisma";
 import { logger } from "./logger";
+import type { ApiErrorBody, ApiSuccess } from "@/schemas";
 
-export type ApiError = {
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-};
+/** Success response in the standard envelope: `{ data, meta? }`. */
+export function ok<T>(
+  data: T,
+  init: { status?: number; meta?: Record<string, unknown> } = {}
+): NextResponse<ApiSuccess<T>> {
+  const body: ApiSuccess<T> = init.meta ? { data, meta: init.meta } : { data };
+  return NextResponse.json(body, { status: init.status ?? 200 });
+}
 
 export function errorResponse(
   code: string,
   message: string,
   status: number,
   details?: Record<string, unknown>
-): NextResponse<ApiError> {
+): NextResponse<ApiErrorBody> {
   if (status >= 500) {
     logger.error("api", `${code}: ${message}`, details);
   } else if (status >= 400) {

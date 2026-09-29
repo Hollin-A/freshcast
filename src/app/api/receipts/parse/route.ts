@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { llmParseReceiptLineItems } from "@/services/llm-receipt-parser";
 import { ruleBasedReceiptParse } from "@/services/rule-based-receipt-parser";
@@ -85,7 +84,7 @@ export async function POST(request: Request) {
         itemCount: llmResult.parsed.length,
         unmatchedCount: llmResult.unmatched.length,
       });
-      return NextResponse.json({
+      return ok({
         ...llmResult,
         source: "receipt",
         key,
@@ -103,7 +102,7 @@ export async function POST(request: Request) {
         itemCount: ruleResult.parsed.length,
         unmatchedCount: ruleResult.unmatched.length,
       });
-      return NextResponse.json({
+      return ok({
         ...ruleResult,
         parseMethod: "rule-based-structured" as const,
         source: "receipt",

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getOrGenerateInsights } from "@/services/insight-generator";
 import { getLocalDateStr } from "@/lib/dates";
@@ -13,7 +12,7 @@ export async function GET() {
 
     const result = await getOrGenerateInsights(ctx.businessId, ctx.timezone);
 
-    return NextResponse.json({
+    return ok({
       date: getLocalDateStr(ctx.timezone),
       ...result,
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 type Product = {
   id: string;
@@ -11,13 +12,17 @@ type Product = {
   trend: number | null;
 };
 
+// POST/PATCH /api/products return the product without list analytics.
+type ProductRecord = Omit<Product, "avgPerDay" | "trend">;
+
 export function useProducts(active = true) {
   return useQuery<{ products: Product[] }>({
     queryKey: ["products", { active }],
     queryFn: async () => {
-      const res = await fetch(`/api/products?active=${active}`);
-      if (!res.ok) throw new Error("Failed to fetch products");
-      return res.json();
+      const products = await apiFetch<Product[]>(`/api/products?active=${active}`, undefined, {
+        fallbackMessage: "Failed to fetch products",
+      });
+      return { products };
     },
   });
 }
@@ -26,16 +31,15 @@ export function useAddProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: { name: string; defaultUnit?: string }) => {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error?.message || "Failed to add product");
-      }
-      return res.json();
+      return apiFetch<ProductRecord>(
+        "/api/products",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        { fallbackMessage: "Failed to add product" }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -52,16 +56,15 @@ export function useUpdateProduct() {
       defaultUnit?: string;
       isActive?: boolean;
     }) => {
-      const res = await fetch("/api/products", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.error?.message || "Failed to update product");
-      }
-      return res.json();
+      return apiFetch<ProductRecord>(
+        "/api/products",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+        { fallbackMessage: "Failed to update product" }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

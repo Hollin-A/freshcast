@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
       logger.warn("auth", "Failed to send verification email", emailErr);
     }
 
-    return NextResponse.json(
+    return ok(
       { message: "Account created successfully" },
       { status: 201 }
     );

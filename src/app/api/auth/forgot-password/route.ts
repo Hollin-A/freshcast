@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
@@ -23,14 +22,14 @@ export async function POST(request: Request) {
     const { success } = rateLimit(`forgot:${email}`, 3, 60 * 60 * 1000);
     if (!success) {
       // Still return success message to prevent email enumeration
-      return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
+      return ok({ message: "If an account exists, a reset link has been sent." });
     }
 
     // Always return success to prevent email enumeration
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       logger.info("auth", "Password reset requested for non-existent email", { email });
-      return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
+      return ok({ message: "If an account exists, a reset link has been sent." });
     }
 
     // Generate token
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
       console.log(`\n🔑 Password reset link for ${email}:\n${resetUrl}\n`);
     }
 
-    return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
+    return ok({ message: "If an account exists, a reset link has been sent." });
   } catch (err) {
     logger.error("auth", "POST /api/auth/forgot-password failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

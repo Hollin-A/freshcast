@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 
 const DEMO_PRODUCTS = [
@@ -87,7 +86,7 @@ export async function POST() {
     }
 
     logger.info("demo", "Demo data loaded", { businessId });
-    return NextResponse.json({ message: "Demo data loaded. Your dashboard is ready." }, { status: 201 });
+    return ok({ message: "Demo data loaded. Your dashboard is ready." }, { status: 201 });
   } catch (err) {
     logger.error("demo", "POST /api/demo failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

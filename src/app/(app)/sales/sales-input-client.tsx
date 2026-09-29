@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProducts, useAddProduct } from "@/hooks/use-products";
 import { useParseSales, useSaveSales } from "@/hooks/use-sales";
+import { apiFetch } from "@/lib/api-client";
 import type { ParsedItem } from "@/schemas";
 
 type ManualItem = {
@@ -22,6 +23,12 @@ type ManualItem = {
 type ReceiptUploadResponse = {
   key: string;
   uploadUrl: string;
+};
+
+type ReceiptParseResponse = {
+  parsed: ParsedItem[];
+  key?: string;
+  extractedText?: string;
 };
 
 const NL_PLACEHOLDERS: Record<string, string> = {
@@ -100,17 +107,15 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
 
     setIsProcessingReceipt(true);
     try {
-      const uploadRes = await fetch("/api/receipts/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type }),
-      });
-      if (!uploadRes.ok) {
-        const body = await uploadRes.json();
-        throw new Error(body.error?.message || "Failed to prepare upload");
-      }
-
-      const uploadData = (await uploadRes.json()) as ReceiptUploadResponse;
+      const uploadData = await apiFetch<ReceiptUploadResponse>(
+        "/api/receipts/upload",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+        },
+        { fallbackMessage: "Failed to prepare upload" }
+      );
       const s3PutRes = await fetch(uploadData.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -126,20 +131,15 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
         );
       }
 
-      const parseRes = await fetch("/api/receipts/parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: uploadData.key }),
-      });
-      if (!parseRes.ok) {
-        const body = await parseRes.json();
-        throw new Error(
-          body.error?.message ||
-            "We couldn't read that receipt. Please try typing your sales instead."
-        );
-      }
-
-      const parsedFromReceipt = await parseRes.json();
+      const parsedFromReceipt = await apiFetch<ReceiptParseResponse>(
+        "/api/receipts/parse",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: uploadData.key }),
+        },
+        { fallbackMessage: "We couldn't read that receipt. Please try typing your sales instead." }
+      );
       setNlText(parsedFromReceipt.extractedText || "");
       setParsedItems(parsedFromReceipt.parsed || []);
       setReceiptKey(parsedFromReceipt.key || uploadData.key);
