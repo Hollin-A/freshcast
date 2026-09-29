@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 
 export async function DELETE() {
@@ -55,7 +54,7 @@ export async function DELETE() {
 
     logger.info("account", "Account deleted", { userId });
 
-    return NextResponse.json({ message: "Account deleted successfully" });
+    return ok({ message: "Account deleted successfully" });
   } catch (err) {
     logger.error("account", "DELETE /api/account failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

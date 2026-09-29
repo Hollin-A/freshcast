@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { sanitizeText } from "@/lib/sanitize";
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     });
 
     logger.info("sales", "Sales entry created", { entryId: entry.id });
-    return NextResponse.json(entry, { status: 201 });
+    return ok(entry, { status: 201 });
   } catch (err) {
     logger.error("sales", "POST /api/sales failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       }),
     ]);
 
-    return NextResponse.json({ entries, total, limit, offset });
+    return ok(entries, { meta: { total, limit, offset } });
   } catch (err) {
     logger.error("sales", "GET /api/sales failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

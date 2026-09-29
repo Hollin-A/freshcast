@@ -1,15 +1,37 @@
 # Freshcast API Documentation
 
-All API routes are prefixed with `/api`. Authenticated routes require a valid JWT session (via NextAuth.js). Error responses follow a standard shape:
+All API routes are prefixed with `/api`. Authenticated routes require a valid JWT session (via NextAuth.js).
+
+## Response format
+
+Every JSON route returns a standard envelope.
+
+**Success:** the payload is in `data`. List endpoints may add `meta` (for example, pagination).
+
+```json
+{ "data": { }, "meta": { } }
+```
+
+**Error:**
 
 ```json
 { "error": { "code": "ERROR_CODE", "message": "Human-readable message", "details": {} } }
 ```
 
+**The response examples in this document show the value of `data`.** Where a response has `meta`, it's shown separately.
+
+Routes that don't return JSON are excluded from the envelope:
+- `GET /api/sales/export` returns a CSV file.
+- `GET /api/auth/verify-email` redirects.
+- `/api/auth/[...nextauth]` responses are controlled by Auth.js.
+
+The client helper `apiFetch` (`src/lib/api-client.ts`) unwraps `data` and throws `ApiRequestError` (with `status`, `code` and `details`) for error responses.
+
 ---
 
 ## Table of Contents
 
+- [Response format](#response-format)
 - [Authentication](#authentication)
 - [Account](#account)
 - [Business](#business)
@@ -261,11 +283,9 @@ Returns the business's product catalogue.
 
 **Response `200`:**
 ```json
-{
-  "products": [
-    { "id": "string", "name": "string", "defaultUnit": "string", "isActive": true }
-  ]
-}
+[
+  { "id": "string", "name": "string", "defaultUnit": "string", "isActive": true, "avgPerDay": 12.5, "trend": 8 }
+]
 ```
 
 **Error codes:** `UNAUTHORIZED` (401), `INTERNAL_ERROR` (500)
@@ -361,14 +381,14 @@ Returns a paginated list of sales entries.
 | `from` | ISO date | 30 days ago | Start of date range |
 | `to` | ISO date | today | End of date range |
 
-**Response `200`:**
+**Response `200`:** `data` is the array of entries; pagination is in `meta`.
 ```json
-{
-  "entries": [...],
-  "total": 42,
-  "limit": 20,
-  "offset": 0
-}
+[ { "id": "string", "date": "2026-09-28", "inputMethod": "MANUAL", "items": [...] } ]
+```
+
+**`meta`:**
+```json
+{ "total": 42, "limit": 20, "offset": 0 }
 ```
 
 Results ordered by date DESC, then createdAt DESC.

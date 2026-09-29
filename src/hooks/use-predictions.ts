@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch, ApiRequestError } from "@/lib/api-client";
 
 type DayForecast = {
   forecastDate: string;
@@ -19,10 +20,17 @@ export function useDayPredictions() {
   return useQuery<DayForecast>({
     queryKey: ["predictions", "day"],
     queryFn: async () => {
-      const res = await fetch("/api/predictions?horizon=day");
-      if (res.status === 422) return null as unknown as DayForecast;
-      if (!res.ok) throw new Error("Failed to fetch predictions");
-      return res.json();
+      try {
+        return await apiFetch<DayForecast>("/api/predictions?horizon=day", undefined, {
+          fallbackMessage: "Failed to fetch predictions",
+        });
+      } catch (err) {
+        // 422: not enough sales history yet
+        if (err instanceof ApiRequestError && err.status === 422) {
+          return null as unknown as DayForecast;
+        }
+        throw err;
+      }
     },
     retry: false,
   });

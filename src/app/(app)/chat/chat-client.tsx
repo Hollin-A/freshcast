@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { apiFetch, ApiRequestError } from "@/lib/api-client";
 import { Badge } from "@/components/ui/badge";
 
 type Message = {
@@ -36,35 +37,35 @@ export function ChatClient({ businessName }: { businessName: string }) {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text.trim(),
-          history: updatedMessages.slice(-8),
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json();
-        if (res.status === 503) {
+      const data = await apiFetch<{ response: string }>(
+        "/api/chat",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text.trim(),
+            history: updatedMessages.slice(-8),
+          }),
+        },
+        { fallbackMessage: "Something went wrong" }
+      );
+      setMessages([
+        ...updatedMessages,
+        { role: "assistant", content: data.response },
+      ]);
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        if (err.status === 503) {
           setMessages([
             ...updatedMessages,
             { role: "assistant", content: "I'm temporarily unavailable. Please try again in a moment." },
           ]);
         } else {
-          toast.error(body.error?.message || "Something went wrong");
+          toast.error(err.message);
         }
-        return;
+      } else {
+        toast.error("Failed to send message");
       }
-
-      const data = await res.json();
-      setMessages([
-        ...updatedMessages,
-        { role: "assistant", content: data.response },
-      ]);
-    } catch {
-      toast.error("Failed to send message");
     } finally {
       setIsLoading(false);
     }

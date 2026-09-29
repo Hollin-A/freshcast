@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { NextRequest } from "next/server";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       const tomorrowDate = toUTCDate(todayStr);
       tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
 
-      return NextResponse.json({
+      return ok({
         forecastDate: tomorrowDate.toISOString().split("T")[0],
         predictions: result.predictions,
         dataPoints: result.dataPoints,
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       const weekEnd = new Date(weekStart);
       weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
 
-      return NextResponse.json({
+      return ok({
         weekStart: weekStart.toISOString().split("T")[0],
         weekEnd: weekEnd.toISOString().split("T")[0],
         predictions: result,

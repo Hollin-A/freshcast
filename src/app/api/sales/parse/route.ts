@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseSalesInput } from "@/services/sales-parser";
@@ -39,14 +38,14 @@ export async function POST(request: Request) {
 
     if (llmResult) {
       logger.info("sales-parse", "Used LLM parser", { itemCount: llmResult.parsed.length });
-      return NextResponse.json(llmResult);
+      return ok(llmResult);
     }
 
     // Fallback to rule-based parser
     const parsed = parseSalesInput(result.data.text, products);
     logger.info("sales-parse", "Used rule-based parser", { itemCount: parsed.parsed.length });
 
-    return NextResponse.json({ ...parsed, parseMethod: "rule-based" });
+    return ok({ ...parsed, parseMethod: "rule-based" });
   } catch (err) {
     logger.error("sales-parse", "POST /api/sales/parse failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

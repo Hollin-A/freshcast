@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
+import { ok, errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { updateSalesItemsSchema } from "@/schemas";
@@ -31,7 +30,7 @@ export async function GET(
       return errorResponse("NOT_FOUND", "Sales entry not found", 404);
     }
 
-    return NextResponse.json(entry);
+    return ok(entry);
   } catch (err) {
     logger.error("sales", "GET /api/sales/[id] failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -97,7 +96,7 @@ export async function PUT(
       });
     });
 
-    return NextResponse.json(updated);
+    return ok(updated);
   } catch (err) {
     logger.error("sales", "PUT /api/sales/[id] failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
@@ -128,7 +127,7 @@ export async function DELETE(
 
     logger.info("sales", "Sales entry deleted", { entryId: id });
 
-    return NextResponse.json({ message: "Entry deleted" });
+    return ok({ message: "Entry deleted" });
   } catch (err) {
     logger.error("sales", "DELETE /api/sales/[id] failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

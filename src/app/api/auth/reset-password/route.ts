@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { resetPasswordRequestSchema } from "@/schemas";
 
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
     }
 
     logger.info("auth", "Password reset successful", { email });
-    return NextResponse.json({ message: "Password reset successfully. You can now log in." });
+    return ok({ message: "Password reset successfully. You can now log in." });
   } catch (err) {
     logger.error("auth", "POST /api/auth/reset-password failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);

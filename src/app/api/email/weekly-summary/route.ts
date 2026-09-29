@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { errorResponse } from "@/lib/api-helpers";
+import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getSecret } from "@/lib/secrets";
 import { sendWeeklySummary } from "@/services/weekly-email";
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     logger.info("email", "Weekly summary cron complete", { sent, failed });
 
-    return NextResponse.json({ sent, failed, total: businesses.length });
+    return ok({ sent, failed, total: businesses.length });
   } catch (err) {
     logger.error("email", "POST /api/email/weekly-summary failed", err);
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
