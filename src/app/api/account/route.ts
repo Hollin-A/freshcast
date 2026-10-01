@@ -2,8 +2,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function DELETE() {
+async function handleDelete() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -60,3 +61,5 @@ export async function DELETE() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const DELETE = withRequestLogging(handleDelete);

@@ -6,9 +6,14 @@ All notable changes to Freshcast are documented here.
 
 ## Unreleased
 
+### Added
+- Request IDs: every API response carries an `x-request-id` header (a valid incoming one is reused), and every log line written while handling the request includes it.
+- One `request completed` log line per API request, with method, path, status and duration. Query strings and bodies aren't logged.
+
 ### Changed
 - All JSON API routes now return a standard envelope: `{ data, meta? }` on success, and the existing `{ error: { code, message, details? } }` on failure. `GET /api/products` returns the product array as `data`; `GET /api/sales` returns entries as `data` with pagination in `meta`. Frontend calls go through a shared `apiFetch` client helper. See `docs/API.md`.
 - Zod request schemas are consolidated in `src/schemas/`, shared by API routes and forms.
+- Production logs are single-line JSON (`level`, `timestamp`, `context`, `message`, `requestId`, `data`) for CloudWatch filtering; local dev keeps the colored format.
 
 ### Fixed
 - The signup form now limits the name to 100 characters, matching the API, and shows a field message instead of a generic error.

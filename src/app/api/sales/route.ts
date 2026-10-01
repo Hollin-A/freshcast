@@ -5,8 +5,9 @@ import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { sanitizeText } from "@/lib/sanitize";
 import { createSalesSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -129,3 +130,6 @@ export async function GET(request: NextRequest) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);
+export const GET = withRequestLogging(handleGet);

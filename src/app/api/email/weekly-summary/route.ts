@@ -4,9 +4,10 @@ import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getSecret } from "@/lib/secrets";
 import { sendWeeklySummary } from "@/services/weekly-email";
+import { withRequestLogging } from "@/lib/request-logging";
 
 // Called by EventBridge Scheduler (Amplify) or Vercel Cron (fallback) or manually.
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
     const cronSecret = await getSecret("CRON_SECRET", "freshcast/cron-secret");
@@ -39,3 +40,5 @@ export async function POST(request: NextRequest) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);
