@@ -3,6 +3,8 @@
 **Status:** Accepted
 **Date:** 2026-05-06
 
+> **Update (2026-10-01):** receipt upload and parsing are switched off by default behind `RECEIPT_UPLOAD_ENABLED` (#62). Textract is a billed service outside the Anthropic spend cap, and the parse endpoint had no rate limit. Both receipt endpoints are now rate limited per business, and uploads are capped at 10 MB through the signed `Content-Length`. Replacing Textract with Claude image input is being evaluated in #63; that decision will get its own ADR.
+
 ## Context
 
 Phase 29 shipped receipt upload and OCR using Amazon Textract's `DetectDocumentTextCommand` and routed the extracted text into the existing sales parse pipeline (LLM primary in `src/services/llm-sales-parser.ts`, rule-based fallback in `src/services/sales-parser.ts`). The fallback is the same one used by the Log/NL tab — it was designed in ADR-003 to handle short chat-style inputs like `"sold 20 eggs, 30kg beef"`.

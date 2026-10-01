@@ -1,12 +1,10 @@
 import { randomUUID } from "node:crypto";
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-} from "@aws-sdk/client-s3";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
-import { getReceiptsBucket, getS3Client } from "@/lib/s3";
+import { getReceiptsBucket, getS3Client, isReceiptUploadEnabled, presignReceiptUpload } from "@/lib/s3";
+import { rateLimit } from "@/lib/rate-limit";
 import { receiptUploadSchema } from "@/schemas";
 import { withRequestLogging } from "@/lib/request-logging";
 
@@ -24,6 +22,19 @@ async function handlePost(request: Request) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
 
+    if (!isReceiptUploadEnabled()) {
+      return errorResponse(
+        "FEATURE_DISABLED",
+        "Receipt upload is currently unavailable. Type your sales or use the product form instead.",
+        503
+      );
+    }
+
+    const { success: rateLimitOk } = rateLimit(`receipt-upload:${ctx.businessId}`, 20, 60 * 60 * 1000);
+    if (!rateLimitOk) {
+      return errorResponse("RATE_LIMITED", "Too many receipt uploads. Please try again later.", 429);
+    }
+
     const bucket = getReceiptsBucket();
     if (!bucket) {
       return errorResponse("SERVICE_UNAVAILABLE", "Receipt upload is not configured", 503);
@@ -32,10 +43,12 @@ async function handlePost(request: Request) {
     const body = await request.json();
     const result = receiptUploadSchema.safeParse(body);
     if (!result.success) {
-      return errorResponse("VALIDATION_ERROR", "Invalid upload request", 400);
+      return errorResponse("VALIDATION_ERROR", "Invalid upload request", 400, {
+        fields: result.error.flatten().fieldErrors,
+      });
     }
 
-    const { fileName, contentType } = result.data;
+    const { fileName, contentType, fileSize } = result.data;
     if (!ALLOWED_CONTENT_TYPES.has(contentType.toLowerCase())) {
       return errorResponse(
         "VALIDATION_ERROR",
@@ -48,15 +61,13 @@ async function handlePost(request: Request) {
     const key = `receipts/${ctx.businessId}/${Date.now()}-${randomUUID()}-${safeFileName}`;
     const s3 = getS3Client();
 
-    const uploadUrl = await getSignedUrl(
-      s3,
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        ContentType: contentType,
-      }),
-      { expiresIn: 60 * 5 }
-    );
+    const uploadUrl = await presignReceiptUpload({
+      bucket,
+      key,
+      contentType,
+      contentLength: fileSize,
+      expiresIn: 60 * 5,
+    });
 
     const previewUrl = await getSignedUrl(
       s3,
@@ -71,6 +82,7 @@ async function handlePost(request: Request) {
       businessId: ctx.businessId,
       key,
       contentType,
+      fileSize,
     });
 
     return ok({
