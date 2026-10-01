@@ -5,8 +5,9 @@ import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
 import { createBusinessSchema, updateBusinessSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+async function handleGet() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -100,7 +101,7 @@ export async function GET() {
   }
 }
 
-export async function PATCH(request: Request) {
+async function handlePatch(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -135,3 +136,7 @@ export async function PATCH(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);
+export const GET = withRequestLogging(handleGet);
+export const PATCH = withRequestLogging(handlePatch);

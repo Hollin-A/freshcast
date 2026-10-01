@@ -1,9 +1,10 @@
 import { ok } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
+import { withRequestLogging } from "@/lib/request-logging";
 
 const startTime = Date.now();
 
-export async function GET() {
+async function handleGet() {
   let dbStatus = "ok";
   let lastInsightTime: string | null = null;
 
@@ -30,3 +31,5 @@ export async function GET() {
     timestamp: new Date().toISOString(),
   });
 }
+
+export const GET = withRequestLogging(handleGet);

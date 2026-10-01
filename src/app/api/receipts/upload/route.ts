@@ -8,6 +8,7 @@ import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getReceiptsBucket, getS3Client } from "@/lib/s3";
 import { receiptUploadSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/jpeg",
@@ -16,7 +17,7 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "image/webp",
 ]);
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -83,3 +84,5 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

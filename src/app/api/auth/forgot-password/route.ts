@@ -6,8 +6,9 @@ import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
 import { forgotPasswordSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const body = await request.json();
     const result = forgotPasswordSchema.safeParse(body);
@@ -67,3 +68,5 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

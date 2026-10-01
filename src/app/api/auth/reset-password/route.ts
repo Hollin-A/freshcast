@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { resetPasswordRequestSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const body = await request.json();
     const result = resetPasswordRequestSchema.safeParse(body);
@@ -61,3 +62,5 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

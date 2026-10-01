@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { withRequestLogging } from "@/lib/request-logging";
 
 const DEMO_PRODUCTS = [
   { name: "Eggs", defaultUnit: "pieces" },
@@ -24,7 +25,7 @@ function generateQuantity(base: number, dayOfWeek: number): number {
   return Math.max(1, Math.round(base * multiplier * random));
 }
 
-export async function POST() {
+async function handlePost() {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -92,3 +93,5 @@ export async function POST() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

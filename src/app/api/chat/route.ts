@@ -5,8 +5,9 @@ import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
 import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat";
 import { chatSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -55,3 +56,5 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

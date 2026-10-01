@@ -3,8 +3,9 @@ import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -66,3 +67,5 @@ export async function GET(request: NextRequest) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const GET = withRequestLogging(handleGet);

@@ -6,8 +6,9 @@ import { normalizeUnit } from "@/lib/unit-normalizer";
 import { sanitizeText } from "@/lib/sanitize";
 import { getProductDailyHistory } from "@/services/analytics";
 import { productInputSchema, updateProductSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const businessId = await getBusinessId();
     if (!businessId) {
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+async function handlePatch(request: Request) {
   try {
     const businessId = await getBusinessId();
     if (!businessId) {
@@ -134,3 +135,7 @@ export async function PATCH(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const GET = withRequestLogging(handleGet);
+export const POST = withRequestLogging(handlePost);
+export const PATCH = withRequestLogging(handlePatch);

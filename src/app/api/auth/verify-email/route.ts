@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   try {
     const token = request.nextUrl.searchParams.get("token");
     const email = request.nextUrl.searchParams.get("email");
@@ -36,3 +37,5 @@ export async function GET(request: NextRequest) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const GET = withRequestLogging(handleGet);

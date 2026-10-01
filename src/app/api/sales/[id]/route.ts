@@ -4,8 +4,9 @@ import { ok, errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { updateSalesItemsSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function GET(
+async function handleGet(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
@@ -37,7 +38,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+async function handlePut(
   request: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
@@ -103,7 +104,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+async function handleDelete(
   _req: NextRequest,
   ctx: { params: Promise<{ id: string }> }
 ) {
@@ -133,3 +134,7 @@ export async function DELETE(
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const GET = withRequestLogging(handleGet);
+export const PUT = withRequestLogging(handlePut);
+export const DELETE = withRequestLogging(handleDelete);

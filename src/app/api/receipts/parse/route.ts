@@ -6,6 +6,7 @@ import { ruleBasedReceiptParse } from "@/services/rule-based-receipt-parser";
 import { extractReceiptFromS3 } from "@/lib/textract";
 import { getReceiptsBucket } from "@/lib/s3";
 import { parseReceiptSchema } from "@/schemas";
+import { withRequestLogging } from "@/lib/request-logging";
 
 /**
  * Whether to use the structured rule-based fallback when the LLM is
@@ -20,7 +21,7 @@ function isStructuredFallbackEnabled(): boolean {
   return process.env.RECEIPT_FALLBACK === "structured";
 }
 
-export async function POST(request: Request) {
+async function handlePost(request: Request) {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -127,3 +128,5 @@ export async function POST(request: Request) {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

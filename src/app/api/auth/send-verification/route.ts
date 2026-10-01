@@ -5,6 +5,7 @@ import { ok, errorResponse } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
+import { withRequestLogging } from "@/lib/request-logging";
 
 function buildVerificationEmail(verifyUrl: string): string {
   return `
@@ -26,7 +27,7 @@ function buildVerificationEmail(verifyUrl: string): string {
   `;
 }
 
-export async function POST() {
+async function handlePost() {
   try {
     const session = await auth();
     if (!session?.user?.id || !session.user.email) {
@@ -77,3 +78,5 @@ export async function POST() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const POST = withRequestLogging(handlePost);

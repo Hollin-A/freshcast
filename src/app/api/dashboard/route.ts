@@ -5,8 +5,9 @@ import { getTodaySummary, getWeekSummary, getTopProducts, getProductDailyHistory
 import { predictNextDay, predictNextWeek } from "@/services/prediction-engine";
 import { getOrGenerateInsights } from "@/services/insight-generator";
 import { getLocalDateStr, toUTCDate } from "@/lib/dates";
+import { withRequestLogging } from "@/lib/request-logging";
 
-export async function GET() {
+async function handleGet() {
   try {
     const ctx = await getBusinessContext();
     if (!ctx) {
@@ -71,3 +72,5 @@ export async function GET() {
     return errorResponse("INTERNAL_ERROR", "Something went wrong", 500);
   }
 }
+
+export const GET = withRequestLogging(handleGet);

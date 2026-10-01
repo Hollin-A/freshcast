@@ -170,9 +170,12 @@ src/
 │   ├── textract.ts                 # AWS Textract AnalyzeExpense wrapper + line-item mapping
 │   ├── secrets.ts                  # Hybrid env→Secrets Manager resolver (ADR-018)
 │   ├── aws-config.ts               # Shared AWS SDK runtime config (region + credentials)
-│   ├── api-helpers.ts              # errorResponse, getBusinessId, getBusinessContext
+│   ├── api-helpers.ts              # ok, errorResponse, getBusinessId, getBusinessContext
+│   ├── api-client.ts               # Client fetch helper: apiFetch unwraps { data }, throws ApiRequestError
+│   ├── request-context.ts          # Per-request context (request ID) via AsyncLocalStorage
+│   ├── request-logging.ts          # withRequestLogging route wrapper (one log line per request)
 │   ├── dates.ts                    # Timezone-aware date utilities
-│   ├── logger.ts                   # Structured logging (color-coded, timestamped)
+│   ├── logger.ts                   # Logger: JSON lines in production, colored text in dev; adds request ID
 │   ├── rate-limit.ts               # In-memory rate limiter
 │   ├── unit-normalizer.ts          # Unit string normalization (50+ variations)
 │   ├── sanitize.ts                 # Text input sanitization (XSS protection)
@@ -289,8 +292,19 @@ The full endpoint catalogue — request/response shapes, query parameters, statu
 - Content type: `application/json` (except CSV export)
 - Auth: all routes except auth endpoints require valid session
 - Business scoping: `businessId` from session, never from request body
+- Success format: `{ data, meta? }` (`meta` for pagination)
 - Error format: `{ error: { code, message, details? } }`
+- Request ID: every API response carries an `x-request-id` header (a valid incoming one is reused)
 - Status codes: 200, 201, 400, 401, 404, 409, 422, 429, 500, 503
+
+### Request logging
+
+Every API request produces one `request completed` log line with `method`, `path`, `status`, `durationMs` and the request ID. It's logged at `info`, `warn` (4xx) or `error` (5xx).
+
+- **`src/proxy.ts`** assigns the request ID for `/api/*`. It reuses a well-formed incoming `x-request-id` (letters, digits, `.`, `_`, `-`, up to 128 characters) or generates a UUID. It passes the ID to the route as a request header and returns it on the response. Requests the proxy rejects (401) are logged there with `handledBy: "proxy"`.
+- **`withRequestLogging`** (`src/lib/request-logging.ts`) wraps every route handler export. It runs the handler inside a request context, so any `logger` call made while handling the request is tagged with the same ID. It times the request and writes the summary line. An unhandled error is logged and returned as the standard 500 envelope.
+- **Not logged:** query strings and request/response bodies, which can contain tokens or personal data. Only the path is logged.
+- **Format:** in production (`NODE_ENV=production`) each line is a single JSON object, `{ level, timestamp, context, message, requestId?, data? }`, so CloudWatch can filter on fields (e.g. `$.data.status >= 500`). Local development keeps the colored format, with a short `[req:xxxxxxxx]` tag.
 
 ---
 
