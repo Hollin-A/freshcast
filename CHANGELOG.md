@@ -11,6 +11,8 @@ All notable changes to Freshcast are documented here.
 - One `request completed` log line per API request, with method, path, status and duration. Query strings and bodies aren't logged.
 
 ### Changed
+- Database: added indexes for business-scoped sales queries, `SalesEntry (businessId, date)` and `SalesItem (salesEntryId)`.
+- Database: a catch-up migration records schema changes previously applied with `db push`, so a database built from `prisma/migrations` now matches `schema.prisma`. Setup and schema changes use `prisma migrate` (README, CONTRIBUTING).
 - All JSON API routes now return a standard envelope: `{ data, meta? }` on success, and the existing `{ error: { code, message, details? } }` on failure. `GET /api/products` returns the product array as `data`; `GET /api/sales` returns entries as `data` with pagination in `meta`. Frontend calls go through a shared `apiFetch` client helper. See `docs/API.md`.
 - Zod request schemas are consolidated in `src/schemas/`, shared by API routes and forms.
 - Production logs are single-line JSON (`level`, `timestamp`, `context`, `message`, `requestId`, `data`) for CloudWatch filtering; local dev keeps the colored format.
