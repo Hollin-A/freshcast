@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isReceiptUploadEnabled } from "@/lib/s3";
 import { SalesInputClient } from "./sales-input-client";
 
 export default async function SalesPage() {
@@ -15,7 +16,10 @@ export default async function SalesPage() {
 
   return (
     <div className="mx-auto max-w-md pb-28">
-      <SalesInputClient businessType={business.type} />
+      <SalesInputClient
+        businessType={business.type}
+        receiptUploadEnabled={isReceiptUploadEnabled()}
+      />
     </div>
   );
 }

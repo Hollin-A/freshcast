@@ -33,7 +33,7 @@ Freshcast helps small business owners (market vendors, butchers, cafés) track w
 
 - **Natural language sales input** — type "sold 20 eggs, 30kg beef" and the parser extracts structured data
 - **Manual form input** — tap through a product list with quantity fields
-- **Receipt photo upload** — snap a supplier or POS receipt; AWS Textract `AnalyzeExpense` extracts structured line items, the LLM maps them to your products, and you confirm before saving
+- **Receipt photo upload** — snap a supplier or POS receipt; AWS Textract `AnalyzeExpense` extracts structured line items, the LLM maps them to your products, and you confirm before saving. *Currently switched off by default (`RECEIPT_UPLOAD_ENABLED`); see [ADR-019](docs/adr/019-receipt-ocr-hardening.md).*
 - **Demand predictions** — "You may need ~25 eggs tomorrow" based on weekday patterns and recent trends, with holiday-aware adjustments
 - **Auto-generated insights** — "Egg sales increased 23% this week", "Friday is your strongest day"
 - **AI chat** — ask questions about your own data ("what sold best this week?")

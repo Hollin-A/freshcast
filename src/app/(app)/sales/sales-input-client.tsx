@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProducts, useAddProduct } from "@/hooks/use-products";
 import { useParseSales, useSaveSales } from "@/hooks/use-sales";
 import { apiFetch } from "@/lib/api-client";
+import { RECEIPT_MAX_UPLOAD_BYTES } from "@/lib/constants";
 import type { ParsedItem } from "@/schemas";
 
 type ManualItem = {
@@ -44,7 +45,13 @@ const NL_PLACEHOLDERS: Record<string, string> = {
 
 const DEFAULT_PLACEHOLDER = '"e.g., sold 20 eggs, 30kg beef, and 10 milk bottles"';
 
-export function SalesInputClient({ businessType }: { businessType?: string }) {
+export function SalesInputClient({
+  businessType,
+  receiptUploadEnabled = false,
+}: {
+  businessType?: string;
+  receiptUploadEnabled?: boolean;
+}) {
   const router = useRouter();
   const { data: productsData } = useProducts();
   const parseMutation = useParseSales();
@@ -104,6 +111,10 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
       toast.error("Please upload an image file.");
       return;
     }
+    if (file.size > RECEIPT_MAX_UPLOAD_BYTES) {
+      toast.error("Receipt image must be 10 MB or smaller.");
+      return;
+    }
 
     setIsProcessingReceipt(true);
     try {
@@ -112,7 +123,7 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+          body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
         },
         { fallbackMessage: "Failed to prepare upload" }
       );
@@ -453,16 +464,18 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
 
         <TabsContent value="nl">
           <div className="mt-4">
-            <input
-              ref={receiptInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleReceiptFile(file);
-              }}
-            />
+            {receiptUploadEnabled && (
+              <input
+                ref={receiptInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleReceiptFile(file);
+                }}
+              />
+            )}
             <div className="rounded-2xl border border-terra bg-paper p-4 shadow-[0_0_0_4px_rgba(181,85,58,0.10)]">
               <textarea
                 className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-ink placeholder:text-mute2 focus:outline-none"
@@ -476,17 +489,19 @@ export function SalesInputClient({ businessType }: { businessType?: string }) {
                 <span className="font-mono text-[11px] text-mute2">{nlText.length} chars</span>
               </div>
             </div>
-            <div className="mt-3">
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={() => receiptInputRef.current?.click()}
-                disabled={isProcessingReceipt || parseMutation.isPending}
-              >
-                {isProcessingReceipt ? "Reading receipt..." : "Upload receipt photo"}
-              </Button>
-            </div>
+            {receiptUploadEnabled && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => receiptInputRef.current?.click()}
+                  disabled={isProcessingReceipt || parseMutation.isPending}
+                >
+                  {isProcessingReceipt ? "Reading receipt..." : "Upload receipt photo"}
+                </Button>
+              </div>
+            )}
             <div className="mt-4">
               <Button
                 size="lg"

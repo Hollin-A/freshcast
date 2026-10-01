@@ -506,13 +506,16 @@ Parses a natural-language sales description into structured line items using Cla
 
 Generates a presigned S3 upload URL for receipt images.
 
+**Availability:** receipt upload and parsing are off unless `RECEIPT_UPLOAD_ENABLED=true`. When off, both receipt endpoints return `503 FEATURE_DISABLED` (see ADR-019).
+
 **Auth required:** Yes
 
 **Request body:**
 ```json
 {
   "fileName": "receipt.jpg",
-  "contentType": "image/jpeg"
+  "contentType": "image/jpeg",
+  "fileSize": 482133
 }
 ```
 
@@ -528,10 +531,12 @@ Generates a presigned S3 upload URL for receipt images.
 
 **Notes:**
 - Allowed content types: JPEG, PNG, WEBP
+- `fileSize` is in bytes, maximum 10 MB (`RECEIPT_MAX_UPLOAD_BYTES`). It's signed into `uploadUrl` as `Content-Length`, so S3 rejects an upload of a different size.
+- Rate limit: 20 upload URLs per business per hour
 - `key` is business-scoped and later passed to parse and save APIs
 - Requires `S3_RECEIPTS_BUCKET` and valid AWS credentials/role
 
-**Error codes:** `UNAUTHORIZED` (401), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503), `INTERNAL_ERROR` (500)
+**Error codes:** `UNAUTHORIZED` (401), `VALIDATION_ERROR` (400), `RATE_LIMITED` (429), `FEATURE_DISABLED` (503), `SERVICE_UNAVAILABLE` (503 — bucket not configured), `INTERNAL_ERROR` (500)
 
 ---
 
@@ -592,7 +597,9 @@ Runs OCR on an uploaded receipt image using **Amazon Textract `AnalyzeExpense`**
 }
 ```
 
-**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `SERVICE_UNAVAILABLE` (503 — Textract failure, no detected line items, or LLM unavailable with the structured fallback disabled), `INTERNAL_ERROR` (500)
+**Rate limit:** 20 parses per business per hour (each parse calls Textract and Claude).
+
+**Error codes:** `UNAUTHORIZED` (401), `FORBIDDEN` (403), `VALIDATION_ERROR` (400), `RATE_LIMITED` (429), `FEATURE_DISABLED` (503 — receipts switched off), `SERVICE_UNAVAILABLE` (503 — Textract failure, no detected line items, or LLM unavailable with the structured fallback disabled), `INTERNAL_ERROR` (500)
 
 **Environment variable naming note:**
 - Preferred: `APP_AWS_REGION`, `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`

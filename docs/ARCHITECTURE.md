@@ -542,6 +542,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 | `AWS_SECRET_ACCESS_KEY` | No | Backward-compatible fallback secret key variable |
 | `SES_FROM_EMAIL` | No | Verified sender email for SES |
 | `S3_RECEIPTS_BUCKET` | No | S3 bucket for receipt image uploads and OCR parsing |
+| `RECEIPT_UPLOAD_ENABLED` | No | Set to `true` to enable receipt photo upload and parsing. Off by default: when unset, the Log page hides the upload button and both receipt endpoints return `503 FEATURE_DISABLED`. To enable in production it must also be added to the `amplify.yml` env allowlist (ADR-017). |
 | `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
 | `CRON_SECRET` | No | Shared secret for invoking cron-triggered routes (e.g. weekly summary) |
 | `RECEIPT_FALLBACK` | No | Set to `structured` to enable the structured rule-based fallback on `/api/receipts/parse` when the LLM is unavailable. Off by default per ADR-019 — see Phase 32.1.3 for the broader feature-flag plan. |

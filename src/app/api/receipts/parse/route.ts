@@ -4,7 +4,8 @@ import { logger } from "@/lib/logger";
 import { llmParseReceiptLineItems } from "@/services/llm-receipt-parser";
 import { ruleBasedReceiptParse } from "@/services/rule-based-receipt-parser";
 import { extractReceiptFromS3 } from "@/lib/textract";
-import { getReceiptsBucket } from "@/lib/s3";
+import { getReceiptsBucket, isReceiptUploadEnabled } from "@/lib/s3";
+import { rateLimit } from "@/lib/rate-limit";
 import { parseReceiptSchema } from "@/schemas";
 import { withRequestLogging } from "@/lib/request-logging";
 
@@ -26,6 +27,20 @@ async function handlePost(request: Request) {
     const ctx = await getBusinessContext();
     if (!ctx) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
+    }
+
+    if (!isReceiptUploadEnabled()) {
+      return errorResponse(
+        "FEATURE_DISABLED",
+        "Receipt reading is currently unavailable. Type your sales or use the product form instead.",
+        503
+      );
+    }
+
+    // Each parse calls Textract and Claude, so cap it per business.
+    const { success: rateLimitOk } = rateLimit(`receipt-parse:${ctx.businessId}`, 20, 60 * 60 * 1000);
+    if (!rateLimitOk) {
+      return errorResponse("RATE_LIMITED", "Too many receipts processed. Please try again later.", 429);
     }
 
     const bucket = getReceiptsBucket();
