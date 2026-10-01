@@ -124,6 +124,8 @@ model SalesEntry {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   items SalesItem[]
+
+  @@index([businessId, date])
 }
 
 enum InputMethod {
@@ -141,6 +143,8 @@ model SalesItem {
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
+
+  @@index([salesEntryId])
 }
 
 model DailyInsight {

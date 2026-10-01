@@ -236,6 +236,8 @@ The complete Prisma schema is in `prisma/schema.prisma`, and the full field-by-f
 - **Multiple entries per day** — no unique constraint on `(businessId, date)` for SalesEntry
 - **Insight dedup** — `@@unique([businessId, date, type])` on DailyInsight prevents duplicates
 - **Cascade deletes** — SalesItem cascades from SalesEntry; all business data cascades from Business
+- **Query indexes** — `SalesEntry (businessId, date)` serves the business-scoped date-range queries behind the dashboard, history, export, analytics, predictions, insights, chat and weekly email. `SalesItem (salesEntryId)` serves loading items for those entries. `Product` lookups by `businessId` use the `(businessId, name)` unique index. `DailyInsight` and `DemandForecast` have their own `(businessId, date)` indexes. Not indexed, on purpose: `SalesItem.productId` (only checked when a product row is deleted) and `Account`/`Session.userId` (unused with JWT sessions).
+- **Migrations** — schema changes ship as Prisma migrations in `prisma/migrations/` and are applied with `prisma migrate deploy`. `20261001000000_catch_up_schema_drift` records earlier changes that had been applied with `db push`; databases that already had them mark it as applied with `prisma migrate resolve --applied`. See [CONTRIBUTING](../CONTRIBUTING.md#database-schema-changes).
 
 ### Key Fields Added Post-MVP
 

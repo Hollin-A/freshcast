@@ -161,10 +161,10 @@ Notes:
 - LLM features degrade gracefully without `ANTHROPIC_API_KEY` (NL parser falls back to rule-based; insights fall back to templates; chat is disabled). Receipt OCR returns 503 in this case — see [ADR-019](docs/adr/019-receipt-ocr-hardening.md).
 - In production, vendor API keys and the cron secret are sourced from AWS Secrets Manager via a hybrid env→SM resolver — see [ADR-018](docs/adr/018-secrets-manager.md). Local dev continues to use plain env vars.
 
-Set up the database:
+Set up the database by applying the migrations in `prisma/migrations`:
 
 ```bash
-npx prisma db push
+npx prisma migrate deploy
 npx prisma generate
 ```
 
