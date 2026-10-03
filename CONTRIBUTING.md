@@ -50,9 +50,10 @@ PRs should be small and focused. Include:
 
 Recommended checklist:
 
-- [ ] `npm run lint`
-- [ ] `npm run typecheck` (or equivalent type check command)
-- [ ] `npm test`
+- [ ] `pnpm lint`
+- [ ] `pnpm exec tsc --noEmit`
+- [ ] `pnpm test`
+- [ ] `pnpm build`
 - [ ] Manual smoke test for affected user flow
 
 ## Documentation sync requirements
@@ -72,15 +73,22 @@ ADR rule:
 - Add a new ADR with the next sequential number for significant decisions
 - Mark old ADRs as superseded when replaced
 
+## Package manager
+
+This repo uses **pnpm**; the version is pinned in `package.json` (`packageManager`). Run `corepack enable` once and Corepack provides that version. Don't use npm or yarn: they ignore `pnpm-lock.yaml`.
+
+- Dependencies whose install scripts may run are listed under `allowBuilds` in `pnpm-workspace.yaml`. If a new dependency needs its install script (for example to download a native binary), add it there deliberately.
+- pnpm is strict: code can only import packages declared in its own `package.json`, so add missing dependencies explicitly instead of relying on transitive ones.
+
 ## Database schema changes
 
 Schema changes go through Prisma migrations. Don't use `prisma db push` against shared databases; it changes the schema without recording a migration, and the migrations folder drifts from the real database.
 
 1. Edit `prisma/schema.prisma`.
-2. Run `npx prisma migrate dev --name <short_description>` against your development database. It creates a migration in `prisma/migrations/` and applies it.
+2. Run `pnpm exec prisma migrate dev --name <short_description>` against your development database. It creates a migration in `prisma/migrations/` and applies it.
    - It needs a temporary shadow database. If your database role can't create one, set `shadowDatabaseUrl` in `prisma.config.ts` to a spare empty database, such as another Neon branch.
 3. Commit the schema and the migration together.
-4. Production applies migrations with `npx prisma migrate deploy`. Applying to production is a separate, deliberate step, not part of the build.
+4. Production applies migrations with `pnpm exec prisma migrate deploy`. Applying to production is a separate, deliberate step, not part of the build.
 
 ## Next.js 16 note
 

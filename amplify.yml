@@ -3,9 +3,15 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        # pnpm 11 (pinned in package.json "packageManager") needs Node 22.22+ or 24.15+.
+        - nvm install 24
+        - nvm use 24
+        - corepack enable
+        # Store inside the build dir so Amplify can cache it between builds.
+        - pnpm install --frozen-lockfile --store-dir .pnpm-store
     build:
       commands:
+        - nvm use 24
         # Surface Amplify Console env vars into .env.production so they reach the SSR Lambda.
         # See docs/adr/017-next-config-no-env.md.
         # Server-only vars (no NEXT_PUBLIC_ prefix → never inlined into the client bundle by Next.js).
@@ -13,13 +19,13 @@ frontend:
           env | grep -E '^(DATABASE_URL|AUTH_SECRET|AUTH_URL|APP_AWS_REGION|APP_AWS_ACCESS_KEY_ID|APP_AWS_SECRET_ACCESS_KEY|APP_AWS_SESSION_TOKEN|SES_FROM_EMAIL|S3_RECEIPTS_BUCKET)=' >> .env.production || true
         # Public vars (NEXT_PUBLIC_*) — intentionally inlined into the client bundle.
         - env | grep -E '^NEXT_PUBLIC_' >> .env.production || true
-        - npx prisma generate
-        - npm run build
+        - pnpm exec prisma generate
+        - pnpm build
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
+      - .pnpm-store/**/*
       - .next/cache/**/*
