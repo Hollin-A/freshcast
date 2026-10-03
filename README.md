@@ -127,7 +127,8 @@ To avoid duplication and stale docs, each topic has a single home:
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22.22+ or 24.15+ (24 recommended)
+- pnpm, via Corepack: run `corepack enable` once and the version pinned in `package.json` is used automatically
 - PostgreSQL database (or [Neon](https://neon.tech) free tier)
 
 ### Setup
@@ -135,7 +136,7 @@ To avoid duplication and stale docs, each topic has a single home:
 ```bash
 git clone https://github.com/Hollin-A/freshcast.git
 cd freshcast
-npm install
+pnpm install
 ```
 
 Create a `.env` file:
@@ -164,20 +165,20 @@ Notes:
 Set up the database by applying the migrations in `prisma/migrations`:
 
 ```bash
-npx prisma migrate deploy
-npx prisma generate
+pnpm exec prisma migrate deploy
+pnpm exec prisma generate
 ```
 
 Optionally seed with demo data:
 
 ```bash
-npx tsx prisma/seed.ts
+pnpm exec tsx prisma/seed.ts
 ```
 
 Run the dev server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -187,7 +188,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Run the test suite:
 
 ```bash
-npm test
+pnpm test
 ```
 
 Tests cover core business logic: sales parser, LLM sales parser, product matcher, prediction engine, insight generator, unit normalizer, date utilities, holiday multipliers, rate limiter, Textract `AnalyzeExpense` mapping, and the rule-based receipt parser. All tests are pure unit tests with no database or network calls.
