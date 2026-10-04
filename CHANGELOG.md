@@ -11,7 +11,7 @@ All notable changes to Freshcast are documented here.
 - One `request completed` log line per API request, with method, path, status and duration. Query strings and bodies aren't logged.
 
 ### Changed
-- Package manager switched from npm to pnpm (pinned via `packageManager` and Corepack); `pnpm-lock.yaml` replaces `package-lock.json`. CI and Amplify builds use Node 24, and CI now also runs a production build.
+- Package manager switched from npm to pnpm (pinned via `packageManager` and Corepack); `pnpm-lock.yaml` replaces `package-lock.json`. CI and Amplify builds use Node 24, and CI now also runs a production build. `node_modules` uses pnpm's hoisted (flat) layout, because Amplify's SSR runtime couldn't load the default symlinked layout and returned HTTP 500 from every route handler.
 - Receipt photo upload and parsing are switched off by default behind `RECEIPT_UPLOAD_ENABLED`. When off, the upload button is hidden and both receipt endpoints return `503 FEATURE_DISABLED`. When on, each endpoint is limited to 20 requests per business per hour, and uploads are capped at 10 MB through the signed `Content-Length` of the upload URL.
 - Database: added indexes for business-scoped sales queries, `SalesEntry (businessId, date)` and `SalesItem (salesEntryId)`.
 - Database: a catch-up migration records schema changes previously applied with `db push`, so a database built from `prisma/migrations` now matches `schema.prisma`. Setup and schema changes use `prisma migrate` (README, CONTRIBUTING).

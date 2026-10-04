@@ -8,3 +8,7 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+
+# Flat, npm-style node_modules. Amplify Hosting's SSR runtime cannot load pnpm's
+# default symlinked layout (route handlers fail to load with HTTP 500).
+nodeLinker: hoisted
