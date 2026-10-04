@@ -79,6 +79,7 @@ This repo uses **pnpm**; the version is pinned in `package.json` (`packageManage
 
 - Dependencies whose install scripts may run are listed under `allowBuilds` in `pnpm-workspace.yaml`. If a new dependency needs its install script (for example to download a native binary), add it there deliberately.
 - pnpm is strict: code can only import packages declared in its own `package.json`, so add missing dependencies explicitly instead of relying on transitive ones.
+- `nodeLinker: hoisted` in `pnpm-workspace.yaml` keeps `node_modules` flat (npm-style). Amplify Hosting's SSR runtime can't load pnpm's default symlinked layout, so don't remove it without testing a deployment.
 
 ## Database schema changes
 
