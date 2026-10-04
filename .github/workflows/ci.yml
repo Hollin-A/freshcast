@@ -13,18 +13,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Installs the pnpm version pinned in package.json "packageManager".
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
       - name: Test
-        run: npm test
+        run: pnpm test
+
+      # Catches build-only failures before Amplify does. Placeholder values
+      # satisfy the env checks that run when routes load; the build never
+      # connects to the database.
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-build-only
+          AUTH_URL: http://localhost:3000

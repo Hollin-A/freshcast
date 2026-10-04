@@ -44,3 +44,6 @@ next-env.d.ts
 
 # internal docs (local-only, not public-facing)
 docs/internal/
+
+# pnpm store (Amplify build cache)
+.pnpm-store
