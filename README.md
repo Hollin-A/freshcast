@@ -139,7 +139,7 @@ cd freshcast
 pnpm install
 ```
 
-Create a `.env` file:
+Create `apps/web/.env` (the web app reads its env file from its own folder; Prisma commands at the repo root read it too):
 
 ```env
 # Required

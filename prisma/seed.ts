@@ -1,7 +1,10 @@
-import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { config } from "dotenv";
+import { PrismaClient } from "../apps/web/src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+
+// Run from the repo root; the web app's .env holds DATABASE_URL.
+config({ path: "apps/web/.env" });
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
