@@ -23,12 +23,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # Each script runs the task in every workspace package through Turborepo.
       - name: Lint
         run: pnpm lint
 
       - name: Type check
-        run: pnpm typecheck
+        run: pnpm exec tsc --noEmit
 
       - name: Test
         run: pnpm test
