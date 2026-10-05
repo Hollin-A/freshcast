@@ -73,13 +73,25 @@ ADR rule:
 - Add a new ADR with the next sequential number for significant decisions
 - Mark old ADRs as superseded when replaced
 
+## Repository layout
+
+This is a pnpm workspace managed with Turborepo:
+
+- `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`.
+- `packages/`: shared packages (added in Stage 2 of the migration, ADR-020).
+- `prisma/`: schema, migrations and seed. They stay at the repo root until they move into `packages/db`.
+
+Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` and `pnpm test` run the task in every package through Turborepo, which caches results and skips unchanged packages. To target one package: `pnpm --filter @freshcast/web <script>`.
+
+The web app's `build` script runs `scripts/materialize-next-aliases.mjs` after `next build`. It replaces the alias symlinks Turbopack creates in `.next/node_modules` (for `@prisma/client`, `pg`, `@aws-sdk/client-s3` and others) with real copies. Amplify deploys the app flattened to `/var/task`, which breaks those relative links, and every route using these packages would fail to load. Keep the step unless a deployment proves it unnecessary, and recheck it on Next.js upgrades.
+
 ## Package manager
 
 This repo uses **pnpm**; the version is pinned in `package.json` (`packageManager`). Run `corepack enable` once and Corepack provides that version. Don't use npm or yarn: they ignore `pnpm-lock.yaml`.
 
 - Dependencies whose install scripts may run are listed under `allowBuilds` in `pnpm-workspace.yaml`. If a new dependency needs its install script (for example to download a native binary), add it there deliberately.
 - pnpm is strict: code can only import packages declared in its own `package.json`, so add missing dependencies explicitly instead of relying on transitive ones.
-- `nodeLinker: hoisted` in `pnpm-workspace.yaml` keeps `node_modules` flat (npm-style). Amplify Hosting's SSR runtime can't load pnpm's default symlinked layout, so don't remove it without testing a deployment.
+- `nodeLinker: hoisted` in `pnpm-workspace.yaml` (mirrored as `node-linker=hoisted` in `.npmrc`, which Amplify reads) keeps `node_modules` flat (npm-style). Amplify Hosting's SSR runtime can't load pnpm's default symlinked layout, so don't remove it without testing a deployment.
 
 ## Database schema changes
 

@@ -83,6 +83,8 @@ This is the canonical technical reference for Freshcast: system architecture, da
 
 ### 2.2 Project Structure
 
+The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; `prisma/` stays at the repo root until it moves into `packages/db`. The tree below is `apps/web/src/`.
+
 ```
 src/
 ├── app/

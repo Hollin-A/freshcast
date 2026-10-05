@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -6,6 +7,9 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Monorepo: trace dependencies from the repo root, where pnpm installs the
+  // shared node_modules, so the standalone output includes them.
+  outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
   // No `env` block by design. Per ADR-017, runtime env vars (secrets and
   // non-secrets) reach SSR via amplify.yml writing .env.production before
   // `next build`. Listing values here would inline them into the client
