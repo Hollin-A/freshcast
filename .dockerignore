@@ -1,10 +1,13 @@
-node_modules
-.next
+**/node_modules
+**/.next
+.turbo
+**/.turbo
+.pnpm-store
 .git
 .github
 .claude
 docs
 *.md
 !README.md
-.env
-.env.*
+**/.env
+**/.env.*
