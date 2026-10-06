@@ -9,15 +9,9 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "postinstall": "prisma generate"
+    "test": "turbo run test"
   },
   "devDependencies": {
-    "@prisma/adapter-pg": "^7.6.0",
-    "bcryptjs": "^3.0.3",
-    "dotenv": "^17.3.1",
-    "prisma": "^7.5.0",
-    "tsx": "^4.21.0",
     "turbo": "^2.11.7"
   }
 }

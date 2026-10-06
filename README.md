@@ -162,17 +162,22 @@ Notes:
 - LLM features degrade gracefully without `ANTHROPIC_API_KEY` (NL parser falls back to rule-based; insights fall back to templates; chat is disabled). Receipt OCR returns 503 in this case — see [ADR-019](docs/adr/019-receipt-ocr-hardening.md).
 - In production, vendor API keys and the cron secret are sourced from AWS Secrets Manager via a hybrid env→SM resolver — see [ADR-018](docs/adr/018-secrets-manager.md). Local dev continues to use plain env vars.
 
-Set up the database by applying the migrations in `prisma/migrations`:
+Prisma lives in the `@freshcast/db` package (`packages/db`). Its commands read `DATABASE_URL` from `packages/db/.env`, so create that file with the same `DATABASE_URL` line:
+
+```env
+DATABASE_URL=postgresql://...
+```
+
+Set up the database by applying the migrations in `packages/db/prisma/migrations`:
 
 ```bash
-pnpm exec prisma migrate deploy
-pnpm exec prisma generate
+pnpm --filter @freshcast/db migrate:deploy
 ```
 
 Optionally seed with demo data:
 
 ```bash
-pnpm exec tsx prisma/seed.ts
+pnpm --filter @freshcast/db seed
 ```
 
 Run the dev server:
