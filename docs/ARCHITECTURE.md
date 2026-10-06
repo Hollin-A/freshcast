@@ -83,7 +83,7 @@ This is the canonical technical reference for Freshcast: system architecture, da
 
 ### 2.2 Project Structure
 
-The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; the Prisma schema, migrations and client factory live in the `@freshcast/db` package (`packages/db`). The tree below is `apps/web/src/`.
+The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; the Prisma schema, migrations and client factory live in the `@freshcast/db` package (`packages/db`); the Zod request schemas, response-envelope types and the constants they use (`BUSINESS_TYPES`, `RECEIPT_MAX_UPLOAD_BYTES`) live in `@freshcast/shared` (`packages/shared/src/schemas`: auth, business, products, sales, receipts, chat, api). The tree below is `apps/web/src/`.
 
 ```
 src/
@@ -201,14 +201,6 @@ src/
 │   ├── analytics.ts                # Trend calculations, period comparisons
 │   ├── chat-context.ts             # Business data context builder for AI chat
 │   └── weekly-email.ts             # Weekly summary email composer + sender
-├── schemas/                        # Zod request schemas + shared types (client-safe; used by routes and forms)
-│   ├── auth.ts                     # Signup, login, forgot/reset password (API + form variants)
-│   ├── business.ts                 # Create/update business, onboarding details form
-│   ├── products.ts                 # Product input and update
-│   ├── sales.ts                    # Create/update sales, parse request, ParsedItem type
-│   ├── receipts.ts                 # Receipt upload and parse requests
-│   ├── chat.ts                     # Chat request
-│   └── index.ts
 ├── data/
 │   └── holidays.ts                 # Public holiday data by region (AU-VIC default)
 ├── hooks/

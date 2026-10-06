@@ -11,8 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProducts, useAddProduct } from "@/hooks/use-products";
 import { useParseSales, useSaveSales } from "@/hooks/use-sales";
 import { apiFetch } from "@/lib/api-client";
-import { RECEIPT_MAX_UPLOAD_BYTES } from "@/lib/constants";
-import type { ParsedItem } from "@/schemas";
+import { RECEIPT_MAX_UPLOAD_BYTES, type ParsedItem } from "@freshcast/shared";
 
 type ManualItem = {
   productId: string;

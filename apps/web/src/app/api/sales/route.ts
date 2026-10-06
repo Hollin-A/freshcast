@@ -1,10 +1,11 @@
+import { flattenError } from "zod";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
 import { sanitizeText } from "@/lib/sanitize";
-import { createSalesSchema } from "@/schemas";
+import { createSalesSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handlePost(request: Request) {
@@ -21,7 +22,7 @@ async function handlePost(request: Request) {
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
-        fields: result.error.flatten().fieldErrors,
+        fields: flattenError(result.error).fieldErrors,
       });
     }
 

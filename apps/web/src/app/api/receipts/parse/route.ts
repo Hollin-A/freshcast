@@ -6,7 +6,7 @@ import { ruleBasedReceiptParse } from "@/services/rule-based-receipt-parser";
 import { extractReceiptFromS3 } from "@/lib/textract";
 import { getReceiptsBucket, isReceiptUploadEnabled } from "@/lib/s3";
 import { rateLimit } from "@/lib/rate-limit";
-import { parseReceiptSchema } from "@/schemas";
+import { parseReceiptSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 /**

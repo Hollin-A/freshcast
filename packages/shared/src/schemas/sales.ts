@@ -10,7 +10,7 @@ const salesItemsSchema = z.array(salesItemInputSchema).min(1).max(50);
 
 // POST /api/sales
 export const createSalesSchema = z.object({
-  date: z.string().date(),
+  date: z.iso.date(),
   inputMethod: z.enum(["NATURAL_LANGUAGE", "MANUAL"]),
   rawInput: z.string().max(1000).optional().nullable(),
   receiptKey: z.string().max(1024).optional().nullable(),

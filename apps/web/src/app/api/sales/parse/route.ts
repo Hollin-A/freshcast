@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { parseSalesInput } from "@/services/sales-parser";
 import { llmParseSalesInput } from "@/services/llm-sales-parser";
-import { parseSalesSchema } from "@/schemas";
+import { parseSalesSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handlePost(request: Request) {

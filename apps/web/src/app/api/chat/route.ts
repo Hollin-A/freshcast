@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { generateText } from "@/lib/claude";
 import { buildChatContext } from "@/services/chat-context";
 import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat";
-import { chatSchema } from "@/schemas";
+import { chatSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handlePost(request: Request) {

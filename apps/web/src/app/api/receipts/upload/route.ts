@@ -1,3 +1,4 @@
+import { flattenError } from "zod";
 import { randomUUID } from "node:crypto";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -5,7 +6,7 @@ import { ok, errorResponse, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getReceiptsBucket, getS3Client, isReceiptUploadEnabled, presignReceiptUpload } from "@/lib/s3";
 import { rateLimit } from "@/lib/rate-limit";
-import { receiptUploadSchema } from "@/schemas";
+import { receiptUploadSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 const ALLOWED_CONTENT_TYPES = new Set([
@@ -44,7 +45,7 @@ async function handlePost(request: Request) {
     const result = receiptUploadSchema.safeParse(body);
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid upload request", 400, {
-        fields: result.error.flatten().fieldErrors,
+        fields: flattenError(result.error).fieldErrors,
       });
     }
 

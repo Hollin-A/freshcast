@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { RECEIPT_MAX_UPLOAD_BYTES } from "@/lib/constants";
+import { RECEIPT_MAX_UPLOAD_BYTES } from "../constants.js";
 
 // POST /api/receipts/upload
 export const receiptUploadSchema = z.object({

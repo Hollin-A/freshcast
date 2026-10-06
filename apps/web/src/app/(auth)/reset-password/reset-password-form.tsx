@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordFormSchema, type ResetPasswordFormValues } from "@/schemas";
+import { resetPasswordFormSchema, type ResetPasswordFormValues } from "@freshcast/shared";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
