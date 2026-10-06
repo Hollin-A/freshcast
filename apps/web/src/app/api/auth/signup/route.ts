@@ -1,3 +1,4 @@
+import { flattenError } from "zod";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,7 @@ import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
-import { signupRequestSchema } from "@/schemas";
+import { signupRequestSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handlePost(request: Request) {
@@ -26,7 +27,7 @@ async function handlePost(request: Request) {
         "VALIDATION_ERROR",
         "Invalid input",
         400,
-        { fields: result.error.flatten().fieldErrors }
+        { fields: flattenError(result.error).fieldErrors }
       );
     }
 

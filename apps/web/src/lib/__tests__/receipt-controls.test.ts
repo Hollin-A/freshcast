@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { receiptUploadSchema } from "@/schemas";
-import { RECEIPT_MAX_UPLOAD_BYTES } from "../constants";
+import { RECEIPT_MAX_UPLOAD_BYTES, receiptUploadSchema } from "@freshcast/shared";
 
 // s3.ts caches its client, so each test loads a fresh copy after setting env.
 async function loadS3(env: Record<string, string>) {

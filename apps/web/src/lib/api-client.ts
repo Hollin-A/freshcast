@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ApiSuccess } from "@/schemas";
+import type { ApiErrorBody, ApiSuccess } from "@freshcast/shared";
 
 /** Thrown for non-2xx API responses; carries the envelope's error fields. */
 export class ApiRequestError extends Error {

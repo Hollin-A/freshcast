@@ -29,7 +29,8 @@ const eslintConfig = defineConfig([
     },
   },
   // UI code reaches the backend through the API and shares types via
-  // src/schemas, not by importing services directly.
+  // @freshcast/shared, not by importing services directly. (The shared
+  // package enforces its own client-safety rules in its eslint.config.mjs.)
   {
     files: ["src/app/**/*.tsx", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
     rules: {
@@ -37,26 +38,7 @@ const eslintConfig = defineConfig([
         "error",
         {
           patterns: [
-            { group: ["@/services", "@/services/*"], message: "UI code must not import services; use types from @/schemas." },
-          ],
-        },
-      ],
-    },
-  },
-  // Schemas are shared by API routes and client forms (and become
-  // packages/shared), so they must stay client-safe.
-  {
-    files: ["src/schemas/**/*.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            { name: "server-only", message: "Schemas are imported by client code and must stay client-safe." },
-          ],
-          patterns: [
-            { regex: "^@/(?!lib/constants$)", message: "Schemas may only import zod, sibling schemas and @/lib/constants." },
-            { group: ["next", "next/*", "react", "react-dom"], message: "Schemas must not depend on Next.js or React." },
+            { group: ["@/services", "@/services/*"], message: "UI code must not import services; use types from @freshcast/shared." },
           ],
         },
       ],

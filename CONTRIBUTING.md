@@ -79,6 +79,7 @@ This is a pnpm workspace managed with Turborepo:
 
 - `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`.
 - `packages/db`: `@freshcast/db`, the Prisma schema, migrations, seed and a `createPrismaClient()` factory. It's a compiled package (`prisma generate` + `tsc` to `dist/`) shared by the apps; Turborepo builds it before anything that depends on it. Prisma commands read `packages/db/.env`. It must stay framework-neutral: no `server-only` (the web app keeps that guard in `src/lib/prisma.ts`).
+- `packages/shared`: `@freshcast/shared`, the Zod request schemas, response-envelope types and the constants they use, shared by API routes, browser forms and (later) the NestJS API. Compiled with `tsc` like `@freshcast/db`. It's imported by client code, so its own lint config only allows `zod` and its own modules.
 
 Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` and `pnpm test` run the task in every package through Turborepo, which caches results and skips unchanged packages. To target one package: `pnpm --filter @freshcast/web <script>`.
 

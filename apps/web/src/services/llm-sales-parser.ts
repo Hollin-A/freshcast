@@ -2,7 +2,7 @@ import { generateJSON } from "@/lib/claude";
 import { logger } from "@/lib/logger";
 import { normalizeUnit } from "@/lib/unit-normalizer";
 import { PARSER_SYSTEM_PROMPT } from "@/prompts/parser";
-import type { ParsedItem } from "@/schemas";
+import type { ParsedItem } from "@freshcast/shared";
 
 type ProductRecord = {
   id: string;

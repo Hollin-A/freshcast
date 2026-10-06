@@ -1,7 +1,7 @@
 import { matchProduct } from "./product-matcher";
 import { KNOWN_UNITS } from "@/lib/constants";
 import { normalizeUnit } from "@/lib/unit-normalizer";
-import type { ParsedItem } from "@/schemas";
+import type { ParsedItem } from "@freshcast/shared";
 
 type ProductRecord = {
   id: string;

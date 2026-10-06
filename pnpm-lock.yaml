@@ -44,6 +44,9 @@ importers:
       '@freshcast/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@freshcast/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.72.0(react@19.2.4))
@@ -175,6 +178,22 @@ importers:
       typescript:
         specifier: ^5
         version: 5.9.3
+
+  packages/shared:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      eslint:
+        specifier: ^9
+        version: 9.39.4(jiti@2.6.1)(supports-color@8.1.1)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.57.2
+        version: 8.57.2(eslint@9.39.4(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
 
 packages:
 

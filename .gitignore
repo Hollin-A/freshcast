@@ -44,7 +44,7 @@ yarn-error.log*
 next-env.d.ts
 
 packages/db/src/generated/prisma
-packages/db/dist
+packages/*/dist
 
 # internal docs (local-only, not public-facing)
 docs/internal/

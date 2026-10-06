@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, apiFetchWithMeta } from "@/lib/api-client";
-import type { PaginationMeta, ParsedItem } from "@/schemas";
+import type { PaginationMeta, ParsedItem } from "@freshcast/shared";
 
 type SalesEntry = {
   id: string;

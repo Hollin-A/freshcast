@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "./auth";
 import { prisma } from "./prisma";
 import { logger } from "./logger";
-import type { ApiErrorBody, ApiSuccess } from "@/schemas";
+import type { ApiErrorBody, ApiSuccess } from "@freshcast/shared";
 
 /** Success response in the standard envelope: `{ data, meta? }`. */
 export function ok<T>(

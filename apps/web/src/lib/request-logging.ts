@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import type { ApiErrorBody } from "@/schemas";
+import type { ApiErrorBody } from "@freshcast/shared";
 import { logger } from "./logger";
 import { REQUEST_ID_HEADER, resolveRequestId, runWithRequestContext } from "./request-context";
 

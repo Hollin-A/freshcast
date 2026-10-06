@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { BUSINESS_TYPES } from "@/lib/constants";
-import { productInputSchema } from "./products";
+import { BUSINESS_TYPES } from "../constants.js";
+import { productInputSchema } from "./products.js";
 
 // POST /api/business
 export const createBusinessSchema = z.object({

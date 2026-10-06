@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordSchema, type ForgotPasswordValues } from "@/schemas";
+import { forgotPasswordSchema, type ForgotPasswordValues } from "@freshcast/shared";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

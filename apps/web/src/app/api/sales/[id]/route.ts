@@ -1,9 +1,10 @@
+import { flattenError } from "zod";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ok, errorResponse, getBusinessId, getBusinessContext } from "@/lib/api-helpers";
 import { logger } from "@/lib/logger";
 import { getLocalDateStr } from "@/lib/dates";
-import { updateSalesItemsSchema } from "@/schemas";
+import { updateSalesItemsSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handleGet(
@@ -71,7 +72,7 @@ async function handlePut(
 
     if (!result.success) {
       return errorResponse("VALIDATION_ERROR", "Invalid input", 400, {
-        fields: result.error.flatten().fieldErrors,
+        fields: flattenError(result.error).fieldErrors,
       });
     }
 

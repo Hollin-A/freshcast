@@ -9,8 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { BUSINESS_TYPES } from "@/lib/constants";
-import { businessDetailsFormSchema, type BusinessDetailsFormValues } from "@/schemas";
+import {
+  BUSINESS_TYPES,
+  businessDetailsFormSchema,
+  type BusinessDetailsFormValues,
+} from "@freshcast/shared";
 
 const TOTAL_STEPS = 3;
 

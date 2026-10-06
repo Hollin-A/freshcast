@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
-import { forgotPasswordSchema } from "@/schemas";
+import { forgotPasswordSchema } from "@freshcast/shared";
 import { withRequestLogging } from "@/lib/request-logging";
 
 async function handlePost(request: Request) {
