@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@/generated/prisma/client";
-import type { InsightType } from "@/generated/prisma/client";
+import { Prisma, type InsightType } from "@freshcast/db";
 import { getDaysAgoUTC, getTodayUTC, getDayOfWeekFromDate } from "@/lib/dates";
 import { generateJSON } from "@/lib/claude";
 import { logger } from "@/lib/logger";

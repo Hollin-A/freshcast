@@ -83,7 +83,7 @@ This is the canonical technical reference for Freshcast: system architecture, da
 
 ### 2.2 Project Structure
 
-The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; `prisma/` stays at the repo root until it moves into `packages/db`. The tree below is `apps/web/src/`.
+The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; the Prisma schema, migrations and client factory live in the `@freshcast/db` package (`packages/db`). The tree below is `apps/web/src/`.
 
 ```
 src/
@@ -230,7 +230,7 @@ src/
 
 ## 3. Data Model
 
-The complete Prisma schema is in `prisma/schema.prisma`, and the full field-by-field reference for every model lives in the [API Reference → Data Models](./API.md#data-models). This section records only the design decisions behind the schema:
+The complete Prisma schema is in `packages/db/prisma/schema.prisma`, and the full field-by-field reference for every model lives in the [API Reference → Data Models](./API.md#data-models). This section records only the design decisions behind the schema:
 
 - **Prisma v7** with `prisma-client` generator (ESM, Rust-free) and `PrismaPg` adapter
 - **`@db.Date`** for sales dates — stores calendar date only, no time component
@@ -239,7 +239,7 @@ The complete Prisma schema is in `prisma/schema.prisma`, and the full field-by-f
 - **Insight dedup** — `@@unique([businessId, date, type])` on DailyInsight prevents duplicates
 - **Cascade deletes** — SalesItem cascades from SalesEntry; all business data cascades from Business
 - **Query indexes** — `SalesEntry (businessId, date)` serves the business-scoped date-range queries behind the dashboard, history, export, analytics, predictions, insights, chat and weekly email. `SalesItem (salesEntryId)` serves loading items for those entries. `Product` lookups by `businessId` use the `(businessId, name)` unique index. `DailyInsight` and `DemandForecast` have their own `(businessId, date)` indexes. Not indexed, on purpose: `SalesItem.productId` (only checked when a product row is deleted) and `Account`/`Session.userId` (unused with JWT sessions).
-- **Migrations** — schema changes ship as Prisma migrations in `prisma/migrations/` and are applied with `prisma migrate deploy`. `20261001000000_catch_up_schema_drift` records earlier changes that had been applied with `db push`; databases that already had them mark it as applied with `prisma migrate resolve --applied`. See [CONTRIBUTING](../CONTRIBUTING.md#database-schema-changes).
+- **Migrations** — schema changes ship as Prisma migrations in `packages/db/prisma/migrations/` and are applied with `prisma migrate deploy`. `20261001000000_catch_up_schema_drift` records earlier changes that had been applied with `db push`; databases that already had them mark it as applied with `prisma migrate resolve --applied`. See [CONTRIBUTING](../CONTRIBUTING.md#database-schema-changes).
 
 ### Key Fields Added Post-MVP
 

@@ -6,17 +6,18 @@ WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json ./apps/web/
-COPY prisma ./prisma
-COPY prisma.config.ts ./
-RUN pnpm install --frozen-lockfile
+COPY packages/db/package.json ./packages/db/
+# Install scripts (prisma generate) run in the build stage via Turborepo.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Stage 2: Build
 FROM node:24-alpine AS builder
 WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY . .
-RUN pnpm exec prisma generate
+RUN pnpm rebuild
 RUN pnpm turbo run build --filter=@freshcast/web
 
 # Stage 3: Production

@@ -78,8 +78,7 @@ ADR rule:
 This is a pnpm workspace managed with Turborepo:
 
 - `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`.
-- `packages/`: shared packages (added in Stage 2 of the migration, ADR-020).
-- `prisma/`: schema, migrations and seed. They stay at the repo root until they move into `packages/db`.
+- `packages/db`: `@freshcast/db`, the Prisma schema, migrations, seed and a `createPrismaClient()` factory. It's a compiled package (`prisma generate` + `tsc` to `dist/`) shared by the apps; Turborepo builds it before anything that depends on it. Prisma commands read `packages/db/.env`. It must stay framework-neutral: no `server-only` (the web app keeps that guard in `src/lib/prisma.ts`).
 
 Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` and `pnpm test` run the task in every package through Turborepo, which caches results and skips unchanged packages. To target one package: `pnpm --filter @freshcast/web <script>`.
 
@@ -97,11 +96,11 @@ This repo uses **pnpm**; the version is pinned in `package.json` (`packageManage
 
 Schema changes go through Prisma migrations. Don't use `prisma db push` against shared databases; it changes the schema without recording a migration, and the migrations folder drifts from the real database.
 
-1. Edit `prisma/schema.prisma`.
-2. Run `pnpm exec prisma migrate dev --name <short_description>` against your development database. It creates a migration in `prisma/migrations/` and applies it.
-   - It needs a temporary shadow database. If your database role can't create one, set `shadowDatabaseUrl` in `prisma.config.ts` to a spare empty database, such as another Neon branch.
+1. Edit `packages/db/prisma/schema.prisma`.
+2. Run `pnpm --filter @freshcast/db migrate:dev --name <short_description>` against your development database (`packages/db/.env`). It creates a migration in `packages/db/prisma/migrations/` and applies it.
+   - It needs a temporary shadow database. If your database role can't create one, set `shadowDatabaseUrl` in `packages/db/prisma.config.ts` to a spare empty database, such as another Neon branch.
 3. Commit the schema and the migration together.
-4. Production applies migrations with `pnpm exec prisma migrate deploy`. Applying to production is a separate, deliberate step, not part of the build.
+4. Production applies migrations with `pnpm --filter @freshcast/db migrate:deploy` (with the production `DATABASE_URL` set for that command only). Applying to production is a separate, deliberate step, not part of the build.
 
 ## Next.js 16 note
 

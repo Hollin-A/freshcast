@@ -10,7 +10,8 @@ applications:
         preBuild:
           commands:
             # pnpm 11 (pinned in package.json "packageManager") needs Node 22.22+ or 24.15+.
-            - nvm install 24
+            # --skip-default-packages: skip the image's default global npm tools (~40s).
+            - nvm install 24 --skip-default-packages
             - nvm use 24
             - corepack enable
             # Store inside the build dir so Amplify can cache it between builds.
@@ -25,7 +26,7 @@ applications:
               env | grep -E '^(DATABASE_URL|AUTH_SECRET|AUTH_URL|APP_AWS_REGION|APP_AWS_ACCESS_KEY_ID|APP_AWS_SECRET_ACCESS_KEY|APP_AWS_SESSION_TOKEN|SES_FROM_EMAIL|S3_RECEIPTS_BUCKET)=' >> apps/web/.env.production || true
             # Public vars (NEXT_PUBLIC_*) — intentionally inlined into the client bundle.
             - env | grep -E '^NEXT_PUBLIC_' >> apps/web/.env.production || true
-            - pnpm exec prisma generate
+            # Builds @freshcast/db (prisma generate + tsc) first, then the web app.
             - pnpm turbo run build --filter=@freshcast/web
       artifacts:
         # Relative to buildPath (the repo root).
