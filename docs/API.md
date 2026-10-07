@@ -733,7 +733,9 @@ Up to 10 prior messages may be included in `history`.
 
 ### `POST /api/email/weekly-summary`
 
-Triggers weekly summary emails for every business with `weeklyEmailEnabled: true`. Designed to be invoked on a schedule by Amazon EventBridge (production) or Vercel Cron (mirror), but can also be invoked manually with the cron secret.
+Triggers weekly summary emails for every business with `weeklyEmailEnabled: true`.
+
+**Status:** not currently invoked. No scheduler is configured, and requests without a login session are rejected by `src/proxy.ts` before reaching the route. The feature is being rebuilt on a scheduled job queue (#42).
 
 **Auth required:** No session — instead, a shared secret is required when one is configured.
 
