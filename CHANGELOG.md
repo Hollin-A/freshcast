@@ -6,6 +6,14 @@ All notable changes to Freshcast are documented here.
 
 ## Unreleased
 
+## v1.2.0 — 2026-10-07 — Monorepo, API Foundations & Cost Controls
+
+This release prepares the codebase for a dedicated NestJS backend (ADR-020):
+- **Monorepo:** the repo is now a pnpm + Turborepo workspace, with the web app in `apps/web` and shared `@freshcast/db` and `@freshcast/shared` packages.
+- **API foundations:** a standard response envelope, request IDs and structured logs, and query indexes with a clean migration history.
+- **Cost controls:** receipt OCR is off by default, with rate limits and an upload size cap.
+- **Retired and paused:** the Vercel mirror is retired, and the never-delivered weekly email is paused pending a rebuild.
+
 ### Added
 - Request IDs: every API response carries an `x-request-id` header (a valid incoming one is reused), and every log line written while handling the request includes it.
 - One `request completed` log line per API request, with method, path, status and duration. Query strings and bodies aren't logged.
@@ -13,7 +21,7 @@ All notable changes to Freshcast are documented here.
 ### Changed
 - Retired the Vercel mirror deployment (ADR-020 D7): removed `vercel.json` (its cron never reached the route) and the Vercel demo link. AWS Amplify is the only host.
 - The weekly summary email is paused and its Settings toggle hidden until the feature is rebuilt (#42). Emails were never delivered: scheduler requests were rejected by the session proxy, and the EventBridge connection was deauthorized. The legacy EventBridge rule has been removed.
-- Zod request schemas, response-envelope types and the constants they use moved into the `@freshcast/shared` workspace package (`packages/shared`), imported directly by the web app. Schemas use the Zod 4 forms `z.iso.date()` and `z.flattenError()` (same validation and output).
+- Zod request schemas, response-envelope types and the constants they use are consolidated in the `@freshcast/shared` workspace package (`packages/shared`), shared by API routes and forms. Schemas use the Zod 4 forms `z.iso.date()` and `z.flattenError()` (same validation and output).
 - Prisma moved into the `@freshcast/db` workspace package (`packages/db`): schema, migrations, seed and a `createPrismaClient()` factory, compiled with `tsc` and built by Turborepo before the web app. Prisma commands now run as `pnpm --filter @freshcast/db <migrate:deploy|migrate:dev|migrate:status|seed>` and read `packages/db/.env`. Migration names are unchanged. Amplify builds skip nvm's default global packages.
 - Repository is now a pnpm workspace with Turborepo: the Next.js app moved to `apps/web` (`@freshcast/web`), and root scripts (`pnpm dev`, `build`, `lint`, `typecheck`, `test`) run through Turborepo with caching. The web app's `.env` moved to `apps/web/.env`. Amplify builds use the monorepo format (`appRoot: apps/web`). After `next build`, a post-build step replaces Turbopack's `.next/node_modules` alias symlinks with real copies, because Amplify's flattened runtime layout broke them (the first attempt, #67, was reverted in #69).
 - Package manager switched from npm to pnpm (pinned via `packageManager` and Corepack); `pnpm-lock.yaml` replaces `package-lock.json`. CI and Amplify builds use Node 24, and CI now also runs a production build. `node_modules` uses pnpm's hoisted (flat) layout, because Amplify's SSR runtime couldn't load the default symlinked layout and returned HTTP 500 from every route handler.
@@ -21,7 +29,6 @@ All notable changes to Freshcast are documented here.
 - Database: added indexes for business-scoped sales queries, `SalesEntry (businessId, date)` and `SalesItem (salesEntryId)`.
 - Database: a catch-up migration records schema changes previously applied with `db push`, so a database built from `prisma/migrations` now matches `schema.prisma`. Setup and schema changes use `prisma migrate` (README, CONTRIBUTING).
 - All JSON API routes now return a standard envelope: `{ data, meta? }` on success, and the existing `{ error: { code, message, details? } }` on failure. `GET /api/products` returns the product array as `data`; `GET /api/sales` returns entries as `data` with pagination in `meta`. Frontend calls go through a shared `apiFetch` client helper. See `docs/API.md`.
-- Zod request schemas are consolidated in `src/schemas/`, shared by API routes and forms.
 - Production logs are single-line JSON (`level`, `timestamp`, `context`, `message`, `requestId`, `data`) for CloudWatch filtering; local dev keeps the colored format.
 
 ### Fixed
