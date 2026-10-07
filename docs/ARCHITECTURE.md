@@ -26,6 +26,7 @@ This is the canonical technical reference for Freshcast: system architecture, da
 | [017](adr/017-next-config-no-env.md) | No `next.config` `env`; route via `amplify.yml` → `.env.production` |
 | [018](adr/018-secrets-manager.md) | Hybrid env→Secrets Manager resolver for vendor API keys + cron secret |
 | [019](adr/019-receipt-ocr-hardening.md) | Receipt OCR is LLM-only by default; Textract migrated to `AnalyzeExpense` |
+| [020](adr/020-dedicated-nestjs-backend.md) | Dedicated NestJS backend, migrated incrementally in a pnpm + Turborepo monorepo |
 
 ---
 
@@ -34,56 +35,75 @@ This is the canonical technical reference for Freshcast: system architecture, da
 ### 2.1 High-Level Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    Client (Browser / PWA)             │
-│  Next.js App Router · React 19 · Tailwind v4 · shadcn│
-└───────────────────────┬─────────────────────────────┘
-                        │ HTTPS
-┌───────────────────────▼─────────────────────────────┐
-│       Next.js SSR (AWS Amplify)                     │
-│  ┌──────────────┐  ┌──────────────────────────────┐ │
-│  │  App Router   │  │   API Routes (/api/*)        │ │
-│  │  (SSR/RSC)    │  │   REST endpoints             │ │
-│  └──────────────┘  └──────────┬───────────────────┘ │
-│                                │                     │
-│  ┌──────────────┐  ┌──────────▼───────────────────┐ │
-│  │   Auth.js v5  │  │   Business Logic Services    │ │
-│  │  (JWT)        │  │   Parser · Receipt parser ·  │ │
-│  └──────┬───────┘  │   Analytics · Predictions ·  │ │
-│         │          │   Insights · Chat Context ·  │ │
-│         │          │   Weekly Email               │ │
-│         │          └──────────┬───────────────────┘ │
-│  ┌──────▼─────────────────────▼───────────────────┐ │
-│  │         Prisma v7 ORM (PrismaPg adapter)        │ │
-│  │    + Product ownership verification             │ │
-│  └──────────────────────┬─────────────────────────┘ │
-└─────────────────────────┼───────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────┐
-│          PostgreSQL (Neon — Serverless)               │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ Client (Browser / PWA)                                   │
+│ Next.js App Router · React 19 · Tailwind v4 · shadcn/ui  │
+│ Forms validate with @freshcast/shared (Zod)              │
+└──────────────────────────────────────────────────────────┘
+                              │ HTTPS · freshcast.site
+                              ▼
+┌──────────────────────────────────────────────────────────┐
+│ apps/web: Next.js SSR on AWS Amplify                     │
+│                                                          │
+│ proxy.ts        session check · request IDs              │
+│ App Router      pages (SSR/RSC)                          │
+│ API routes      REST, { data } / { error } envelope,     │
+│                 withRequestLogging (JSON logs)           │
+│ Auth.js v5      credentials, JWT sessions                │
+│ Services        parsers · analytics · predictions ·      │
+│                 insights · chat context · weekly email   │
+│                                                          │
+│ @freshcast/shared   Zod schemas, API types, constants    │
+│ @freshcast/db       createPrismaClient() (Prisma + pg)   │
+└──────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌──────────────────────────────────────────────────────────┐
+│ PostgreSQL (Neon, serverless)                            │
+└──────────────────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────────────┐
-│    Claude API (Anthropic Haiku 4.5)                   │
-│    Insights · NL Parsing · Receipt mapping · AI Chat  │
-│    Fallback: templates (insights), rule-based (NL),   │
-│    503 (receipts — see ADR-019)                       │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ Claude API (Anthropic Haiku 4.5)                         │
+│ Insights · NL parsing · receipt mapping · chat           │
+│ Fallbacks: templates (insights), rule-based (NL),        │
+│ 503 (receipts, see ADR-019)                              │
+└──────────────────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────────────┐
-│    AWS                                                │
-│    SES — auth + weekly summary email (Resend fallback)│
-│    EventBridge — weekly summary scheduler             │
-│    S3 — receipt image storage (presigned PUT)         │
-│    Textract `AnalyzeExpense` — structured receipt OCR │
-│    Secrets Manager — Anthropic, Resend, cron secret   │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ AWS                                                      │
+│ SES: auth emails (Resend fallback)                       │
+│ S3 + Textract AnalyzeExpense: receipts (off by default)  │
+│ Secrets Manager: Anthropic, Resend, cron secret          │
+│ CloudWatch: request and application logs                 │
+│ Weekly summary scheduling: paused, rebuild in #42        │
+└──────────────────────────────────────────────────────────┘
 ```
 
 
 ### 2.2 Project Structure
 
-The repo is a pnpm workspace with Turborepo (ADR-020). The Next.js app lives in `apps/web`; the Prisma schema, migrations and client factory live in the `@freshcast/db` package (`packages/db`); the Zod request schemas, response-envelope types and the constants they use (`BUSINESS_TYPES`, `RECEIPT_MAX_UPLOAD_BYTES`) live in `@freshcast/shared` (`packages/shared/src/schemas`: auth, business, products, sales, receipts, chat, api). The tree below is `apps/web/src/`.
+The repo is a pnpm workspace built with Turborepo (ADR-020):
+
+```
+freshcast/
+├── apps/
+│   └── web/                     # @freshcast/web: Next.js app (pages, API routes, services)
+│       ├── src/                 # see the tree below
+│       ├── scripts/             # materialize-next-aliases.mjs (post-build, see §12)
+│       └── public/
+├── packages/
+│   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
+│   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
+│   │   └── src/                 # client factory + generated client (gitignored)
+│   └── shared/                  # @freshcast/shared: Zod schemas, envelope types, constants
+│       └── src/schemas/         # auth, business, products, sales, receipts, chat, api
+├── docs/                        # ARCHITECTURE, API, ADRs
+├── amplify.yml                  # Amplify monorepo build (appRoot: apps/web)
+├── turbo.json                   # Turborepo task graph
+└── pnpm-workspace.yaml          # workspace packages, allowBuilds, nodeLinker: hoisted
+```
+
+The web app's source tree (`apps/web/src/`):
 
 ```
 src/
@@ -268,11 +288,11 @@ Reset:      POST /api/auth/forgot-password → generate token → send email via
 
 ### Route Protection
 
-`src/proxy.ts` (Next.js 16's replacement for middleware) protects all `/(app)/*` routes. Public routes: `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify`.
+`apps/web/src/proxy.ts` (Next.js 16's replacement for middleware) protects all `/(app)/*` routes. Public routes: `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify`.
 
 ### Rate Limiting
 
-In-memory sliding window rate limiter (`src/lib/rate-limit.ts`):
+In-memory sliding window rate limiter (`apps/web/src/lib/rate-limit.ts`):
 - Signup: 10 per IP per hour
 - Forgot password: 3 per email per hour (silently drops excess to prevent enumeration)
 
@@ -297,8 +317,8 @@ The full endpoint catalogue — request/response shapes, query parameters, statu
 
 Every API request produces one `request completed` log line with `method`, `path`, `status`, `durationMs` and the request ID. It's logged at `info`, `warn` (4xx) or `error` (5xx).
 
-- **`src/proxy.ts`** assigns the request ID for `/api/*`. It reuses a well-formed incoming `x-request-id` (letters, digits, `.`, `_`, `-`, up to 128 characters) or generates a UUID. It passes the ID to the route as a request header and returns it on the response. Requests the proxy rejects (401) are logged there with `handledBy: "proxy"`.
-- **`withRequestLogging`** (`src/lib/request-logging.ts`) wraps every route handler export. It runs the handler inside a request context, so any `logger` call made while handling the request is tagged with the same ID. It times the request and writes the summary line. An unhandled error is logged and returned as the standard 500 envelope.
+- **`apps/web/src/proxy.ts`** assigns the request ID for `/api/*`. It reuses a well-formed incoming `x-request-id` (letters, digits, `.`, `_`, `-`, up to 128 characters) or generates a UUID. It passes the ID to the route as a request header and returns it on the response. Requests the proxy rejects (401) are logged there with `handledBy: "proxy"`.
+- **`withRequestLogging`** (`apps/web/src/lib/request-logging.ts`) wraps every route handler export. It runs the handler inside a request context, so any `logger` call made while handling the request is tagged with the same ID. It times the request and writes the summary line. An unhandled error is logged and returned as the standard 500 envelope.
 - **Not logged:** query strings and request/response bodies, which can contain tokens or personal data. Only the path is logged.
 - **Format:** in production (`NODE_ENV=production`) each line is a single JSON object, `{ level, timestamp, context, message, requestId?, data? }`, so CloudWatch can filter on fields (e.g. `$.data.status >= 500`). Local development keeps the colored format, with a short `[req:xxxxxxxx]` tag.
 
@@ -349,7 +369,7 @@ Two parsers with automatic fallback:
 - Confidence: based on data volume (5/15/30 thresholds) adjusted by coefficient of variation
 - Minimum: 5 sales entries before predictions activate
 - Time horizons: next day + next 7 days
-- Region-based holiday data from `src/data/holidays.ts`
+- Region-based holiday data from `apps/web/src/data/holidays.ts`
 
 ### 6.3 Insight Generator (ADR-005, ADR-011)
 
@@ -408,7 +428,7 @@ Two parsers, both consuming AWS Textract `AnalyzeExpense` output (structured `Li
 `services/weekly-email.ts` composes a per-business weekly digest (last week's totals + week-ahead forecast) and sends via `lib/email.ts` (SES primary, Resend fallback). Triggered by `POST /api/email/weekly-summary`, which fans out across every business with `weeklyEmailEnabled: true`.
 
 **Status: not operational (paused).** No scheduler invokes the route, and the Settings toggle is hidden until the feature is rebuilt.
-- The route sits behind the session check in `src/proxy.ts`, which rejects scheduler calls (no login cookie) before the route's own bearer check runs. Neither the EventBridge rule nor the Vercel Cron mirror ever reached it.
+- The route sits behind the session check in `apps/web/src/proxy.ts`, which rejects scheduler calls (no login cookie) before the route's own bearer check runs. Neither the EventBridge rule nor the Vercel Cron mirror ever reached it.
 - The legacy EventBridge setup (a scheduled rule targeting an API destination, plus a connection holding `Authorization: Bearer <CRON_SECRET>`) had a deauthorized connection with a pre-rotation secret. It has been removed.
 - Planned redesign (#42, Stage 4f): EventBridge Scheduler (hourly, IAM-authorized, defined in code) → SQS (one message per business, with a dead-letter queue and alarm) → a NestJS worker. Each business is sent at its local Monday 07:00, guarded by a unique `(businessId, isoWeek)` sent record so retries can't double-send.
 
@@ -466,15 +486,15 @@ Settings accessible from dashboard header (⚙ Settings link).
 ### 7.5 i18n
 
 - Library: `next-intl` with Next.js 16 plugin
-- ~150 translation keys in `src/messages/en.json`
+- ~150 translation keys in `apps/web/src/messages/en.json`
 - 8 namespaces: common, auth, onboarding, dashboard, sales, products, predictions, nav
-- Adding a language: create `src/messages/{locale}.json`, update `src/i18n/request.ts`
+- Adding a language: create `apps/web/src/messages/{locale}.json`, update `apps/web/src/i18n/request.ts`
 
 ### 7.6 PWA
 
-- `src/app/manifest.ts` — app name, warm theme, standalone display, start URL `/dashboard`
+- `apps/web/src/app/manifest.ts` — app name, warm theme, standalone display, start URL `/dashboard`
 - `public/sw.js` — network-first service worker with offline fallback
-- `src/app/offline/page.tsx` — "You're offline" page
+- `apps/web/src/app/offline/page.tsx` — "You're offline" page
 - Icons: 192x192, 512x512, 512x512 maskable, apple-touch-icon
 
 ---
@@ -486,7 +506,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 - CSRF: Auth.js built-in
 - Rate limiting: in-memory sliding window on auth endpoints (signup 10/IP/hr, forgot-password 3/email/hr), AI chat (20/hr), and `/api/sales/parse` (30/hr) per Phase 23
 - Input validation: Zod schemas on all API inputs
-- Input sanitization: `src/lib/sanitize.ts` strips control chars + clamps length on user-facing text (business name, product name)
+- Input sanitization: `apps/web/src/lib/sanitize.ts` strips control chars + clamps length on user-facing text (business name, product name)
 - SQL injection: Prisma parameterized queries
 - XSS: React default escaping + sanitization above
 - Data isolation: every query scoped to `businessId` from session
@@ -513,11 +533,13 @@ Settings accessible from dashboard header (⚙ Settings link).
 | Amazon Textract `AnalyzeExpense` | Structured receipt OCR | ~$0.01/page (≈10× `DetectDocumentText`); pennies/business/month at expected receipt volumes |
 | AWS Secrets Manager | Vendor API keys + cron secret (3 secrets) | ~$0.40/month/secret + per-call charges |
 | Resend | Fallback email delivery | Free tier (3000/month) |
-| Sentry | Error tracking | Free developer tier |
+| Sentry | Error tracking (SDK initialization fix pending, #68) | Free developer tier |
 
 ---
 
 ## 10. Environment Variables
+
+Locally, the web app reads `apps/web/.env` and Prisma commands read `packages/db/.env` (only `DATABASE_URL`). In production, Amplify writes allowlisted variables to `apps/web/.env.production` at build time (see below).
 
 ### Variables
 
@@ -547,17 +569,17 @@ Per **ADR-017**, no environment variables are listed under `next.config.ts` `env
 
 Amplify Hosting injects Console env vars into the **build container** but does not propagate them to the **SSR Lambda**. To bridge the gap, `amplify.yml` writes the relevant Console vars into `.env.production` immediately before `next build`, where Next.js's native `.env` loader picks them up for both the build and the SSR runtime. Server-only vars stay server-side; only `NEXT_PUBLIC_*` cross into the client bundle.
 
-Server-only modules that read secret env vars (`src/lib/{prisma,env,email,ses,claude,s3,aws-config,secrets}.ts`) carry an `import "server-only"` guard so that any future client-side import fails the build instead of silently leaking values into a client chunk.
+Server-only modules that read secret env vars (`apps/web/src/lib/{prisma,env,email,ses,claude,s3,aws-config,secrets}.ts`) carry an `import "server-only"` guard so that any future client-side import fails the build instead of silently leaking values into a client chunk.
 
 ### Secrets Manager (hybrid resolver)
 
-Per **ADR-018**, three secrets are sourced from **AWS Secrets Manager** at runtime via `src/lib/secrets.ts`:
+Per **ADR-018**, three secrets are sourced from **AWS Secrets Manager** at runtime via `apps/web/src/lib/secrets.ts`:
 
 | SM secret ID | Reads as env | Consumer |
 |---|---|---|
-| `freshcast/anthropic-api-key` | `ANTHROPIC_API_KEY` | `src/lib/claude.ts` |
-| `freshcast/resend-api-key` | `RESEND_API_KEY` | `src/lib/email.ts` |
-| `freshcast/cron-secret` | `CRON_SECRET` | `src/app/api/email/weekly-summary/route.ts` |
+| `freshcast/anthropic-api-key` | `ANTHROPIC_API_KEY` | `apps/web/src/lib/claude.ts` |
+| `freshcast/resend-api-key` | `RESEND_API_KEY` | `apps/web/src/lib/email.ts` |
+| `freshcast/cron-secret` | `CRON_SECRET` | `apps/web/src/app/api/email/weekly-summary/route.ts` |
 
 Resolution order is **env first, SM second**: when the env var is set the resolver returns it without touching SM (used by local dev, preview branches, and as a manual rollback). When unset, SM is fetched once per warm Lambda container and cached for the rest of its lifetime. On SM error the resolver returns `null` so callers degrade gracefully (chat skipped, weekly-summary route returns 401 if no secret is resolved).
 
@@ -588,3 +610,55 @@ The Amplify SSR Lambda execution role has a least-privilege inline policy granti
 | Env on Amplify | No `next.config` `env`; route via `amplify.yml` → `.env.production` | 017 |
 | Secrets at runtime | Hybrid env→Secrets Manager resolver for vendor API keys and cron secret | 018 |
 | Receipt OCR fallback | LLM-only by default; Textract migrated to `AnalyzeExpense`; structured rule-based fallback opt-in via `RECEIPT_FALLBACK=structured` | 019 |
+| Backend architecture | Dedicated NestJS API, migrated incrementally; monorepo with `@freshcast/db` and `@freshcast/shared` | 020 |
+
+---
+
+## 12. Build and Deployment
+
+### 12.1 Workspace and task graph
+
+The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.json`). Root scripts run each task across all packages:
+
+| Task | What runs | Order |
+|---|---|---|
+| `build` | `@freshcast/db`: `prisma generate && tsc` · `@freshcast/shared`: `tsc` · `@freshcast/web`: `next build && node scripts/materialize-next-aliases.mjs` | Dependencies first (`^build`) |
+| `lint`, `typecheck`, `test`, `dev` | Per package | After dependencies are built |
+
+- **Compiled packages:** both packages compile to `dist/`, with `exports` pointing types at `apps/web/src/` and runtime at `dist/`.
+- **Caching:** Turborepo caches task outputs (`.next/**`, `dist/**`, and the generated Prisma client), so unchanged packages are skipped.
+- **Environment mode:** `envMode: loose` passes the full environment to tasks, as plain `next build` did. `.env*` files count as build inputs.
+
+### 12.2 CI and branch rules
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push to `main`: frozen `pnpm install`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` with placeholder env values. The build checks that env vars exist when routes load but never connects to the database.
+
+A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` job must pass, and force-pushes and branch deletion are blocked.
+
+### 12.3 AWS Amplify (production)
+
+`amplify.yml` uses Amplify's monorepo format:
+- **`appRoot: apps/web`.** The Amplify environment variable `AMPLIFY_MONOREPO_APP_ROOT=apps/web` (all branches) must match it.
+- **`buildPath: /`,** so the workspace installs and builds from the repo root.
+- **Node 24** via `nvm install 24 --skip-default-packages`, then `corepack enable` and `pnpm install --frozen-lockfile`.
+- **Hoisted `node_modules`** (`nodeLinker: hoisted`, mirrored in `.npmrc`). Amplify's SSR runtime can't load pnpm's default symlinked layout.
+- **Allowlisted env vars** are written to `apps/web/.env.production` before the build (ADR-017).
+- **Build:** `pnpm turbo run build --filter=@freshcast/web`; artifacts come from `apps/web/.next`.
+
+**Post-build alias step:** Turbopack externalizes some packages (`@prisma/client`, `pg`, `@aws-sdk/client-s3`, OpenTelemetry hooks) through hashed alias symlinks in `.next/node_modules`, with relative targets sized for the `apps/web` depth. Amplify deploys the app root flattened to `/var/task`, which breaks those links: in #67, every route using these packages failed to load. `scripts/materialize-next-aliases.mjs` replaces the links with real copies, and the build fails if any remain. Recheck it on Next.js upgrades.
+
+### 12.4 Preview branches
+
+Changes to the build, package layout or deployment config are deployed to an **Amplify preview branch** before merging, because local runs don't reproduce Amplify's runtime layout:
+1. **Connect the feature branch** in Amplify. It gets its own URL, `https://<branch>.<app-id>.amplifyapp.com`.
+2. **Set branch-only overrides:** `DATABASE_URL` points at a **dev Neon branch** (never production data), and `AUTH_URL` is the preview URL.
+3. **Turn on access control** (a password) for the branch.
+4. **Verify:** the `/api/auth/*` endpoints return JSON, then a logged-in click-through.
+5. **After merging,** disconnect the preview branch.
+
+Ordinary code changes don't need a preview; CI covers them.
+
+### 12.5 Rollback and migrations
+
+- **Rollback:** Amplify's "Redeploy this version" **rebuilds** that commit with the current environment variables. A commit from before the monorepo needs `AMPLIFY_MONOREPO_APP_ROOT` removed first.
+- **Production migrations** are a separate, deliberate step, never part of the build: `pnpm --filter @freshcast/db migrate:deploy`, with the production `DATABASE_URL` set for that command only. Schema changes go through migrations, never `db push` (see CONTRIBUTING).

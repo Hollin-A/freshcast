@@ -25,7 +25,7 @@ Routes that don't return JSON are excluded from the envelope:
 - `GET /api/auth/verify-email` redirects.
 - `/api/auth/[...nextauth]` responses are controlled by Auth.js.
 
-The client helper `apiFetch` (`src/lib/api-client.ts`) unwraps `data` and throws `ApiRequestError` (with `status`, `code` and `details`) for error responses.
+The client helper `apiFetch` (`apps/web/src/lib/api-client.ts`) unwraps `data` and throws `ApiRequestError` (with `status`, `code` and `details`) for error responses.
 
 ---
 
@@ -735,7 +735,7 @@ Up to 10 prior messages may be included in `history`.
 
 Triggers weekly summary emails for every business with `weeklyEmailEnabled: true`.
 
-**Status:** not currently invoked. No scheduler is configured, and requests without a login session are rejected by `src/proxy.ts` before reaching the route. The feature is being rebuilt on a scheduled job queue (#42).
+**Status:** not currently invoked. No scheduler is configured, and requests without a login session are rejected by `apps/web/src/proxy.ts` before reaching the route. The feature is being rebuilt on a scheduled job queue (#42).
 
 **Auth required:** No session — instead, a shared secret is required when one is configured.
 
@@ -835,7 +835,7 @@ Field semantics:
 | `type` | enum | See business types below |
 | `locale` | string | e.g. `"en"`, default `"en"` |
 | `timezone` | string | IANA timezone, default `"UTC"`, validated server-side via `Intl.DateTimeFormat` |
-| `region` | string | Default `"AU-VIC"`. Drives holiday-aware predictions (`src/data/holidays.ts`). |
+| `region` | string | Default `"AU-VIC"`. Drives holiday-aware predictions (`apps/web/src/data/holidays.ts`). |
 | `weeklyEmailEnabled` | boolean | Default `false`. Toggled via `PATCH /api/business`. Drives `POST /api/email/weekly-summary` recipient list. |
 | `onboarded` | boolean | Default `false`; set to `true` when onboarding completes |
 | `userId` | string | Unique FK → User (one business per user) |

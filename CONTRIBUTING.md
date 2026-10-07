@@ -16,6 +16,8 @@ Branch naming:
 
 - `feat/{short-description}` for features
 - `fix/{short-description}` for bug fixes
+- `refactor/{short-description}` for restructuring without behavior change
+- `chore/{short-description}` for tooling, config and maintenance
 - `docs/{short-description}` for docs-only changes
 
 Use kebab-case and keep branch names short.
@@ -51,10 +53,11 @@ PRs should be small and focused. Include:
 Recommended checklist:
 
 - [ ] `pnpm lint`
-- [ ] `pnpm exec tsc --noEmit`
+- [ ] `pnpm typecheck`
 - [ ] `pnpm test`
 - [ ] `pnpm build`
 - [ ] Manual smoke test for affected user flow
+- [ ] For changes to the build, package layout or deployment config: verified on an Amplify preview branch (see [Architecture §12.4](docs/ARCHITECTURE.md#124-preview-branches))
 
 ## Documentation sync requirements
 
@@ -110,11 +113,13 @@ If your change touches routing, middleware/proxy, rendering, or config conventio
 
 ## Merge flow
 
-After PR approval:
+`main` is protected: changes land through pull requests, and the CI `check` job (lint, type check, tests, build) must pass before merging. Merge on GitHub, then update your local copy:
 
 ```bash
 git checkout main
 git pull
-git merge <your-branch>
+git branch -d <your-branch>
 ```
+
+Merges to `main` deploy to production through AWS Amplify (see [Architecture §12](docs/ARCHITECTURE.md#12-build-and-deployment)).
 
