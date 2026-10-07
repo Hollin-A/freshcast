@@ -56,35 +56,37 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | Language | TypeScript (strict mode) |
 | UI | Tailwind CSS v4, shadcn/ui, Fraunces + Inter + JetBrains Mono |
 | State | React Query (TanStack Query) |
-| Forms | react-hook-form + Zod v4 |
+| Forms | react-hook-form + Zod v4 (schemas shared via `@freshcast/shared`) |
 | Auth | Auth.js v5 (Credentials provider, JWT) |
 | Database | PostgreSQL (Neon serverless) |
-| ORM | Prisma v7 (ESM, PrismaPg adapter) |
+| ORM | Prisma v7 (ESM, PrismaPg adapter) in `@freshcast/db` |
 | AI | Claude Haiku (Anthropic) — NL parsing, insights, chat, receipt mapping |
 | Email | Amazon SES (primary), Resend (fallback) |
 | Scheduling | Paused; to be rebuilt on EventBridge Scheduler + SQS ([#42](https://github.com/Hollin-A/freshcast/issues/42)) |
 | OCR | Amazon Textract `AnalyzeExpense` (receipts) |
 | Storage | Amazon S3 (receipt images, presigned uploads) |
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |
-| Monitoring | Sentry error tracking |
+| Monitoring | Structured JSON logs with request IDs (CloudWatch); Sentry (initialization fix pending, [#68](https://github.com/Hollin-A/freshcast/issues/68)) |
 | i18n | next-intl (externalized strings) |
-| Testing | Vitest (72 unit tests), GitHub Actions CI |
+| Testing | Vitest (92 unit tests), GitHub Actions CI (lint, type check, test, build) |
 | Deployment | AWS Amplify |
+| Monorepo | pnpm workspaces + Turborepo |
 
 ## Architecture
 
 ```
-Client (Browser, PWA)
-  └── Next.js App Router (RSC + Client Components)
-        ├── API Routes (REST)
+Client (Browser, PWA) — forms validate with @freshcast/shared
+  └── apps/web — Next.js App Router (RSC + Client Components) on AWS Amplify
+        ├── proxy.ts (session check, request IDs)
+        ├── API Routes (REST, { data } / { error } envelope)
         │     ├── Auth (signup, login, password reset, email verification)
         │     ├── Business & Products (CRUD)
         │     ├── Sales (parse, create, list, edit, delete, export CSV)
-        │     ├── Receipts (presigned upload, OCR + parse)
+        │     ├── Receipts (presigned upload, OCR + parse; off by default)
         │     ├── Dashboard (aggregated single-call)
         │     ├── Predictions & Insights (cached + on-demand)
         │     ├── Chat (AI-powered Q&A)
-        │     ├── Email cron (weekly summary)
+        │     ├── Weekly summary email (paused, #42)
         │     └── Health & Demo
         ├── Services
         │     ├── Sales Parser (LLM + rule-based fallback)
@@ -94,15 +96,25 @@ Client (Browser, PWA)
         │     ├── Prediction Engine (moving averages + weekday + holidays)
         │     ├── Insight Generator (LLM + template fallback)
         │     ├── Chat Context Builder (business data → Claude prompt)
-        │     └── Weekly Email (summary + forecast)
+        │     └── Weekly Email (summary + forecast; scheduling paused)
         ├── AWS Services
-        │     ├── SES (auth + weekly summary email delivery)
-        │     ├── EventBridge (scheduled jobs)
-        │     ├── S3 (receipt image storage, presigned PUT)
-        │     ├── Textract `AnalyzeExpense` (structured receipt OCR)
+        │     ├── SES (auth emails)
+        │     ├── S3 + Textract `AnalyzeExpense` (receipts)
         │     └── Secrets Manager (Anthropic, Resend, cron secret)
-        └── Prisma ORM → PostgreSQL (Neon)
+        ├── @freshcast/shared — Zod schemas, API envelope types, shared constants
+        └── @freshcast/db — Prisma client factory → PostgreSQL (Neon)
 ```
+
+### Repository layout
+
+```
+apps/web          Next.js app: pages, API routes, services (@freshcast/web)
+packages/db       Prisma schema, migrations, seed and client factory (@freshcast/db)
+packages/shared   Zod request schemas, API envelope types, constants (@freshcast/shared)
+docs/             Architecture, API reference, ADRs
+```
+
+The repo is a pnpm workspace built with Turborepo. Build, deployment and preview-branch practice are described in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#12-build-and-deployment); day-to-day commands are in the [Contributing Guide](CONTRIBUTING.md#repository-layout).
 
 Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
@@ -139,7 +151,7 @@ cd freshcast
 pnpm install
 ```
 
-Create `apps/web/.env` (the web app reads its env file from its own folder; Prisma commands at the repo root read it too):
+Create `apps/web/.env` (the web app reads its env file from its own folder):
 
 ```env
 # Required
@@ -196,9 +208,9 @@ Run the test suite:
 pnpm test
 ```
 
-Tests cover core business logic: sales parser, LLM sales parser, product matcher, prediction engine, insight generator, unit normalizer, date utilities, holiday multipliers, rate limiter, Textract `AnalyzeExpense` mapping, and the rule-based receipt parser. All tests are pure unit tests with no database or network calls.
+Tests cover core business logic (sales parsers, product matcher, prediction engine, unit normalizer, date utilities, holiday multipliers, Textract `AnalyzeExpense` mapping, rule-based receipt parser) and platform code (rate limiter, API client, request logging and IDs, logger, receipt cost controls). All tests are pure unit tests with no database or network calls.
 
-CI runs automatically on every push and PR via GitHub Actions — linting, type checking, and tests.
+CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build. Merging to `main` requires a passing CI check.
 
 ## Current Scope
 
@@ -207,9 +219,9 @@ Freshcast is production-ready for single-business usage with:
 - Sales logging (natural language + manual)
 - Forecasting, insights, and AI chat grounded in business data
 - Privacy and safety controls (business isolation, rate limits, account safeguards)
-- Operational foundations (monitoring, health checks, CI, testing, dual deployment)
+- Operational foundations (structured logging, health checks, CI-gated deploys, testing)
 
-Planned and deferred work is tracked in the project's internal backlog and implementation plan.
+The backend is moving to a dedicated NestJS API ([ADR-020](docs/adr/020-dedicated-nestjs-backend.md)). Planned work is tracked in [GitHub Issues](https://github.com/Hollin-A/freshcast/issues) and on the [project board](https://github.com/users/Hollin-A/projects/1).
 
 ## License
 
