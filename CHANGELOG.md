@@ -11,6 +11,7 @@ All notable changes to Freshcast are documented here.
 - One `request completed` log line per API request, with method, path, status and duration. Query strings and bodies aren't logged.
 
 ### Changed
+- Retired the Vercel mirror deployment (ADR-020 D7): removed `vercel.json` (its cron never reached the route) and the Vercel demo link. AWS Amplify is the only host.
 - The weekly summary email is paused and its Settings toggle hidden until the feature is rebuilt (#42). Emails were never delivered: scheduler requests were rejected by the session proxy, and the EventBridge connection was deauthorized. The legacy EventBridge rule has been removed.
 - Zod request schemas, response-envelope types and the constants they use moved into the `@freshcast/shared` workspace package (`packages/shared`), imported directly by the web app. Schemas use the Zod 4 forms `z.iso.date()` and `z.flattenError()` (same validation and output).
 - Prisma moved into the `@freshcast/db` workspace package (`packages/db`): schema, migrations, seed and a `createPrismaClient()` factory, compiled with `tsc` and built by Turborepo before the web app. Prisma commands now run as `pnpm --filter @freshcast/db <migrate:deploy|migrate:dev|migrate:status|seed>` and read `packages/db/.env`. Migration names are unchanged. Amplify builds skip nvm's default global packages.

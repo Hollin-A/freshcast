@@ -6,7 +6,7 @@ import { getSecret } from "@/lib/secrets";
 import { sendWeeklySummary } from "@/services/weekly-email";
 import { withRequestLogging } from "@/lib/request-logging";
 
-// Called by EventBridge Scheduler (Amplify) or Vercel Cron (fallback) or manually.
+// Not currently scheduled; the weekly email is rebuilt on a job queue in #42.
 async function handlePost(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
