@@ -37,7 +37,7 @@ Freshcast helps small business owners (market vendors, butchers, cafés) track w
 - **Demand predictions** — "You may need ~25 eggs tomorrow" based on weekday patterns and recent trends, with holiday-aware adjustments
 - **Auto-generated insights** — "Egg sales increased 23% this week", "Friday is your strongest day"
 - **AI chat** — ask questions about your own data ("what sold best this week?")
-- **Weekly summary email** — opt-in digest with last week's totals and the week-ahead forecast
+- **Weekly summary email** — opt-in digest with last week's totals and the week-ahead forecast. *Paused: being rebuilt on a scheduled job queue ([#42](https://github.com/Hollin-A/freshcast/issues/42)).*
 - **Dashboard** — today's summary, weekly trends with bar chart, top products, forecasts, demand spike alerts
 
 ## How it works
@@ -62,7 +62,7 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | ORM | Prisma v7 (ESM, PrismaPg adapter) |
 | AI | Claude Haiku (Anthropic) — NL parsing, insights, chat, receipt mapping |
 | Email | Amazon SES (primary), Resend (fallback) |
-| Scheduling | Amazon EventBridge (AWS), Vercel Cron (fallback) |
+| Scheduling | Paused; to be rebuilt on EventBridge Scheduler + SQS ([#42](https://github.com/Hollin-A/freshcast/issues/42)) |
 | OCR | Amazon Textract `AnalyzeExpense` (receipts) |
 | Storage | Amazon S3 (receipt images, presigned uploads) |
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |

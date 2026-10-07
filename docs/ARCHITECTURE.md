@@ -146,7 +146,7 @@ src/
 │   │   ├── insights/route.ts       # GET
 │   │   ├── chat/route.ts           # POST
 │   │   ├── email/
-│   │   │   └── weekly-summary/route.ts  # POST (cron-triggered, EventBridge primary / Vercel Cron mirror)
+│   │   │   └── weekly-summary/route.ts  # POST (bearer CRON_SECRET; currently not scheduled, see 6.7)
 │   │   ├── health/route.ts         # GET (DB + last-insight liveness probe)
 │   │   └── demo/route.ts           # POST (seed demo data)
 │   ├── offline/page.tsx            # PWA offline fallback
@@ -407,10 +407,10 @@ Two parsers, both consuming AWS Textract `AnalyzeExpense` output (structured `Li
 
 `services/weekly-email.ts` composes a per-business weekly digest (last week's totals + week-ahead forecast) and sends via `lib/email.ts` (SES primary, Resend fallback). Triggered by `POST /api/email/weekly-summary`, which fans out across every business with `weeklyEmailEnabled: true`.
 
-**Scheduling**
-- Production: Amazon EventBridge invokes the route weekly with `Authorization: Bearer <CRON_SECRET>`
-- Mirror: Vercel Cron invokes the same route on the Vercel deployment as a safety net
-- Manual: operators can `curl` the route with the same bearer token for backfills
+**Status: not operational (paused).** No scheduler invokes the route, and the Settings toggle is hidden until the feature is rebuilt.
+- The route sits behind the session check in `src/proxy.ts`, which rejects scheduler calls (no login cookie) before the route's own bearer check runs. Neither the EventBridge rule nor the Vercel Cron mirror ever reached it.
+- The legacy EventBridge setup (a scheduled rule targeting an API destination, plus a connection holding `Authorization: Bearer <CRON_SECRET>`) had a deauthorized connection with a pre-rotation secret. It has been removed.
+- Planned redesign (#42, Stage 4f): EventBridge Scheduler (hourly, IAM-authorized, defined in code) → SQS (one message per business, with a dead-letter queue and alarm) → a NestJS worker. Each business is sent at its local Monday 07:00, guarded by a unique `(businessId, isoWeek)` sent record so retries can't double-send.
 
 The route never throws on per-business failure; it logs and continues, returning a `{ sent, failed, total }` summary so a single bad recipient doesn't block the rest.
 
@@ -509,7 +509,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 | Vercel | Hosting + deployment (mirror) | Free tier |
 | Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat, receipt mapping | ~$1-5/month at moderate usage |
 | Amazon SES | Primary email delivery (auth + weekly summary) | Free tier (sandbox mode: verified recipients only) |
-| Amazon EventBridge | Weekly summary scheduler | Free tier (under 14M scheduled invocations/month) |
+| Amazon EventBridge | Weekly summary scheduler (removed; rebuild planned in #42) | n/a |
 | Amazon S3 | Receipt image storage (presigned PUT) | Pennies/month at expected receipt volumes |
 | Amazon Textract `AnalyzeExpense` | Structured receipt OCR | ~$0.01/page (≈10× `DetectDocumentText`); pennies/business/month at expected receipt volumes |
 | AWS Secrets Manager | Vendor API keys + cron secret (3 secrets) | ~$0.40/month/secret + per-call charges |
