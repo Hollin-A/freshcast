@@ -40,7 +40,7 @@ This is the canonical technical reference for Freshcast: system architecture, da
 └───────────────────────┬─────────────────────────────┘
                         │ HTTPS
 ┌───────────────────────▼─────────────────────────────┐
-│       Next.js SSR (AWS Amplify primary, Vercel mirror)│
+│       Next.js SSR (AWS Amplify)                     │
 │  ┌──────────────┐  ┌──────────────────────────────┐ │
 │  │  App Router   │  │   API Routes (/api/*)        │ │
 │  │  (SSR/RSC)    │  │   REST endpoints             │ │
@@ -506,7 +506,6 @@ Settings accessible from dashboard header (⚙ Settings link).
 |---------|---------|------|
 | Neon | PostgreSQL (serverless) | Free tier |
 | AWS Amplify | Hosting + deployment (primary) | Free tier (build minutes + SSR Lambda invocations) |
-| Vercel | Hosting + deployment (mirror) | Free tier |
 | Anthropic (Claude Haiku 4.5) | NL parsing, insights, chat, receipt mapping | ~$1-5/month at moderate usage |
 | Amazon SES | Primary email delivery (auth + weekly summary) | Free tier (sandbox mode: verified recipients only) |
 | Amazon EventBridge | Weekly summary scheduler (removed; rebuild planned in #42) | n/a |
@@ -526,7 +525,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
 | `AUTH_SECRET` | Yes | Auth.js session encryption key |
-| `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.vercel.app`) |
+| `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.site`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
 | `APP_AWS_REGION` | No | Preferred AWS region variable (use when `AWS_*` is reserved by hosting platform) |
 | `APP_AWS_ACCESS_KEY_ID` | No | Preferred AWS access key variable |

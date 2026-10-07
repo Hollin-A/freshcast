@@ -1,6 +1,6 @@
 /**
  * Simple in-memory rate limiter using a sliding window.
- * Suitable for single-instance deployments (Vercel serverless functions
+ * Suitable for single-instance deployments (serverless functions
  * share memory within a single invocation but not across — this provides
  * basic protection, not bulletproof distributed rate limiting).
  */
