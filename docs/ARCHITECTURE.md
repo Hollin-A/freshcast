@@ -27,6 +27,7 @@ This is the canonical technical reference for Freshcast: system architecture, da
 | [018](adr/018-secrets-manager.md) | Hybrid env→Secrets Manager resolver for vendor API keys + cron secret |
 | [019](adr/019-receipt-ocr-hardening.md) | Receipt OCR is LLM-only by default; Textract migrated to `AnalyzeExpense` |
 | [020](adr/020-dedicated-nestjs-backend.md) | Dedicated NestJS backend, migrated incrementally in a pnpm + Turborepo monorepo |
+| [021](adr/021-api-hosting-and-infrastructure-as-code.md) | API on ECS Fargate + ALB; infrastructure as code with AWS CDK from Stage 3; DNS via the existing Route 53 zone |
 
 ---
 
@@ -611,6 +612,7 @@ The Amplify SSR Lambda execution role has a least-privilege inline policy granti
 | Secrets at runtime | Hybrid env→Secrets Manager resolver for vendor API keys and cron secret | 018 |
 | Receipt OCR fallback | LLM-only by default; Textract migrated to `AnalyzeExpense`; structured rule-based fallback opt-in via `RECEIPT_FALLBACK=structured` | 019 |
 | Backend architecture | Dedicated NestJS API, migrated incrementally; monorepo with `@freshcast/db` and `@freshcast/shared` | 020 |
+| API hosting & infrastructure | ECS Fargate + ALB (rolling deploys, circuit breaker); AWS CDK in `infra/`; CDK references the existing Route 53 zone | 021 |
 
 ---
 
