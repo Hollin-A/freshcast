@@ -1,6 +1,8 @@
 import { ok } from "@/lib/api-helpers";
 import { prisma } from "@/lib/prisma";
 import { withRequestLogging } from "@/lib/request-logging";
+// Bundled at build time; npm_package_version is unset when server.js runs directly (Amplify).
+import { version } from "../../../../package.json";
 
 const startTime = Date.now();
 
@@ -27,7 +29,7 @@ async function handleGet() {
     uptime: Math.round((Date.now() - startTime) / 1000),
     database: dbStatus,
     lastInsightGeneration: lastInsightTime,
-    version: process.env.npm_package_version || "0.1.0",
+    version,
     timestamp: new Date().toISOString(),
   });
 }

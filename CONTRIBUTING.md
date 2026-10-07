@@ -106,6 +106,14 @@ Schema changes go through Prisma migrations. Don't use `prisma db push` against 
 3. Commit the schema and the migration together.
 4. Production applies migrations with `pnpm --filter @freshcast/db migrate:deploy` (with the production `DATABASE_URL` set for that command only). Applying to production is a separate, deliberate step, not part of the build.
 
+## Versioning and releases
+
+Freshcast uses [semantic versioning](https://semver.org/). All workspace packages (root, `apps/web`, `packages/*`) share one version, which the health endpoint reports.
+
+1. Changes accumulate under **Unreleased** in `CHANGELOG.md`, updated in the PR that ships them.
+2. **To release:** a PR bumps every `package.json` to the new version and renames "Unreleased" to `vX.Y.Z — <date> — <title>` (with a fresh empty "Unreleased" above it).
+3. **After it merges,** tag the merge commit `vX.Y.Z` on `main` and publish a GitHub Release, using the CHANGELOG section as its notes.
+
 ## Next.js 16 note
 
 This project uses Next.js 16 with breaking changes versus earlier versions.
