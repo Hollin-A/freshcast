@@ -72,7 +72,7 @@ Request validation uses Zod through `nestjs-zod`, with the schemas living in `pa
 - Tasks run in public subnets with a restrictive security group. No NAT gateway, which keeps the baseline cost low.
 - The first deployment is a **walking skeleton** in Stage 3: health endpoint only, with the full CI/CD pipeline in place before any business endpoint moves.
 - CI/CD uses GitHub Actions with **GitHub OIDC** federation to AWS, so no long-lived AWS keys are stored in GitHub. Merges to `main` build the image, push it to ECR, and deploy it to ECS.
-- Whether to add a staging environment is decided in Stage 3.
+- Whether to add a staging environment is decided in Stage 3. *(Deferred to Stage 4 by [ADR-021](021-api-hosting-and-infrastructure-as-code.md), which also records the hosting alternatives considered.)*
 
 ### D6 — EventBridge remains the scheduler
 
@@ -89,6 +89,8 @@ The in-memory limiter becomes `@nestjs/throttler`. In-memory storage is correct 
 ### D9 — Infrastructure as code (optional)
 
 The API's AWS resources (ECR, ECS service and task definition, ALB, security groups, OIDC role) may be codified with AWS CDK (TypeScript) in the final stage.
+
+*Superseded by [ADR-021](021-api-hosting-and-infrastructure-as-code.md): infrastructure as code with AWS CDK is adopted from Stage 3, not optional.*
 
 ### Working practices
 
