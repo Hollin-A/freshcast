@@ -88,10 +88,12 @@ The repo is a pnpm workspace built with Turborepo (ADR-020):
 ```
 freshcast/
 ├── apps/
-│   └── web/                     # @freshcast/web: Next.js app (pages, API routes, services)
-│       ├── src/                 # see the tree below
-│       ├── scripts/             # materialize-next-aliases.mjs (post-build, see §12)
-│       └── public/
+│   ├── web/                     # @freshcast/web: Next.js app (pages, API routes, services)
+│   │   ├── src/                 # see the tree below
+│   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §12)
+│   │   └── public/
+│   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
+│       └── src/                 # main.ts, app.module.ts, config/, database/, secrets/
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
 │   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
@@ -624,7 +626,7 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 
 | Task | What runs | Order |
 |---|---|---|
-| `build` | `@freshcast/db`: `prisma generate && tsc` · `@freshcast/shared`: `tsc` · `@freshcast/web`: `next build && node scripts/materialize-next-aliases.mjs` | Dependencies first (`^build`) |
+| `build` | `@freshcast/db`: `prisma generate && tsc` · `@freshcast/shared`: `tsc` · `@freshcast/web`: `next build && node scripts/materialize-next-aliases.mjs` · `@freshcast/api`: `nest build` | Dependencies first (`^build`) |
 | `lint`, `typecheck`, `test`, `dev` | Per package | After dependencies are built |
 
 - **Compiled packages:** both packages compile to `dist/`, with `exports` pointing types at `apps/web/src/` and runtime at `dist/`.
