@@ -68,7 +68,7 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |
 | Monitoring | Structured JSON logs with request IDs (CloudWatch); Sentry (initialization fix pending, [#68](https://github.com/Hollin-A/freshcast/issues/68)) |
 | i18n | next-intl (externalized strings) |
-| Testing | Vitest (92 unit tests), GitHub Actions CI (lint, type check, test, build) |
+| Testing | Vitest (100 unit tests), GitHub Actions CI (lint, type check, test, build) |
 | Deployment | AWS Amplify |
 | Monorepo | pnpm workspaces + Turborepo |
 
@@ -109,6 +109,7 @@ Client (Browser, PWA) — forms validate with @freshcast/shared
 
 ```
 apps/web          Next.js app: pages, API routes, services (@freshcast/web)
+apps/api          NestJS API, being introduced per ADR-020; not deployed yet (@freshcast/api)
 packages/db       Prisma schema, migrations, seed and client factory (@freshcast/db)
 packages/shared   Zod request schemas, API envelope types, constants (@freshcast/shared)
 docs/             Architecture, API reference, ADRs
@@ -199,6 +200,8 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+`pnpm dev` also starts the NestJS API (`apps/api`) on port 4000. It reads `apps/api/.env`, where only `DATABASE_URL` is required (optional: `PORT`, default 4000; `AWS_REGION`, default `ap-southeast-2`). Without it, the API logs a configuration error and the web app runs as usual. To run only the API: `pnpm --filter @freshcast/api dev`.
 
 ## Testing
 
