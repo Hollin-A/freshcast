@@ -9,6 +9,7 @@ All notable changes to Freshcast are documented here.
 ### Added
 - `apps/api` (`@freshcast/api`): the NestJS API scaffold for the backend migration (ADR-020), not deployed yet. Environment variables are validated with Zod at startup, so a missing or invalid value stops the API with a message naming it. Includes a `SecretsService` port of the env→Secrets Manager resolver (ADR-018) and a `PrismaService` that checks the database at startup and closes its pool on shutdown. `pnpm dev` now also starts the API on port 4000.
 - `@freshcast/db` exports `createPrismaAdapter()`, used by both `createPrismaClient()` and the API.
+- API response envelope, errors and logging in `apps/api`, matching the web API: a global interceptor returns `{ data, meta? }`, a global exception filter returns `{ error: { code, message, details? } }` (unexpected errors become a generic `500 INTERNAL_ERROR`), and `nestjs-pino` writes JSON logs with the web app's fields, one `request completed` line per request and an `x-request-id` on every response. API tests now include HTTP-level tests (Supertest, SWC-compiled).
 
 ## v1.2.0 — 2026-10-07 — Monorepo, API Foundations & Cost Controls
 
