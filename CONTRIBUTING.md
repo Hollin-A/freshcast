@@ -81,7 +81,7 @@ ADR rule:
 This is a pnpm workspace managed with Turborepo:
 
 - `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`.
-- `apps/api`: the NestJS API (`@freshcast/api`), ESM, built with the Nest CLI (`tsc`). Its `.env` lives in `apps/api/.env`; the variables are validated at startup by the Zod schema in `src/config/env.schema.ts`, so add new required config there. Relative imports use `.js` extensions (NodeNext).
+- `apps/api`: the NestJS API (`@freshcast/api`), ESM, built with the Nest CLI (`tsc`). Its `.env` lives in `apps/api/.env`; the variables are validated at startup by the Zod schema in `src/config/env.schema.ts`, so add new required config there. Relative imports use `.js` extensions (NodeNext). Controllers return their payload (or `withMeta(data, meta)`) and throw `ApiException` for expected errors; the global interceptor and filter produce the envelope. Log through Nest's `Logger`, which writes through pino. Tests are compiled with SWC (`unplugin-swc`) so Nest's dependency injection works in Vitest.
 - `packages/db`: `@freshcast/db`, the Prisma schema, migrations, seed and a `createPrismaClient()` factory. It's a compiled package (`prisma generate` + `tsc` to `dist/`) shared by the apps; Turborepo builds it before anything that depends on it. Prisma commands read `packages/db/.env`. It must stay framework-neutral: no `server-only` (the web app keeps that guard in `src/lib/prisma.ts`).
 - `packages/shared`: `@freshcast/shared`, the Zod request schemas, response-envelope types and the constants they use, shared by API routes, browser forms and (later) the NestJS API. Compiled with `tsc` like `@freshcast/db`. It's imported by client code, so its own lint config only allows `zod` and its own modules.
 
