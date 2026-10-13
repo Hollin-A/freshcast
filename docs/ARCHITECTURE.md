@@ -325,6 +325,11 @@ Every API request produces one `request completed` log line with `method`, `path
 - **Not logged:** query strings and request/response bodies, which can contain tokens or personal data. Only the path is logged.
 - **Format:** in production (`NODE_ENV=production`) each line is a single JSON object, `{ level, timestamp, context, message, requestId?, data? }`, so CloudWatch can filter on fields (e.g. `$.data.status >= 500`). Local development keeps the colored format, with a short `[req:xxxxxxxx]` tag.
 
+**NestJS API (`apps/api`, not deployed yet).** The same envelope, request-ID rule and log format, provided by global framework components instead of per-route wrappers:
+- **`EnvelopeInterceptor`** wraps each controller's return value in `{ data }`. Return `withMeta(data, meta)` for `{ data, meta }`; files (`StreamableFile`) pass through.
+- **`ApiExceptionFilter`** turns every error into `{ error: { code, message, details? } }`. Throw `ApiException(code, message, status, details?)` for expected errors, logged at `warn` (4xx) or `error` (5xx) like `errorResponse()`. Nest's own HTTP errors map by status (404 → `NOT_FOUND`, 400 → `VALIDATION_ERROR`, ...). Anything else is logged with its stack and returned as `500 INTERNAL_ERROR`.
+- **`nestjs-pino`** (`src/logging/logging.module.ts`) assigns the request ID, writes the `request completed` line and tags every log line with `requestId` through AsyncLocalStorage. Only the request ID is bound to log lines, never request headers. Development uses `pino-pretty`. Errors use pino's `err` field (`type`, `message`, `stack`).
+
 ---
 
 ## 6. Core Services

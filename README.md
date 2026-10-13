@@ -68,7 +68,7 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |
 | Monitoring | Structured JSON logs with request IDs (CloudWatch); Sentry (initialization fix pending, [#68](https://github.com/Hollin-A/freshcast/issues/68)) |
 | i18n | next-intl (externalized strings) |
-| Testing | Vitest (100 unit tests), GitHub Actions CI (lint, type check, test, build) |
+| Testing | Vitest (112 tests), GitHub Actions CI (lint, type check, test, build) |
 | Deployment | AWS Amplify |
 | Monorepo | pnpm workspaces + Turborepo |
 
