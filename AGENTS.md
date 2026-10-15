@@ -11,6 +11,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `feat/{short-description}`
   - `fix/{short-description}`
   - `docs/{short-description}`
+  - `ui/{short-description}` for frontend presentation-only changes (styles, components, pages, copy). A scope guard limits these branches to the paths in `.github/ui-paths`; see `CONTRIBUTING.md`.
 - Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `style:`, `test:`) with short imperative subjects.
 - Keep docs in sync when behavior changes. See the documentation-sync table in [`CONTRIBUTING.md`](./CONTRIBUTING.md#documentation-sync-requirements) for which file to update; the canonical homes are `README.md` (entrypoint), `docs/ARCHITECTURE.md` (architecture/services/data model), `docs/API.md` (endpoint contracts), `docs/adr/` (decisions), and `CHANGELOG.md` (shipped changes).
 

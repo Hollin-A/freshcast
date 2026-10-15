@@ -1,0 +1,30 @@
+# Paths a ui/* branch may change. Anything else fails the scope guard
+# (scripts/check-ui-scope.mjs), which runs as a Claude Code hook and as the
+# CI scope-guard job. Patterns are globs relative to the repo root; a
+# leading "!" excludes paths an earlier pattern allowed. Widen this list
+# through its own PR, not from a ui/* branch.
+
+# Styles and app-level UI
+apps/web/src/app/globals.css
+apps/web/src/app/layout.tsx
+apps/web/src/app/manifest.ts
+apps/web/src/app/page.tsx
+apps/web/src/app/loading.tsx
+apps/web/src/app/not-found.tsx
+apps/web/src/app/global-error.tsx
+apps/web/src/app/offline/**
+
+# Pages and layouts (route handlers stay out)
+apps/web/src/app/(app)/**
+apps/web/src/app/(auth)/**
+!**/route.ts
+
+# Components, copy and static assets
+apps/web/src/components/**
+apps/web/src/messages/**
+apps/web/public/**
+# The service worker controls caching of API responses
+!apps/web/public/sw.js
+
+# Release notes for the UI change
+CHANGELOG.md
