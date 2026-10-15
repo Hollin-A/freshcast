@@ -19,8 +19,20 @@ Branch naming:
 - `refactor/{short-description}` for restructuring without behavior change
 - `chore/{short-description}` for tooling, config and maintenance
 - `docs/{short-description}` for docs-only changes
+- `ui/{short-description}` for frontend presentation-only changes
 
 Use kebab-case and keep branch names short.
+
+### UI-only branches
+
+A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
+
+The guard runs in two places, both through `scripts/check-ui-scope.mjs`:
+
+- **Claude Code:** a `PreToolUse` hook in `.claude/settings.json` blocks edits outside the allowlist on `ui/` branches. It does nothing on other branches.
+- **CI:** the `scope-guard` job fails a `ui/` pull request that changes any other path, including through shell commands the hook can't see.
+
+Run it locally with `node scripts/check-ui-scope.mjs`. If a UI change turns out to need anything outside the list, it isn't UI-only: rename the branch to `feat/` or `fix/`. Widen `.github/ui-paths` through its own PR, not from a `ui/` branch.
 
 ## Commit style
 
@@ -122,7 +134,7 @@ If your change touches routing, middleware/proxy, rendering, or config conventio
 
 ## Merge flow
 
-`main` is protected: changes land through pull requests, and the CI `check` job (lint, type check, tests, build) must pass before merging. Merge on GitHub, then update your local copy:
+`main` is protected: changes land through pull requests, and the CI `check` job (lint, type check, tests, build) and `scope-guard` job must pass before merging. Merge on GitHub, then update your local copy:
 
 ```bash
 git checkout main

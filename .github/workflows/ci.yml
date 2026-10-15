@@ -42,3 +42,21 @@ jobs:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
           AUTH_SECRET: ci-build-only
           AUTH_URL: http://localhost:3000
+
+  # ui/* branches may only change the frontend presentation files listed in
+  # .github/ui-paths. Other branches pass straight through, so the job can
+  # stay a required check.
+  scope-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check ui/ branch scope
+        run: node scripts/check-ui-scope.mjs --base origin/${{ github.base_ref || 'main' }}
