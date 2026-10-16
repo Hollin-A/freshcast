@@ -27,6 +27,7 @@ This directory contains the architectural decisions made for Freshcast.
 | [019](019-receipt-ocr-hardening.md) | Receipt OCR Hardening — LLM-Only Fallback & AnalyzeExpense Migration | Accepted |
 | [020](020-dedicated-nestjs-backend.md) | Dedicated NestJS Backend (Incremental Migration from Next.js API Routes) | Accepted (D5/D9 refined by ADR-021) |
 | [021](021-api-hosting-and-infrastructure-as-code.md) | API Hosting on ECS Fargate, Infrastructure as Code with AWS CDK | Accepted |
+| [022](022-app-and-landing-site-domains.md) | App on `app.freshcast.site`, Landing Site at the Root Domain | Accepted |
 
 ## Format
 

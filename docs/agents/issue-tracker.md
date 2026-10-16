@@ -19,6 +19,19 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 - **Labels**: exactly one `type:*` (`feat`, `refactor`, `chore`, `test`) and at least one `area:*` (`api`, `web`, `db`, `infra`, `docs`). Add `migration` for work under the NestJS backend migration (ADR-020).
 - Triage labels (see `triage-labels.md`) are applied in addition to these, never instead of them.
 
+## Tracks
+
+Two streams of work run in parallel. Every issue belongs to at most one track, and no issue carries both track labels.
+
+| Track | Label | Milestones | Scope |
+|---|---|---|---|
+| Backend migration | `migration` | `Stage N — …` | Moving the API from Next.js route handlers to NestJS (ADR-020) |
+| UI | `track:ui` | `UI N — …` | Brand, Appearance, desktop layouts, the Landing site, frontend tests and the scope guard |
+
+- A session working on one track lists only that track's issues, for example `gh issue list --label track:ui --state open` or `gh issue list --label migration --state open`.
+- The `track:ui` label names the stream of work, not the branch type. UI-track issues use `ui/` branches for presentation-only changes and `chore/`, `test/` or `docs/` branches for setup the `ui/` scope guard does not allow.
+- Work that needs both tracks lives on one track, and the other track references it and records it as a blocker (see Blocking below).
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
