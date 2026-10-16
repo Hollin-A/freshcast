@@ -33,6 +33,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Scope guard tests
+        run: node --test scripts/check-ui-scope.test.mjs
+
       # Catches build-only failures before Amplify does. Placeholder values
       # satisfy the env checks that run when routes load; the build never
       # connects to the database.
@@ -58,5 +61,11 @@ jobs:
         with:
           node-version: 24
 
+      # Runs main's copy of the script, which reads main's ui-paths, so a
+      # ui/* branch can't loosen the rules that judge it.
       - name: Check ui/ branch scope
-        run: node scripts/check-ui-scope.mjs --base origin/${{ github.base_ref || 'main' }}
+        env:
+          BASE: origin/${{ github.base_ref || 'main' }}
+        run: |
+          git show "$BASE:scripts/check-ui-scope.mjs" > "$RUNNER_TEMP/check-ui-scope.mjs"
+          node "$RUNNER_TEMP/check-ui-scope.mjs" --base "$BASE"

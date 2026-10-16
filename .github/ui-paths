@@ -1,8 +1,10 @@
 # Paths a ui/* branch may change. Anything else fails the scope guard
 # (scripts/check-ui-scope.mjs), which runs as a Claude Code hook and as the
-# CI scope-guard job. Patterns are globs relative to the repo root; a
-# leading "!" excludes paths an earlier pattern allowed. Widen this list
-# through its own PR, not from a ui/* branch.
+# CI scope-guard job. Patterns are globs relative to the repo root, and
+# "**" also matches dot folders. A leading "!" excludes a path whatever its
+# position in the list. CI reads this file from main, so widen it through
+# its own PR; the guard's own files (.github, scripts, .claude) are always
+# out of scope for ui/* branches.
 
 # Styles and app-level UI
 apps/web/src/app/globals.css
@@ -14,17 +16,22 @@ apps/web/src/app/not-found.tsx
 apps/web/src/app/global-error.tsx
 apps/web/src/app/offline/**
 
-# Pages and layouts (route handlers stay out)
+# Pages and layouts. Route handlers and server actions stay out; the script
+# also rejects "use server" directives and changed auth, Prisma and S3 lines.
 apps/web/src/app/(app)/**
 apps/web/src/app/(auth)/**
-!**/route.ts
+!**/route.*
+!**/actions.*
 
 # Components, copy and static assets
 apps/web/src/components/**
 apps/web/src/messages/**
 apps/web/public/**
-# The service worker controls caching of API responses
-!apps/web/public/sw.js
+# A service worker controls caching of API responses, so no scripts in
+# public/ and no changes to where the worker is registered
+!apps/web/public/**/*.js
+!apps/web/public/**/*.mjs
+!apps/web/src/components/shared/sw-register.tsx
 
 # Release notes for the UI change
 CHANGELOG.md

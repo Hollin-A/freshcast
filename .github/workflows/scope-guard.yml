@@ -1,0 +1,35 @@
+name: Scope guard
+
+# The scope-guard job in ci.yml runs the pull request's own copy of ci.yml,
+# which a ui/* branch could edit to skip the check. pull_request_target runs
+# this workflow as it is on main instead. It never checks out or runs the
+# pull request's code: it fetches the head commit and only reads file names,
+# diffs and file contents through git.
+on:
+  pull_request_target:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scope-guard-main:
+    if: startsWith(github.head_ref, 'ui/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check ui/ branch scope
+        env:
+          BASE: origin/${{ github.base_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags origin "pull/$PR_NUMBER/head:pr-head"
+          node scripts/check-ui-scope.mjs --base "$BASE" --head pr-head

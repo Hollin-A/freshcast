@@ -642,7 +642,7 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push to `main`: frozen `pnpm install`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` with placeholder env values. The build checks that env vars exist when routes load but never connects to the database.
 
-A second job, `scope-guard`, runs `scripts/check-ui-scope.mjs`: on `ui/*` branches it fails the pull request if any changed path falls outside `.github/ui-paths`, and it passes immediately on every other branch. The same script backs a Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
+A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 
 A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` and `scope-guard` jobs must pass, and force-pushes and branch deletion are blocked.
 
