@@ -1,0 +1,4 @@
+# The UI scope guard and CI. Changes here need the owner's review.
+/.github/ @Hollin-A
+/scripts/check-ui-scope.mjs @Hollin-A
+/.claude/ @Hollin-A

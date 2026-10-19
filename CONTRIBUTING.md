@@ -27,12 +27,20 @@ Use kebab-case and keep branch names short.
 
 A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
 
-The guard runs in two places, both through `scripts/check-ui-scope.mjs`:
+On top of the path list, the guard rejects a `ui/` change that:
 
-- **Claude Code:** a `PreToolUse` hook in `.claude/settings.json` blocks edits outside the allowlist on `ui/` branches. It does nothing on other branches.
-- **CI:** the `scope-guard` job fails a `ui/` pull request that changes any other path, including through shell commands the hook can't see.
+- adds a server action (a `"use server"` directive), a route handler (`route.*`) or an `actions.*` file
+- adds, removes or edits a line in an allowed file that imports or calls `@/lib/auth`, `@/lib/prisma` or `@/lib/s3`, reads `session`, or calls `redirect(`. Pages and layouts in `(app)` still load their own data, so these lines are how a UI change could reach the backend. The check works line by line: it catches imports, calls and the auth gate, not every line of a multi-line query.
+- adds scripts to `public/` or changes `sw-register.tsx`, since a service worker controls caching of API responses
+- touches the guard itself (`.github/`, `scripts/`, `.claude/`), whatever `.github/ui-paths` says
 
-Run it locally with `node scripts/check-ui-scope.mjs`. If a UI change turns out to need anything outside the list, it isn't UI-only: rename the branch to `feat/` or `fix/`. Widen `.github/ui-paths` through its own PR, not from a `ui/` branch.
+The guard runs in three places, all through `scripts/check-ui-scope.mjs`:
+
+- **Claude Code:** a `PreToolUse` hook in `.claude/settings.json` blocks edits outside the scope on `ui/` branches. It fails closed: if the hook itself errors, the edit is blocked. It resolves symlinks, and blocks edits that land in another checkout of the repo; files outside every checkout (scratch space, memory) are allowed. It does nothing on other branches, and it can't see shell commands.
+- **CI, `scope-guard` (`ci.yml`):** fails a `ui/` pull request that goes outside the scope, including through shell commands the hook can't see. It runs `main`'s copy of the script, which reads `main`'s `.github/ui-paths`, so a `ui/` branch can't loosen the rules that judge it.
+- **CI, `scope-guard-main` (`scope-guard.yml`):** the same check through `pull_request_target`, so it runs the workflow as it is on `main` even if a pull request edits `ci.yml`. It never checks out or runs the pull request's code; it only reads file names, diffs and contents through git.
+
+Run it locally with `node scripts/check-ui-scope.mjs`, and its tests with `node --test scripts/check-ui-scope.test.mjs`. If a UI change turns out to need anything outside the scope, it isn't UI-only: rename the branch to `feat/` or `fix/`. Widen `.github/ui-paths` through its own PR, not from a `ui/` branch. `.github/CODEOWNERS` assigns the guard's files to the owner.
 
 ## Commit style
 

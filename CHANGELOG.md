@@ -12,6 +12,9 @@ All notable changes to Freshcast are documented here.
 - API response envelope, errors and logging in `apps/api`, matching the web API: a global interceptor returns `{ data, meta? }`, a global exception filter returns `{ error: { code, message, details? } }` (unexpected errors become a generic `500 INTERNAL_ERROR`), and `nestjs-pino` writes JSON logs with the web app's fields, one `request completed` line per request and an `x-request-id` on every response. API tests now include HTTP-level tests (Supertest, SWC-compiled).
 - `ui/*` branch type for frontend presentation-only changes, limited to the paths in `.github/ui-paths` by a Claude Code `PreToolUse` hook and a new CI `scope-guard` job (`scripts/check-ui-scope.mjs`).
 
+### Changed
+- The `ui/*` scope guard is harder to get around: CI judges a branch with `main`'s copy of the script and allowlist, a `pull_request_target` workflow (`scope-guard-main`) runs it even if a pull request edits `ci.yml`, and it now rejects server actions, any `route.*` or `actions.*` file, scripts in `public/`, the guard's own files, and changed lines that touch auth, Prisma, S3, the session or redirects. The Claude Code hook fails closed, resolves symlinks and blocks edits in other checkouts of the repo. Dot folders such as `public/.well-known` are no longer blocked by mistake.
+
 ## v1.2.0 — 2026-10-07 — Monorepo, API Foundations & Cost Controls
 
 This release prepares the codebase for a dedicated NestJS backend (ADR-020):
