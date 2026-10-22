@@ -1,5 +1,7 @@
 # Freshcast API Documentation
 
+> **This document describes the Legacy API**, the Next.js route handlers in `apps/web/src/app/api`. They are being replaced by the NestJS API, which follows the conventions in [ADR-023](adr/023-api-contract-owned-by-nestjs.md) and is documented by its OpenAPI document as endpoints ship. A route stays documented here until its Legacy handler is deleted.
+
 All API routes are prefixed with `/api`. Authenticated routes require a valid JWT session (via NextAuth.js).
 
 ## Response format

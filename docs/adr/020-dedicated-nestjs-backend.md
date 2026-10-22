@@ -3,6 +3,8 @@
 ## Status
 Accepted — partially supersedes [ADR-007](007-tech-stack.md) (the "API routes eliminate the need for a separate backend service" rationale and the rejected "Express.js backend" alternative)
 
+*Partially superseded by [ADR-023](023-api-contract-owned-by-nestjs.md): the API owns its contract instead of reproducing the Next.js routes' response shapes, migration slices also move the App's callers and page reads, Stage 5 only removes Prisma from `apps/web`, and the D3 bridge pins the Auth.js version.*
+
 ## Date
 2026-09-25
 

@@ -13,8 +13,12 @@ The public marketing site that introduces Freshcast and links into the App. Serv
 _Avoid_: homepage, marketing page, website
 
 **API**:
-The backend service the App calls for all data, served at `api.freshcast.site`.
+The backend service the App calls for all data, served at `api.freshcast.site`. It replaces the Legacy API one domain at a time.
 _Avoid_: server, backend (when the API specifically is meant)
+
+**Legacy API**:
+The backend built into the App, which the API is replacing. A Legacy API route is deleted once the App no longer calls it.
+_Avoid_: old API, Next.js API, API routes (when the Legacy API as a whole is meant)
 
 ## Presentation
 
