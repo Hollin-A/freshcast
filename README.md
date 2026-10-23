@@ -101,7 +101,7 @@ Client (Browser, PWA) — forms validate with @freshcast/shared
         │     ├── SES (auth emails)
         │     ├── S3 + Textract `AnalyzeExpense` (receipts)
         │     └── Secrets Manager (Anthropic, Resend, cron secret)
-        ├── @freshcast/shared — Zod schemas, API envelope types, shared constants
+        ├── @freshcast/shared — Zod schemas, API response types, shared constants
         └── @freshcast/db — Prisma client factory → PostgreSQL (Neon)
 ```
 
@@ -111,7 +111,7 @@ Client (Browser, PWA) — forms validate with @freshcast/shared
 apps/web          Next.js app: pages, API routes, services (@freshcast/web)
 apps/api          NestJS API, being introduced per ADR-020; not deployed yet (@freshcast/api)
 packages/db       Prisma schema, migrations, seed and client factory (@freshcast/db)
-packages/shared   Zod request schemas, API envelope types, constants (@freshcast/shared)
+packages/shared   Zod request schemas, API response types, constants (@freshcast/shared)
 docs/             Architecture, API reference, ADRs
 ```
 

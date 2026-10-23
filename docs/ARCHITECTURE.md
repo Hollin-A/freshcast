@@ -98,7 +98,7 @@ freshcast/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
 │   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
 │   │   └── src/                 # client factory + generated client (gitignored)
-│   └── shared/                  # @freshcast/shared: Zod schemas, envelope types, constants
+│   └── shared/                  # @freshcast/shared: Zod schemas, response types, constants
 │       └── src/schemas/         # auth, business, products, sales, receipts, chat, api
 ├── docs/                        # ARCHITECTURE, API, ADRs
 ├── amplify.yml                  # Amplify monorepo build (appRoot: apps/web)
@@ -325,9 +325,10 @@ Every API request produces one `request completed` log line with `method`, `path
 - **Not logged:** query strings and request/response bodies, which can contain tokens or personal data. Only the path is logged.
 - **Format:** in production (`NODE_ENV=production`) each line is a single JSON object, `{ level, timestamp, context, message, requestId?, data? }`, so CloudWatch can filter on fields (e.g. `$.data.status >= 500`). Local development keeps the colored format, with a short `[req:xxxxxxxx]` tag.
 
-**NestJS API (`apps/api`, not deployed yet).** The same envelope, request-ID rule and log format, provided by global framework components instead of per-route wrappers:
-- **`EnvelopeInterceptor`** wraps each controller's return value in `{ data }`. Return `withMeta(data, meta)` for `{ data, meta }`; files (`StreamableFile`) pass through.
-- **`ApiExceptionFilter`** turns every error into `{ error: { code, message, details? } }`. Throw `ApiException(code, message, status, details?)` for expected errors, logged at `warn` (4xx) or `error` (5xx) like `errorResponse()`. Nest's own HTTP errors map by status (404 → `NOT_FOUND`, 400 → `VALIDATION_ERROR`, ...). Anything else is logged with its stack and returned as `500 INTERNAL_ERROR`.
+**NestJS API (`apps/api`, not deployed yet).** The same request-ID rule and log format, provided by global framework components instead of per-route wrappers. Responses follow ADR-023 rather than the Legacy envelope:
+- **Responses are unwrapped.** A controller's return value is the response body. Paginated lists return `paginated(items, meta)`, which is `{ items, meta: { total, limit, offset } }`. Deletes use `@HttpCode(204)`.
+- **`ApiExceptionFilter`** turns every error into RFC 9457 Problem Details (`application/problem+json`): `{ type, title, status, detail, code, errors? }`. Throw `ApiException(code, detail, status, { title?, errors? })` for expected errors. They're logged at `warn` (4xx) or `error` (5xx). Nest's own HTTP errors map by status (404 → `NOT_FOUND`, 400 → `VALIDATION_ERROR`, ...). Anything else is logged with its stack and returned as `500 INTERNAL_ERROR`.
+- **`@Public()`** marks routes that the auth guard (#29) will let through without a session.
 - **`nestjs-pino`** (`src/logging/logging.module.ts`) assigns the request ID, writes the `request completed` line and tags every log line with `requestId` through AsyncLocalStorage. Only the request ID is bound to log lines, never request headers. Development uses `pino-pretty`. Errors use pino's `err` field (`type`, `message`, `stack`).
 
 ---
