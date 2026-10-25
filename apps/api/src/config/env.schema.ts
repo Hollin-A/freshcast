@@ -19,6 +19,9 @@ export const envSchema = z.object({
         : "must be a postgres:// or postgresql:// connection string",
   }),
   AWS_REGION: z.string().min(1).default("ap-southeast-2"),
+  // The deployed build, reported by /health/live. The deploy pipeline sets
+  // the git SHA (#34); without it the package.json version is used.
+  APP_VERSION: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

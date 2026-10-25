@@ -4,11 +4,14 @@ import { PrismaClient } from "./generated/prisma/client.js";
 /**
  * Creates the `pg` driver adapter Prisma uses to reach Postgres. Exposed on
  * its own for the API's PrismaService, which extends PrismaClient.
+ * `connectionTimeoutMillis` bounds each new connection; pg waits forever
+ * by default.
  */
 export function createPrismaAdapter(
-  connectionString: string | undefined = process.env.DATABASE_URL
+  connectionString: string | undefined = process.env.DATABASE_URL,
+  options: { connectionTimeoutMillis?: number } = {}
 ): PrismaPg {
-  return new PrismaPg({ connectionString });
+  return new PrismaPg({ connectionString, ...options });
 }
 
 /**

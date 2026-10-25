@@ -16,6 +16,9 @@ async function bootstrap(): Promise<void> {
     process.exit(1);
   }
   app.useLogger(app.get(PinoLogger));
+  // Nest only flushes the buffer once listen() succeeds, so a failure during
+  // init (such as the startup database check) would exit without a log line.
+  app.flushLogs();
 
   // Run onModuleDestroy hooks on SIGTERM, which ECS sends before stopping a task.
   app.enableShutdownHooks();
