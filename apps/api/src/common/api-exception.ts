@@ -1,22 +1,44 @@
 import { HttpException } from "@nestjs/common";
-import type { ApiErrorBody } from "@freshcast/shared";
+import { PROBLEM_TYPE_BASE, type ProblemDetails } from "@freshcast/shared";
 
 /**
- * An expected API error with a stable code, sent to the client as
- * `{ error: { code, message, details? } }` by ApiExceptionFilter.
- * Codes and statuses match the Next.js API (docs/API.md).
+ * An expected API error with a stable code, sent to the client as RFC 9457
+ * Problem Details by ApiExceptionFilter (ADR-023). `detail` is the
+ * human-readable message for this occurrence; `title` defaults to the code
+ * in words ("ENTRY_NOT_EDITABLE" → "Entry not editable").
  */
 export class ApiException extends HttpException {
+  readonly title: string;
+  readonly errors?: Record<string, string[]>;
+
   constructor(
     readonly code: string,
-    message: string,
+    detail: string,
     status: number,
-    readonly details?: Record<string, unknown>
+    options: { title?: string; errors?: Record<string, string[]> } = {}
   ) {
-    super(message, status);
+    super(detail, status);
+    this.title = options.title ?? titleFromCode(code);
+    this.errors = options.errors;
   }
 
-  toBody(): ApiErrorBody {
-    return { error: { code: this.code, message: this.message, details: this.details } };
+  toProblem(): ProblemDetails {
+    return {
+      type: problemType(this.code),
+      title: this.title,
+      status: this.getStatus(),
+      detail: this.message,
+      code: this.code,
+      ...(this.errors && { errors: this.errors }),
+    };
   }
+}
+
+export function problemType(code: string): string {
+  return PROBLEM_TYPE_BASE + code.toLowerCase().replaceAll("_", "-");
+}
+
+export function titleFromCode(code: string): string {
+  const words = code.toLowerCase().replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

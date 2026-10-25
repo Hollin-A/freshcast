@@ -1,4 +1,5 @@
-// Response envelope shared by every JSON API route and the client.
+// Legacy API response envelope, shared by the Next.js routes and the App's
+// apiFetch client. The NestJS API uses ./problem.ts instead (ADR-023).
 // Success: { data, meta? }. Failure: { error: { code, message, details? } }.
 
 export type ApiErrorBody = {

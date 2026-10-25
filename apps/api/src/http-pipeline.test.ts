@@ -1,19 +1,28 @@
 import { Writable } from "node:stream";
-import { Controller, Get, type INestApplication, Module, Post, Query } from "@nestjs/common";
-import { APP_FILTER, APP_INTERCEPTOR } from "@nestjs/core";
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  type INestApplication,
+  Module,
+  Post,
+  Query,
+} from "@nestjs/common";
+import { APP_FILTER } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { LoggerModule, Logger as PinoLogger } from "nestjs-pino";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ApiException } from "./common/api-exception.js";
 import { ApiExceptionFilter } from "./common/api-exception.filter.js";
-import { withMeta } from "./common/envelope.js";
-import { EnvelopeInterceptor } from "./common/envelope.interceptor.js";
+import { paginated } from "./common/pagination.js";
 import { pinoParams } from "./logging/logging.module.js";
 
-// The global filter, interceptor and logger from AppModule, around a
-// test-only controller, without the database. Checks responses and log lines
-// against the Next.js API's format (docs/API.md, #13, #14).
+// The global filter and logger from AppModule, around a test-only controller,
+// without the database. Checks responses against ADR-023 (unwrapped
+// resources, { items, meta }, RFC 9457 errors) and log lines against the web
+// app's format (#14).
 
 @Controller("test")
 class TestController {
@@ -24,17 +33,25 @@ class TestController {
 
   @Get("meta")
   paged(@Query("limit") limit: string) {
-    return withMeta([{ id: "s1" }], { total: 1, limit: Number(limit), offset: 0 });
+    return paginated([{ id: "s1" }], { total: 1, limit: Number(limit), offset: 0 });
   }
 
-  @Get("empty")
-  empty() {
+  @Delete("item")
+  @HttpCode(204)
+  remove() {
     return undefined;
   }
 
   @Get("expected")
   expected() {
-    throw new ApiException("NOT_FOUND", "Product not found", 404, { productId: "p9" });
+    throw new ApiException("ENTRY_NOT_EDITABLE", "Only today's entry can be edited.", 422);
+  }
+
+  @Get("invalid")
+  invalid() {
+    throw new ApiException("VALIDATION_ERROR", "Invalid request", 400, {
+      errors: { name: ["Required"] },
+    });
   }
 
   @Get("crash")
@@ -61,7 +78,6 @@ const sink = new Writable({
   controllers: [TestController],
   providers: [
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
-    { provide: APP_INTERCEPTOR, useClass: EnvelopeInterceptor },
   ],
 })
 class TestAppModule {}
@@ -84,46 +100,68 @@ describe("HTTP pipeline", () => {
     lines.length = 0;
   });
 
-  describe("success envelope", () => {
-    it("wraps a returned value in { data }", async () => {
+  describe("responses", () => {
+    it("returns a resource unwrapped", async () => {
       const res = await request(app.getHttpServer()).get("/test/plain").expect(200);
-      expect(res.body).toEqual({ data: { id: "p1", name: "Milk" } });
+      expect(res.body).toEqual({ id: "p1", name: "Milk" });
     });
 
-    it("returns { data, meta } for withMeta()", async () => {
+    it("returns { items, meta } for paginated()", async () => {
       const res = await request(app.getHttpServer()).get("/test/meta?limit=20").expect(200);
       expect(res.body).toEqual({
-        data: [{ id: "s1" }],
+        items: [{ id: "s1" }],
         meta: { total: 1, limit: 20, offset: 0 },
       });
     });
 
-    it("returns { data: null } when the handler returns nothing", async () => {
-      const res = await request(app.getHttpServer()).get("/test/empty").expect(200);
-      expect(res.body).toEqual({ data: null });
+    it("sends no body for a 204", async () => {
+      const res = await request(app.getHttpServer()).delete("/test/item").expect(204);
+      expect(res.text).toBe("");
     });
   });
 
-  describe("error envelope", () => {
-    it("returns an ApiException's code, message, status and details", async () => {
-      const res = await request(app.getHttpServer()).get("/test/expected").expect(404);
+  describe("problem details", () => {
+    it("returns an ApiException as RFC 9457 Problem Details", async () => {
+      const res = await request(app.getHttpServer())
+        .get("/test/expected")
+        .expect(422)
+        .expect("content-type", /^application\/problem\+json/);
       expect(res.body).toEqual({
-        error: { code: "NOT_FOUND", message: "Product not found", details: { productId: "p9" } },
+        type: "https://api.freshcast.site/problems/entry-not-editable",
+        title: "Entry not editable",
+        status: 422,
+        detail: "Only today's entry can be edited.",
+        code: "ENTRY_NOT_EDITABLE",
       });
       expect(lines).toContainEqual(
         expect.objectContaining({
           level: "warn",
           context: "api",
-          message: "NOT_FOUND: Product not found",
-          data: { productId: "p9" },
+          message: "ENTRY_NOT_EDITABLE: Only today's entry can be edited.",
         })
       );
     });
 
+    it("includes field errors for VALIDATION_ERROR", async () => {
+      const res = await request(app.getHttpServer()).get("/test/invalid").expect(400);
+      expect(res.body).toMatchObject({
+        code: "VALIDATION_ERROR",
+        status: 400,
+        errors: { name: ["Required"] },
+      });
+    });
+
     it("hides unexpected errors behind a generic 500 and logs the cause", async () => {
-      const res = await request(app.getHttpServer()).get("/test/crash").expect(500);
+      const res = await request(app.getHttpServer())
+        .get("/test/crash")
+        .expect(500)
+        .expect("content-type", /^application\/problem\+json/);
       expect(res.body).toEqual({
-        error: { code: "INTERNAL_ERROR", message: "Something went wrong" },
+        type: "https://api.freshcast.site/problems/internal-error",
+        title: "Internal error",
+        status: 500,
+        detail: "Something went wrong",
+        code: "INTERNAL_ERROR",
       });
       expect(JSON.stringify(res.body)).not.toContain("secret");
       const logged = lines.find((l) => l.message === "Unhandled error in route handler");
@@ -132,8 +170,11 @@ describe("HTTP pipeline", () => {
     });
 
     it("maps an unknown route to NOT_FOUND", async () => {
-      const res = await request(app.getHttpServer()).get("/nope").expect(404);
-      expect(res.body.error.code).toBe("NOT_FOUND");
+      const res = await request(app.getHttpServer())
+        .get("/nope")
+        .expect(404)
+        .expect("content-type", /^application\/problem\+json/);
+      expect(res.body).toMatchObject({ code: "NOT_FOUND", status: 404, title: "Not found" });
     });
 
     it("maps a malformed JSON body to VALIDATION_ERROR", async () => {
@@ -142,7 +183,7 @@ describe("HTTP pipeline", () => {
         .set("content-type", "application/json")
         .send("{not json")
         .expect(400);
-      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+      expect(res.body.code).toBe("VALIDATION_ERROR");
     });
   });
 
