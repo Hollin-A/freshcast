@@ -1,11 +1,8 @@
 import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
-  test: {
-    globals: true,
-    environment: "node",
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -16,5 +13,30 @@ export default defineConfig({
       // See docs/adr/017-next-config-no-env.md.
       "server-only": path.resolve(__dirname, "./src/test/server-only-stub.ts"),
     },
+  },
+  test: {
+    globals: true,
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          environment: "node",
+          include: ["src/**/*.test.ts"],
+        },
+      },
+      {
+        // Component tests render React into jsdom. Async Server Components
+        // aren't supported by Vitest; cover those with end-to-end tests.
+        extends: true,
+        plugins: [react()],
+        test: {
+          name: "component",
+          environment: "jsdom",
+          include: ["src/**/*.test.tsx"],
+          setupFiles: ["./src/test/setup-component.ts"],
+        },
+      },
+    ],
   },
 });

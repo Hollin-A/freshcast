@@ -79,6 +79,7 @@ export function MobileNav() {
             <Link
               key={tab.href}
               href={tab.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-2 text-[10.5px] font-semibold transition-colors",
                 isActive ? "text-terra" : "text-mute2"
