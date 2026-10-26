@@ -4,6 +4,7 @@ import { NestFactory } from "@nestjs/core";
 import { Logger as PinoLogger } from "nestjs-pino";
 import { AppModule } from "./app.module.js";
 import type { Env } from "./config/env.schema.js";
+import { setupOpenApi } from "./openapi/openapi.js";
 
 async function bootstrap(): Promise<void> {
   let app: INestApplication;
@@ -22,6 +23,8 @@ async function bootstrap(): Promise<void> {
 
   // Run onModuleDestroy hooks on SIGTERM, which ECS sends before stopping a task.
   app.enableShutdownHooks();
+
+  setupOpenApi(app);
 
   const config = app.get<ConfigService<Env, true>>(ConfigService);
   const port = config.get("PORT", { infer: true });

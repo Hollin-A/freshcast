@@ -20,6 +20,24 @@ export const problemDetailsSchema = z.object({
 
 export type ProblemDetails = z.infer<typeof problemDetailsSchema>;
 
+// Every `code` the API can send, with what it means. ApiException only
+// accepts these, and the OpenAPI docs list them, so the two can't drift.
+// Endpoint slices add their domain codes here (Stage 4).
+export const PROBLEM_CODES = {
+  VALIDATION_ERROR:
+    "The body, query or path parameters are invalid. `errors` maps each field to its messages.",
+  UNAUTHORIZED: "No valid session.",
+  FORBIDDEN: "The session can't access this resource.",
+  NOT_FOUND: "The route or resource doesn't exist.",
+  CONFLICT: "The request conflicts with the resource's current state.",
+  BAD_REQUEST: "The request can't be processed.",
+  RATE_LIMITED: "Too many requests. Retry later.",
+  SERVICE_UNAVAILABLE: "A dependency, such as the database, is unavailable.",
+  INTERNAL_ERROR: "An unexpected error. Details are logged, never returned.",
+} as const;
+
+export type ProblemCode = keyof typeof PROBLEM_CODES;
+
 export const pageMetaSchema = z.object({
   total: z.number().int(),
   limit: z.number().int(),
