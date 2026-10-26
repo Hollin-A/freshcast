@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, apiFetchWithMeta } from "@/lib/api-client";
 import type { PaginationMeta, ParsedItem } from "@freshcast/shared";
 
-type SalesEntry = {
+export type SalesEntry = {
   id: string;
   date: string;
   inputMethod: string;

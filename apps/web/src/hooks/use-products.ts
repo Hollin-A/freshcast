@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 
-type Product = {
+export type Product = {
   id: string;
   name: string;
   defaultUnit: string | null;
@@ -13,7 +13,7 @@ type Product = {
 };
 
 // POST/PATCH /api/products return the product without list analytics.
-type ProductRecord = Omit<Product, "avgPerDay" | "trend">;
+export type ProductRecord = Omit<Product, "avgPerDay" | "trend">;
 
 export function useProducts(active = true) {
   return useQuery<{ products: Product[] }>({
