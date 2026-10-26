@@ -68,7 +68,7 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |
 | Monitoring | Structured JSON logs with request IDs (CloudWatch); Sentry (initialization fix pending, [#68](https://github.com/Hollin-A/freshcast/issues/68)) |
 | i18n | next-intl (externalized strings) |
-| Testing | Vitest (134 tests, including React component tests), GitHub Actions CI (lint, type check, test, build) |
+| Testing | Vitest (137 tests, including React component tests), GitHub Actions CI (lint, type check, test, build) |
 | Deployment | AWS Amplify |
 | Monorepo | pnpm workspaces + Turborepo |
 
@@ -213,7 +213,7 @@ pnpm test
 
 Tests cover core business logic (sales parsers, product matcher, prediction engine, unit normalizer, date utilities, holiday multipliers, Textract `AnalyzeExpense` mapping, rule-based receipt parser) and platform code (rate limiter, API client, request logging and IDs, logger, receipt cost controls). All tests are pure unit tests with no database or network calls.
 
-In `apps/web`, Vitest runs two projects: `unit` (`*.test.ts`, Node) and `component` (`*.test.tsx`, jsdom with React Testing Library). Component tests cover the bottom nav, `BigNumber` and the forgot-password form.
+In `apps/web`, Vitest runs two projects: `unit` (`*.test.ts`, Node) and `component` (`*.test.tsx`, jsdom with React Testing Library). Component tests cover the bottom nav, `BigNumber`, the forgot-password form and the products catalog, with API calls answered by MSW handlers and fixtures in `apps/web/src/test/msw/`.
 
 CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build. Merging to `main` requires a passing CI check.
 

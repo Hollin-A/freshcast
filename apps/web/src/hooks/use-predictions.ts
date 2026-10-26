@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch, ApiRequestError } from "@/lib/api-client";
 
-type DayForecast = {
+export type DayForecast = {
   forecastDate: string;
   predictions: {
     product: string;
