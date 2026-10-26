@@ -1,11 +1,11 @@
 import { HttpException } from "@nestjs/common";
-import { PROBLEM_TYPE_BASE, type ProblemDetails } from "@freshcast/shared";
+import { PROBLEM_TYPE_BASE, type ProblemCode, type ProblemDetails } from "@freshcast/shared";
 
 /**
- * An expected API error with a stable code, sent to the client as RFC 9457
- * Problem Details by ApiExceptionFilter (ADR-023). `detail` is the
- * human-readable message for this occurrence; `title` defaults to the code
- * in words ("ENTRY_NOT_EDITABLE" → "Entry not editable"). `extensions` adds
+ * An expected API error with a stable code from PROBLEM_CODES, sent to the
+ * client as RFC 9457 Problem Details by ApiExceptionFilter (ADR-023).
+ * `detail` is the human-readable message for this occurrence; `title`
+ * defaults to the code in words ("RATE_LIMITED" → "Rate limited"). `extensions` adds
  * extra members to the problem, as RFC 9457 allows.
  */
 export class ApiException extends HttpException {
@@ -14,7 +14,7 @@ export class ApiException extends HttpException {
   readonly extensions?: Record<string, unknown>;
 
   constructor(
-    readonly code: string,
+    readonly code: ProblemCode,
     detail: string,
     status: number,
     options: {
@@ -43,11 +43,11 @@ export class ApiException extends HttpException {
   }
 }
 
-export function problemType(code: string): string {
+export function problemType(code: ProblemCode): string {
   return PROBLEM_TYPE_BASE + code.toLowerCase().replaceAll("_", "-");
 }
 
-export function titleFromCode(code: string): string {
+export function titleFromCode(code: ProblemCode): string {
   const words = code.toLowerCase().replaceAll("_", " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
 }

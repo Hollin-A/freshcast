@@ -201,7 +201,7 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-`pnpm dev` also starts the NestJS API (`apps/api`) on port 4000. It reads `apps/api/.env`, where only `DATABASE_URL` is required (optional: `PORT`, default 4000; `AWS_REGION`, default `ap-southeast-2`). Without it, the API logs a configuration error and the web app runs as usual. To run only the API: `pnpm --filter @freshcast/api dev`.
+`pnpm dev` also starts the NestJS API (`apps/api`) on port 4000. It reads `apps/api/.env`, where only `DATABASE_URL` is required (optional: `PORT`, default 4000; `AWS_REGION`, default `ap-southeast-2`). Without it, the API logs a configuration error and the web app runs as usual. To run only the API: `pnpm --filter @freshcast/api dev`. Its docs are at http://localhost:4000/docs.
 
 ## Testing
 

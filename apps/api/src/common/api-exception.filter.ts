@@ -7,11 +7,11 @@ import {
   Logger,
 } from "@nestjs/common";
 import type { Response } from "express";
-import type { ProblemDetails } from "@freshcast/shared";
+import type { ProblemCode, ProblemDetails } from "@freshcast/shared";
 import { ApiException, problemType, titleFromCode } from "./api-exception.js";
 
 // Codes for Nest's own HTTP errors (unknown route, malformed JSON body, ...).
-const CODE_BY_STATUS: Record<number, string> = {
+const CODE_BY_STATUS: Partial<Record<number, ProblemCode>> = {
   400: "VALIDATION_ERROR",
   401: "UNAUTHORIZED",
   403: "FORBIDDEN",

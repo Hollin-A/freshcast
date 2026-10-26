@@ -1,7 +1,7 @@
 import { Writable } from "node:stream";
 import type { INestApplication } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { APP_FILTER, Reflector } from "@nestjs/core";
+import { Reflector } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { TerminusModule } from "@nestjs/terminus";
 import { LoggerModule, Logger as PinoLogger } from "nestjs-pino";
@@ -12,13 +12,13 @@ import {
   healthReadySchema,
   healthUnavailableSchema,
 } from "@freshcast/shared";
-import { ApiExceptionFilter } from "../common/api-exception.filter.js";
+import { HTTP_PIPELINE } from "../common/http-pipeline.js";
 import { IS_PUBLIC_KEY } from "../common/public.decorator.js";
 import { PrismaService } from "../database/prisma.service.js";
 import { pinoParams } from "../logging/logging.module.js";
 import { HealthController } from "./health.controller.js";
 
-// The health endpoints with the real filter and logger, and a fake Prisma
+// The health endpoints with the real pipeline and logger, and a fake Prisma
 // client whose SELECT 1 can be made to fail.
 
 const prisma = {
@@ -44,7 +44,7 @@ describe("health endpoints", () => {
       imports: [TerminusModule.forRoot({ logger: false }), LoggerModule.forRoot(pinoParams("production", sink))],
       controllers: [HealthController],
       providers: [
-        { provide: APP_FILTER, useClass: ApiExceptionFilter },
+        ...HTTP_PIPELINE,
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: { get: () => "abc1234" } },
       ],

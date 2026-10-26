@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
-import { APP_FILTER } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
-import { ApiExceptionFilter } from "./common/api-exception.filter.js";
+import { HTTP_PIPELINE } from "./common/http-pipeline.js";
 import { validateEnv } from "./config/env.schema.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
@@ -18,10 +17,6 @@ import { SecretsModule } from "./secrets/secrets.module.js";
     SecretsModule,
     HealthModule,
   ],
-  providers: [
-    // Registered here rather than in main.ts so it also applies when tests
-    // build the app from AppModule.
-    { provide: APP_FILTER, useClass: ApiExceptionFilter },
-  ],
+  providers: [...HTTP_PIPELINE],
 })
 export class AppModule {}
