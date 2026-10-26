@@ -11,6 +11,8 @@ All notable changes to Freshcast are documented here.
 - `@freshcast/db` exports `createPrismaAdapter()`, used by both `createPrismaClient()` and the API.
 - API responses, errors and logging in `apps/api`, following ADR-023: resources are returned unwrapped, paginated lists are `{ items, meta }`, and a global exception filter returns RFC 9457 Problem Details (`application/problem+json` with a `code` extension; unexpected errors become a generic `500 INTERNAL_ERROR`). `nestjs-pino` writes JSON logs with the web app's fields, one `request completed` line per request and an `x-request-id` on every response. API tests now include HTTP-level tests (Supertest, SWC-compiled).
 - `@freshcast/shared` exports `problemDetailsSchema`, `pageSchema()` and their types for the NestJS API; `@Public()` in `apps/api` marks routes the upcoming auth guard will skip.
+- Component tests for the web app: a `component` Vitest project (jsdom, React Testing Library, jest-dom matchers) runs `*.test.tsx` files beside the existing Node `unit` project, so `pnpm test` and CI run both. `renderWithProviders` wraps components in next-intl and TanStack Query. First tests cover the bottom nav, `BigNumber` and the forgot-password form.
+- The bottom nav marks the active tab with `aria-current="page"` for screen readers.
 - `ui/*` branch type for frontend presentation-only changes, limited to the paths in `.github/ui-paths` by a Claude Code `PreToolUse` hook and a new CI `scope-guard` job (`scripts/check-ui-scope.mjs`).
 
 ### Changed
