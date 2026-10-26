@@ -52,6 +52,10 @@ export function pinoParams(nodeEnv: Env["NODE_ENV"], stream?: DestinationStream)
     quietResLogger: true,
     customAttributeKeys: { reqId: "requestId" },
 
+    // The ALB calls /health/live every few seconds; logging each call would
+    // drown out real traffic.
+    autoLogging: { ignore: (req) => ((req as Req).originalUrl ?? req.url) === "/health/live" },
+
     // One "request completed" line per request, at a level matching the
     // status, with only method, path, status and duration.
     customLogLevel: (_req, res, err) =>

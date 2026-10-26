@@ -2,6 +2,7 @@
 // forms. Client-safe: only zod and sibling modules (see eslint.config.mjs).
 export * from "./api.js";
 export * from "./problem.js";
+export * from "./health.js";
 export * from "./auth.js";
 export * from "./business.js";
 export * from "./products.js";

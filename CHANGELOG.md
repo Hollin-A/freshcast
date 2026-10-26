@@ -11,12 +11,17 @@ All notable changes to Freshcast are documented here.
 - `@freshcast/db` exports `createPrismaAdapter()`, used by both `createPrismaClient()` and the API.
 - API responses, errors and logging in `apps/api`, following ADR-023: resources are returned unwrapped, paginated lists are `{ items, meta }`, and a global exception filter returns RFC 9457 Problem Details (`application/problem+json` with a `code` extension; unexpected errors become a generic `500 INTERNAL_ERROR`). `nestjs-pino` writes JSON logs with the web app's fields, one `request completed` line per request and an `x-request-id` on every response. API tests now include HTTP-level tests (Supertest, SWC-compiled).
 - `@freshcast/shared` exports `problemDetailsSchema`, `pageSchema()` and their types for the NestJS API; `@Public()` in `apps/api` marks routes the upcoming auth guard will skip.
+- Health endpoints in `apps/api` (ADR-023 §7): `GET /health/live` (process up, with version and uptime; for the ALB, not logged) and `GET /health/ready` (database ping via `@nestjs/terminus`; `503 SERVICE_UNAVAILABLE` Problem Details when it fails). Both are public. `@freshcast/shared` exports their response schemas; `ApiException` accepts Problem Details `extensions`; the optional `APP_VERSION` variable sets the reported version.
 - Component tests for the web app: a `component` Vitest project (jsdom, React Testing Library, jest-dom matchers) runs `*.test.tsx` files beside the existing Node `unit` project, so `pnpm test` and CI run both. `renderWithProviders` wraps components in next-intl and TanStack Query. First tests cover the bottom nav, `BigNumber` and the forgot-password form.
 - The bottom nav marks the active tab with `aria-current="page"` for screen readers.
 - `ui/*` branch type for frontend presentation-only changes, limited to the paths in `.github/ui-paths` by a Claude Code `PreToolUse` hook and a new CI `scope-guard` job (`scripts/check-ui-scope.mjs`).
 
 ### Changed
+- The API's startup database check retries with exponential backoff (5 attempts, about 55s at worst) before stopping the process, and each new database connection now times out after 5s (`createPrismaAdapter()` accepts `connectionTimeoutMillis`).
 - The `ui/*` scope guard is harder to get around: CI judges a branch with `main`'s copy of the script and allowlist, a `pull_request_target` workflow (`scope-guard-main`) runs it even if a pull request edits `ci.yml`, and it now rejects server actions, any `route.*` or `actions.*` file, scripts in `public/`, the guard's own files, and changed lines that touch auth, Prisma, S3, the session or redirects. The Claude Code hook fails closed, resolves symlinks and blocks edits in other checkouts of the repo. Dot folders such as `public/.well-known` are no longer blocked by mistake.
+
+### Fixed
+- The API now writes its startup logs when startup fails. Nest held them in a buffer that is only flushed once the server is listening, so a failed start, such as an unreachable database, exited without a log line.
 
 ## v1.2.0 — 2026-10-07 — Monorepo, API Foundations & Cost Controls
 

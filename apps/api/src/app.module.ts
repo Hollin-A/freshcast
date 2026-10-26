@@ -4,6 +4,7 @@ import { ConfigModule } from "@nestjs/config";
 import { ApiExceptionFilter } from "./common/api-exception.filter.js";
 import { validateEnv } from "./config/env.schema.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { HealthModule } from "./health/health.module.js";
 import { LoggingModule } from "./logging/logging.module.js";
 import { SecretsModule } from "./secrets/secrets.module.js";
 
@@ -15,6 +16,7 @@ import { SecretsModule } from "./secrets/secrets.module.js";
     LoggingModule,
     DatabaseModule,
     SecretsModule,
+    HealthModule,
   ],
   providers: [
     // Registered here rather than in main.ts so it also applies when tests
