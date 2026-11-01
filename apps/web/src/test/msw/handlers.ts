@@ -1,4 +1,4 @@
-import { http } from "msw";
+import { http, HttpResponse } from "msw";
 import type * as z from "zod";
 import {
   chatSchema,
@@ -14,6 +14,7 @@ import type { ProductRecord } from "@/hooks/use-products";
 import type { SalesEntry } from "@/hooks/use-sales";
 import { fail, ok } from "./envelope";
 import { onboarded } from "./fixtures/onboarded";
+import { session } from "./fixtures/session";
 import type { Scenario } from "./fixtures/types";
 
 // One handler per Legacy API endpoint the App calls. Request bodies are
@@ -38,7 +39,8 @@ export function createHandlers(scenario: Scenario = onboarded) {
   const findProduct = (id: string) => products.find((p) => p.id === id);
 
   return [
-    // Auth
+    // Auth. Auth.js answers the session endpoint without the envelope.
+    http.get("/api/auth/session", () => HttpResponse.json(session)),
     http.post("/api/auth/signup", () =>
       ok({ message: "Account created successfully" }, { status: 201 }),
     ),

@@ -215,7 +215,9 @@ Tests cover core business logic (sales parsers, product matcher, prediction engi
 
 In `apps/web`, Vitest runs two projects: `unit` (`*.test.ts`, Node) and `component` (`*.test.tsx`, jsdom with React Testing Library). Component tests cover the bottom nav, `BigNumber`, the forgot-password form and the products catalog, with API calls answered by MSW handlers and fixtures in `apps/web/src/test/msw/`.
 
-CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build. Merging to `main` requires a passing CI check.
+Storybook catalogues the components in `components/ui` and `components/shared`, with the same MSW handlers answering API calls. Open it with `pnpm --filter @freshcast/web storybook` (http://localhost:6006). `pnpm test:storybook` runs every story as a test in headless Chromium, once in the light and once in the dark Appearance, including each story's interaction checks. It needs Chromium once: `pnpm --filter @freshcast/web exec playwright install chromium`.
+
+CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build, plus the story tests in a separate `storybook` job. Merging to `main` requires a passing CI check.
 
 ## Current Scope
 
