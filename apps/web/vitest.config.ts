@@ -1,6 +1,31 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, type TestProjectInlineConfiguration } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import { playwright } from "@vitest/browser-playwright";
 import path from "path";
+
+// Stories run as tests in Chromium, once per Appearance, so every story is
+// checked in both light and dark.
+function storybookProject(theme: "light" | "dark"): TestProjectInlineConfiguration {
+  return {
+    extends: true,
+    plugins: [
+      storybookTest({
+        configDir: path.join(__dirname, ".storybook"),
+        initialGlobals: { theme },
+      }),
+    ],
+    test: {
+      name: `storybook-${theme}`,
+      browser: {
+        enabled: true,
+        headless: true,
+        provider: playwright(),
+        instances: [{ browser: "chromium" }],
+      },
+    },
+  };
+}
 
 export default defineConfig({
   resolve: {
@@ -37,6 +62,8 @@ export default defineConfig({
           setupFiles: ["./src/test/setup-component.ts"],
         },
       },
+      storybookProject("light"),
+      storybookProject("dark"),
     ],
   },
 });

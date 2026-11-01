@@ -46,6 +46,45 @@ jobs:
           AUTH_SECRET: ci-build-only
           AUTH_URL: http://localhost:3000
 
+  # Runs every story as a test in Chromium, once per Appearance (light and
+  # dark). Separate from `check` so the browser download stays out of it.
+  storybook:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @freshcast/web exec playwright install --with-deps chromium
+
+      # A cached browser still needs its system libraries.
+      - name: Install Chromium system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @freshcast/web exec playwright install-deps chromium
+
+      - name: Story tests
+        run: pnpm test:storybook
+
   # ui/* branches may only change the frontend presentation files listed in
   # .github/ui-paths. Other branches pass straight through, so the job can
   # stay a required check.
