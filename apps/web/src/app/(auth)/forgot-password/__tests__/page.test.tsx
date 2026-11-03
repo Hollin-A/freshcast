@@ -20,8 +20,6 @@ function captureRequests() {
 }
 
 describe("ForgotPasswordPage", () => {
-  // A malformed address is stopped by the browser's own type="email" check
-  // before zod runs, so the empty field is what reaches the schema.
   it("shows a validation error and does not submit an empty email", async () => {
     const bodies = captureRequests();
     const user = userEvent.setup();
@@ -30,6 +28,23 @@ describe("ForgotPasswordPage", () => {
     await user.click(screen.getByRole("button", { name: "Send reset link" }));
 
     expect(await screen.findByText("Please enter a valid email")).toBeInTheDocument();
+    expect(bodies).toEqual([]);
+  });
+
+  // The form opts out of the browser's type="email" check, so zod's message
+  // shows instead of the native tooltip.
+  it("shows the app's error for a malformed email and does not submit", async () => {
+    const bodies = captureRequests();
+    const user = userEvent.setup();
+    renderWithProviders(<ForgotPasswordPage />);
+
+    const email = screen.getByLabelText("Email");
+    await user.type(email, "owner@");
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+
+    expect(await screen.findByText("Please enter a valid email")).toBeInTheDocument();
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAccessibleDescription("Please enter a valid email");
     expect(bodies).toEqual([]);
   });
 
