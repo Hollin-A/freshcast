@@ -321,7 +321,7 @@ export function OnboardingWizard() {
           What happens next
         </p>
         {[
-          ["1", "Log each day after closing", "Takes under 30 seconds. Speak it or type."],
+          ["1", "Log each day after closing", "Takes under 30 seconds. Just type it in your own words."],
           ["2", "Watch the pattern form", "Forecasts start appearing after 5–7 days of logs."],
           ["3", "Wake up to tomorrow's forecast", "Quantities, not guesses. Prep with confidence."],
         ].map(([n, title, desc], i) => (

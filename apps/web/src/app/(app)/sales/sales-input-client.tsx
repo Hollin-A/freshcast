@@ -457,7 +457,7 @@ export function SalesInputClient({
         }}
       >
         <TabsList className="w-full">
-          <TabsTrigger value="nl" className="flex-1">Speak or type</TabsTrigger>
+          <TabsTrigger value="nl" className="flex-1">In your words</TabsTrigger>
           <TabsTrigger value="manual" className="flex-1">By product</TabsTrigger>
         </TabsList>
 
