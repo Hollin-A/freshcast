@@ -56,16 +56,31 @@ export default function LoginPage() {
         </span>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
         <div className="space-y-2">
           <Label htmlFor="email">{t("email")}</Label>
-          <Input id="email" type="email" placeholder={t("emailPlaceholder")} autoComplete="email" {...register("email")} />
-          {errors.email && <p className="text-sm text-terra">{errors.email.message}</p>}
+          <Input
+            id="email"
+            type="email"
+            placeholder={t("emailPlaceholder")}
+            autoComplete="email"
+            aria-invalid={errors.email ? true : undefined}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            {...register("email")}
+          />
+          {errors.email && <p id="email-error" className="text-sm text-terra">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">{t("password")}</Label>
-          <PasswordInput id="password" placeholder={t("passwordPlaceholder")} autoComplete="current-password" {...register("password")} />
-          {errors.password && <p className="text-sm text-terra">{errors.password.message}</p>}
+          <PasswordInput
+            id="password"
+            placeholder={t("passwordPlaceholder")}
+            autoComplete="current-password"
+            aria-invalid={errors.password ? true : undefined}
+            aria-describedby={errors.password ? "password-error" : undefined}
+            {...register("password")}
+          />
+          {errors.password && <p id="password-error" className="text-sm text-terra">{errors.password.message}</p>}
         </div>
         <div className="mt-2">
           <Button type="submit" size="lg" className="w-full" disabled={isLoading}>

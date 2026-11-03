@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
         <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -67,10 +67,12 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
+            aria-invalid={errors.email ? true : undefined}
+            aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-sm text-terra">{errors.email.message}</p>
+            <p id="email-error" className="text-sm text-terra">{errors.email.message}</p>
           )}
         </div>
         <div className="mt-2">
