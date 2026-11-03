@@ -51,3 +51,6 @@ docs/internal/
 
 # pnpm store (Amplify build cache)
 .pnpm-store
+
+# Editor swap files
+*.swp
