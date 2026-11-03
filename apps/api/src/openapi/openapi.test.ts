@@ -15,8 +15,15 @@ import { setupOpenApi } from "./openapi.js";
 
 type Spec = {
   openapi: string;
-  paths: Record<string, Record<string, { responses: Record<string, Response> }>>;
-  components: { schemas: Record<string, { properties?: Record<string, { description?: string }> }> };
+  security?: Record<string, string[]>[];
+  paths: Record<
+    string,
+    Record<string, { responses: Record<string, Response>; security?: Record<string, string[]>[] }>
+  >;
+  components: {
+    securitySchemes?: Record<string, { type: string; in?: string; name?: string }>;
+    schemas: Record<string, { properties?: Record<string, { description?: string }> }>;
+  };
 };
 type Response = { content?: Record<string, { schema: { $ref?: string } }> };
 
@@ -78,5 +85,19 @@ describe("OpenAPI docs", () => {
   it("lists every problem code", () => {
     const code = spec.components.schemas.ProblemDetailsDto.properties?.code;
     for (const name of Object.keys(PROBLEM_CODES)) expect(code?.description).toContain(name);
+  });
+
+  it("requires the session cookie by default", () => {
+    expect(spec.components.securitySchemes?.session).toMatchObject({
+      type: "apiKey",
+      in: "cookie",
+      name: "__Secure-authjs.session-token",
+    });
+    expect(spec.security).toEqual([{ session: [] }]);
+  });
+
+  it("marks @Public() routes as needing no session", () => {
+    expect(spec.paths["/health/live"].get.security).toEqual([{}]);
+    expect(spec.paths["/health/ready"].get.security).toEqual([{}]);
   });
 });

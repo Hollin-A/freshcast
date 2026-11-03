@@ -1,9 +1,11 @@
-import { SetMetadata } from "@nestjs/common";
+import { applyDecorators, SetMetadata } from "@nestjs/common";
+import { ApiSecurity } from "@nestjs/swagger";
 
 export const IS_PUBLIC_KEY = "isPublic";
 
 /**
  * Marks a route or controller as reachable without a session. The global
- * auth guard (#29) skips routes carrying this metadata.
+ * SessionGuard skips routes carrying this metadata. In OpenAPI, an empty
+ * security requirement overrides the document-wide session requirement.
  */
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+export const Public = () => applyDecorators(SetMetadata(IS_PUBLIC_KEY, true), ApiSecurity({}));
