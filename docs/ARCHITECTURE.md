@@ -293,6 +293,15 @@ Reset:      POST /api/auth/forgot-password → generate token → send email via
 
 `apps/web/src/proxy.ts` (Next.js 16's replacement for middleware) protects all `/(app)/*` routes. Public routes: `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/verify`.
 
+### NestJS API (`apps/api`, ADR-020 D3 step 1)
+
+Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js session cookie, which reaches it through the App's `/api/*` proxy (#35) because the cookie is host-only.
+
+- **`SessionCookieReader`** decrypts the cookie with `getToken()` from `@auth/core/jwt`, using `AUTH_SECRET` and the cookie name as the salt: `__Secure-authjs.session-token` when `NODE_ENV=production`, `authjs.session-token` otherwise. A missing, tampered or expired cookie (or one without the `id` claim) counts as no session.
+- **`SessionGuard`** (global `APP_GUARD`) skips `@Public()` routes. Otherwise it loads the user with their business in one query, answers `401 UNAUTHORIZED` if there's no session or the user no longer exists, and attaches `{ userId, business }` to the request.
+- **`@CurrentBusiness()`** gives handlers `{ id, timezone, region }` and is the only source of a business ID (ADR-008); it answers `403 BUSINESS_REQUIRED` before onboarding. **`@CurrentUser()`** gives `{ id }` for the few routes that work without a business.
+- **Pinned bridge** (ADR-023 §10): `next-auth` is pinned to an exact version, and `apps/api` depends on the exact `@auth/core` it uses. `src/auth/auth-bridge.test.ts` fails if they drift apart.
+
 ### Rate Limiting
 
 In-memory sliding window rate limiter (`apps/web/src/lib/rate-limit.ts`):
@@ -331,7 +340,7 @@ Every API request produces one `request completed` log line with `method`, `path
 - **Validation** (`ZodRequestPipe`, ADR-020 D4). Every `@Body()`, `@Query()` and `@Param()` is typed with a DTO made by `createZodDto(schema)` from nestjs-zod, usually from a schema in `@freshcast/shared`. Invalid input returns `400 VALIDATION_ERROR` with `errors` keyed by field path (`"items.0.quantity"`), or by source (`"body"`) for the whole input. An input typed as a primitive, such as `@Param("id") id: string`, fails with a 500, so nothing reaches a handler unvalidated. Custom parameter decorators are skipped.
 - **Response schemas.** `@ZodResponse({ status, type: SomeDto })` declares a route's success response: the return value is parsed with the schema (unknown fields are stripped, so internal fields can't leak), TypeScript checks the handler's return type against it, and it appears in the docs. A response that breaks its schema is logged and returned as `500 INTERNAL_ERROR`. `@ApiProblemResponse(status, description, type?)` documents an error response as `application/problem+json`. The filter, pipe and serializer are registered together as `HTTP_PIPELINE` in `src/common/http-pipeline.ts`.
 - **OpenAPI** (`src/openapi/`). Swagger UI at `/docs` and the OpenAPI 3.1 document at `/docs/json`, generated from the DTOs and decorators with `@nestjs/swagger` and nestjs-zod's `cleanupOpenApiDoc()`. Public in every environment. Every route documents a Problem Details 500, and the `ProblemDetailsDto` schema lists every `code`.
-- **`@Public()`** marks routes that the auth guard (#29) will let through without a session.
+- **Authentication** (`src/auth/`, see §4). A global `SessionGuard` requires a valid session on every route; `@Public()` on a route or controller opts out, and in OpenAPI gives it an empty security requirement.
 - **`nestjs-pino`** (`src/logging/logging.module.ts`) assigns the request ID, writes the `request completed` line and tags every log line with `requestId` through AsyncLocalStorage. Only the request ID is bound to log lines, never request headers. Development uses `pino-pretty`. Errors use pino's `err` field (`type`, `message`, `stack`).
 - **Health** (`src/health/`, ADR-023 §7). `GET /health/live` returns `{ status, version, uptimeSeconds }` and never touches a dependency; the ALB checks it, so a database outage doesn't make ECS replace healthy tasks. It isn't logged. `GET /health/ready` pings the database through `@nestjs/terminus` (3s timeout) and returns `{ status, checks }`, or `503 SERVICE_UNAVAILABLE` Problem Details with each check's status; the deploy pipeline and monitoring use it. Both are `@Public()`. `version` is `APP_VERSION` (the git SHA in deploys) or the `package.json` version.
 - **Startup database check.** `PrismaService` runs `SELECT 1` before the API listens, retrying 5 times with exponential backoff (2s to 16s, 5s connection timeout, about 55s at worst). A brief outage or Neon cold start is ridden out; a database that stays unreachable, such as a wrong `DATABASE_URL`, stops the task so the deploy fails and ECS rolls back (#33).
@@ -516,7 +525,7 @@ Settings accessible from dashboard header (⚙ Settings link).
 ## 8. Security
 
 - Passwords: bcrypt cost factor 12
-- Sessions: JWT via Auth.js (7-day expiry)
+- Sessions: JWT via Auth.js (30-day expiry, the Auth.js default, renewed as it's used). The NestJS API verifies the same cookie (§4)
 - CSRF: Auth.js built-in
 - Rate limiting: in-memory sliding window on auth endpoints (signup 10/IP/hr, forgot-password 3/email/hr), AI chat (20/hr), and `/api/sales/parse` (30/hr) per Phase 23
 - Input validation: Zod schemas on all API inputs
@@ -560,7 +569,7 @@ Locally, the web app reads `apps/web/.env` and Prisma commands read `packages/db
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
-| `AUTH_SECRET` | Yes | Auth.js session encryption key |
+| `AUTH_SECRET` | Yes | Auth.js session encryption key. `apps/api` needs the same value to read the session cookie (at least 32 characters) |
 | `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.site`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
 | `APP_AWS_REGION` | No | Preferred AWS region variable (use when `AWS_*` is reserved by hosting platform) |

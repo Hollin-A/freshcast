@@ -28,6 +28,7 @@ export const PROBLEM_CODES = {
     "The body, query or path parameters are invalid. `errors` maps each field to its messages.",
   UNAUTHORIZED: "No valid session.",
   FORBIDDEN: "The session can't access this resource.",
+  BUSINESS_REQUIRED: "The account has no business yet. Finish onboarding first.",
   NOT_FOUND: "The route or resource doesn't exist.",
   CONFLICT: "The request conflicts with the resource's current state.",
   BAD_REQUEST: "The request can't be processed.",

@@ -4,9 +4,14 @@ import { cleanupOpenApiDoc } from "nestjs-zod";
 import { PACKAGE_VERSION } from "../version.js";
 import { ProblemDetailsDto } from "./problem.dto.js";
 
+const SESSION_SECURITY = "session";
+
 const DESCRIPTION = `The Freshcast API (ADR-023).
 
 - Resources are returned unwrapped. Lists are \`{ items, meta: { total, limit, offset } }\`.
+- Every route needs the App's session cookie unless it is marked as needing
+  no security. Locally the cookie is \`authjs.session-token\`; on HTTPS it is
+  \`__Secure-authjs.session-token\`.
 - Errors are RFC 9457 Problem Details (\`application/problem+json\`) with a
   stable \`code\`; see the \`ProblemDetailsDto\` schema for the list.`;
 
@@ -18,6 +23,14 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setVersion(PACKAGE_VERSION)
     // 3.1 is JSON Schema, which is what Zod 4 generates.
     .setOpenAPIVersion("3.1.0")
+    // The App's Auth.js session cookie (ADR-020 D3 step 1), required on every
+    // route; @Public() routes override it with an empty requirement.
+    .addCookieAuth(
+      "__Secure-authjs.session-token",
+      { type: "apiKey", description: "The App's Auth.js session cookie" },
+      SESSION_SECURITY
+    )
+    .addSecurityRequirements(SESSION_SECURITY)
     .addGlobalResponse({
       status: 500,
       description: "An unexpected error",
@@ -36,7 +49,7 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
 /**
  * Serves Swagger UI at /docs and the spec at /docs/json. Public in every
  * environment: the contract is no secret, and the routes are plain Express
- * handlers, so the auth guard (#29) never sees them.
+ * handlers, so SessionGuard never sees them.
  */
 export function setupOpenApi(app: INestApplication): void {
   SwaggerModule.setup("docs", app, createOpenApiDocument(app), {
