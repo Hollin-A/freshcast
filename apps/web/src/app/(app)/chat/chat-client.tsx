@@ -76,18 +76,18 @@ export function ChatClient({ businessName }: { businessName: string }) {
       <div className="px-5 pt-14 pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Your data, only</p>
-            <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-ink">Ask Freshcast</h1>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Your data, only</p>
+            <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-foreground">Ask Freshcast</h1>
           </div>
-          <Badge variant="olive">Private</Badge>
+          <Badge variant="success">Private</Badge>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="rounded-2xl border border-line bg-paper px-4 py-3 text-sm leading-relaxed text-body">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-terra">Freshcast</span>
+            <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm leading-relaxed text-soft-foreground">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-primary">Freshcast</span>
               <p className="mt-1">Morning. Want me to pull anything useful about {businessName} for today?</p>
             </div>
           </div>
@@ -101,12 +101,12 @@ export function ChatClient({ businessName }: { businessName: string }) {
             <div
               className={`max-w-[78%] rounded-2xl px-3.5 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "rounded-br-md bg-ink text-cream"
-                  : "rounded-bl-md border border-line bg-paper text-ink"
+                  ? "rounded-br-md bg-inverse text-inverse-foreground"
+                  : "rounded-bl-md border border-border bg-card text-foreground"
               }`}
             >
               {msg.role === "assistant" && (
-                <p className="mb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-terra">Freshcast</p>
+                <p className="mb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-primary">Freshcast</p>
               )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
@@ -115,8 +115,8 @@ export function ChatClient({ businessName }: { businessName: string }) {
 
         {isLoading && (
           <div className="mb-2.5 flex justify-start">
-            <div className="rounded-2xl rounded-bl-md border border-line bg-paper px-3.5 py-3">
-              <p className="text-sm text-muted-warm">Thinking...</p>
+            <div className="rounded-2xl rounded-bl-md border border-border bg-card px-3.5 py-3">
+              <p className="text-sm text-muted-foreground">Thinking...</p>
             </div>
           </div>
         )}
@@ -130,7 +130,7 @@ export function ChatClient({ businessName }: { businessName: string }) {
               key={q}
               onClick={() => sendMessage(q)}
               disabled={isLoading}
-              className="shrink-0 rounded-full border border-line bg-paper px-3 py-2 text-[13px] text-body whitespace-nowrap"
+              className="shrink-0 rounded-full border border-border bg-card px-3 py-2 text-[13px] text-soft-foreground whitespace-nowrap"
             >
               {q}
             </button>
@@ -139,9 +139,9 @@ export function ChatClient({ businessName }: { businessName: string }) {
       )}
 
       <div className="px-4 pb-4">
-        <div className="flex items-center gap-2 rounded-full border border-line bg-paper py-2.5 pl-4 pr-2.5">
+        <div className="flex items-center gap-2 rounded-full border border-border bg-card py-2.5 pl-4 pr-2.5">
           <input
-            className="flex-1 bg-transparent text-sm text-ink placeholder:text-mute2 outline-none"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-faint-foreground outline-none"
             placeholder="Ask a question…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -151,10 +151,10 @@ export function ChatClient({ businessName }: { businessName: string }) {
           <button
             onClick={() => sendMessage(input)}
             disabled={isLoading || !input.trim()}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-terra disabled:opacity-40"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary disabled:opacity-40"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M5 12l7-7 7 7M12 5v16" stroke="#FFF8EC" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M5 12l7-7 7 7M12 5v16" className="stroke-primary-foreground" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>

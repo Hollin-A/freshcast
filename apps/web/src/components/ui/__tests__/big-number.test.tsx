@@ -22,12 +22,12 @@ describe("BigNumber", () => {
   it("colours a rising trend as positive", () => {
     render(<BigNumber value={10} trend="+12%" />);
 
-    expect(screen.getByText("+12%")).toHaveClass("text-olive");
+    expect(screen.getByText("+12%")).toHaveClass("text-success");
   });
 
   it("colours a falling trend as negative", () => {
     render(<BigNumber value={10} trend="-8%" />);
 
-    expect(screen.getByText("-8%")).toHaveClass("text-terra");
+    expect(screen.getByText("-8%")).toHaveClass("text-destructive");
   });
 });

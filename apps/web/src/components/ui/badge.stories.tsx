@@ -17,10 +17,9 @@ export const Variants = meta.story({
       <Badge {...args} variant="outline">Outline</Badge>
       <Badge {...args} variant="ghost">Ghost</Badge>
       <Badge {...args} variant="link">Link</Badge>
-      <Badge {...args} variant="olive">Olive</Badge>
-      <Badge {...args} variant="gold">Gold</Badge>
-      <Badge {...args} variant="plum">Plum</Badge>
-      <Badge {...args} variant="ink">Ink</Badge>
+      <Badge {...args} variant="success">Success</Badge>
+      <Badge {...args} variant="warning">Warning</Badge>
+      <Badge {...args} variant="inverse">Inverse</Badge>
     </div>
   ),
 });

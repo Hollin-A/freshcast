@@ -26,7 +26,7 @@ const meta = preview.meta({
         <CardTitle>Lamb chops</CardTitle>
         <CardDescription>Sold by the portion</CardDescription>
         <CardAction>
-          <Badge variant="olive">Active</Badge>
+          <Badge variant="success">Active</Badge>
         </CardAction>
       </CardHeader>
       <CardContent>Averaging 18 portions a day over the last week.</CardContent>

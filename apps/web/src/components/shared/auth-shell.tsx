@@ -14,11 +14,11 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
         <FCLogo />
       </div>
       <div className="flex flex-1 flex-col pt-5">
-        <h1 className="mt-10 font-serif text-[34px] font-medium leading-[1.05] tracking-tight text-ink">
+        <h1 className="mt-10 font-serif text-[34px] font-medium leading-[1.05] tracking-tight text-foreground">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2.5 max-w-[300px] text-[15px] leading-relaxed text-muted-warm">
+          <p className="mt-2.5 max-w-[300px] text-[15px] leading-relaxed text-muted-foreground">
             {subtitle}
           </p>
         )}
@@ -27,7 +27,7 @@ export function AuthShell({ title, subtitle, children, footer }: AuthShellProps)
         </div>
         <div className="flex-1" />
         {footer && (
-          <div className="py-5 pb-6 text-center text-sm text-muted-warm">
+          <div className="py-5 pb-6 text-center text-sm text-muted-foreground">
             {footer}
           </div>
         )}

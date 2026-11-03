@@ -34,7 +34,7 @@ function ProgressDots({ step }: { step: number }) {
       {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
         <div
           key={i}
-          className={`h-1 flex-1 rounded-full ${i < step ? "bg-terra" : "bg-line"}`}
+          className={`h-1 flex-1 rounded-full ${i < step ? "bg-primary" : "bg-border"}`}
         />
       ))}
     </div>
@@ -64,24 +64,24 @@ function OnboardShell({
     <div className="flex flex-1 flex-col">
       <div className="flex items-center justify-between px-5 pt-14 pb-4">
         {onBack ? (
-          <button onClick={onBack} className="text-[15px] text-body">← Back</button>
+          <button onClick={onBack} className="text-[15px] text-soft-foreground">← Back</button>
         ) : <div />}
-        <span className="font-mono text-[13px] tracking-wide text-muted-warm">
+        <span className="font-mono text-[13px] tracking-wide text-muted-foreground">
           Step {step} of {TOTAL_STEPS}
         </span>
         <div className="w-10" />
       </div>
       <ProgressDots step={step} />
       <div className="px-6 pt-8">
-        <h1 className="font-serif text-[28px] font-medium leading-[1.1] tracking-tight text-ink">
+        <h1 className="font-serif text-[28px] font-medium leading-[1.1] tracking-tight text-foreground">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2.5 text-[15px] leading-relaxed text-muted-warm">{subtitle}</p>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-muted-foreground">{subtitle}</p>
         )}
       </div>
       <div className="flex-1 overflow-auto px-5 pt-6">{children}</div>
-      <div className="border-t border-line bg-cream px-5 pt-4 pb-10">
+      <div className="border-t border-border bg-background px-5 pt-4 pb-10">
         <Button size="lg" className="w-full" onClick={onCta} disabled={disabled}>
           {cta}
         </Button>
@@ -107,8 +107,8 @@ function BusinessTypeTile({
       onClick={onClick}
       className={`flex min-h-[80px] flex-col items-start justify-between rounded-xl border p-3 text-left transition-colors ${
         selected
-          ? "border-ink bg-ink text-cream"
-          : "border-line bg-paper text-ink"
+          ? "border-inverse bg-inverse text-inverse-foreground"
+          : "border-border bg-card text-foreground"
       }`}
     >
       <span className="text-[22px]">{icon}</span>
@@ -218,7 +218,7 @@ export function OnboardingWizard() {
               {...step1Form.register("name")}
             />
             {step1Form.formState.errors.name && (
-              <p className="text-sm text-terra">{step1Form.formState.errors.name.message}</p>
+              <p className="text-sm text-destructive">{step1Form.formState.errors.name.message}</p>
             )}
           </div>
           <div>
@@ -238,7 +238,7 @@ export function OnboardingWizard() {
               })}
             </div>
             {step1Form.formState.errors.type && (
-              <p className="mt-2 text-sm text-terra">{step1Form.formState.errors.type.message}</p>
+              <p className="mt-2 text-sm text-destructive">{step1Form.formState.errors.type.message}</p>
             )}
           </div>
         </div>
@@ -261,7 +261,7 @@ export function OnboardingWizard() {
           {products.map((product, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 rounded-xl border border-line bg-paper px-3.5 py-3"
+              className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3"
             >
               <div className="flex-1">
                 <Input
@@ -276,14 +276,14 @@ export function OnboardingWizard() {
                   placeholder="unit"
                   value={product.defaultUnit}
                   onChange={(e) => updateProduct(index, "defaultUnit", e.target.value)}
-                  className="w-14 bg-transparent text-center text-[11px] outline-none placeholder:text-mute2"
+                  className="w-14 bg-transparent text-center text-[11px] outline-none placeholder:text-faint-foreground"
                 />
               </Badge>
               {products.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeProductRow(index)}
-                  className="text-lg text-mute2 hover:text-ink"
+                  className="text-lg text-faint-foreground hover:text-foreground"
                   aria-label={`Remove product ${index + 1}`}
                 >
                   ×
@@ -295,9 +295,9 @@ export function OnboardingWizard() {
             <button
               type="button"
               onClick={addProductRow}
-              className="flex items-center gap-2.5 rounded-xl border border-dashed border-line px-3.5 py-3 text-sm text-muted-warm"
+              className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-3.5 py-3 text-sm text-muted-foreground"
             >
-              <span className="text-lg text-terra">＋</span> Add a product
+              <span className="text-lg text-primary">＋</span> Add a product
             </button>
           )}
         </div>
@@ -316,8 +316,8 @@ export function OnboardingWizard() {
       onBack={() => setStep(2)}
       disabled={isSubmitting}
     >
-      <div className="rounded-2xl border border-line bg-paper p-5">
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+      <div className="rounded-2xl border border-border bg-card p-5">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           What happens next
         </p>
         {[
@@ -327,14 +327,14 @@ export function OnboardingWizard() {
         ].map(([n, title, desc], i) => (
           <div
             key={n}
-            className={`flex gap-3 py-2.5 ${i > 0 ? "border-t border-line" : ""}`}
+            className={`flex gap-3 py-2.5 ${i > 0 ? "border-t border-border" : ""}`}
           >
-            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-terra font-serif text-sm font-semibold text-[#FFF8EC]">
+            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-primary font-serif text-sm font-semibold text-primary-foreground">
               {n}
             </div>
             <div>
-              <p className="text-sm font-semibold text-ink">{title}</p>
-              <p className="mt-0.5 text-[13px] leading-relaxed text-muted-warm">{desc}</p>
+              <p className="text-sm font-semibold text-foreground">{title}</p>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">{desc}</p>
             </div>
           </div>
         ))}

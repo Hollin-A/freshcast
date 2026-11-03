@@ -8,31 +8,31 @@ import { Badge } from "@/components/ui/badge";
 
 function SettingsRow({
   icon,
-  color,
+  tone,
   label,
   detail,
   last,
   action,
 }: {
   icon: string;
-  color: string;
+  /** Background class for the icon tile, e.g. bg-chart-1 */
+  tone: string;
   label: string;
   detail?: string;
   last?: boolean;
   action?: React.ReactNode;
 }) {
   return (
-    <div className={`flex items-center gap-3 px-3.5 py-3.5 ${last ? "" : "border-b border-line"}`}>
+    <div className={`flex items-center gap-3 px-3.5 py-3.5 ${last ? "" : "border-b border-border"}`}>
       <div
-        className="flex h-[30px] w-[30px] items-center justify-center rounded-lg text-sm"
-        style={{ background: color, color: "#FFF8EC" }}
+        className={`flex h-[30px] w-[30px] items-center justify-center rounded-lg text-sm text-primary-foreground ${tone}`}
       >
         {icon}
       </div>
-      <span className="flex-1 text-[15px] text-ink">{label}</span>
-      {detail && <span className="text-sm text-muted-warm">{detail}</span>}
+      <span className="flex-1 text-[15px] text-foreground">{label}</span>
+      {detail && <span className="text-sm text-muted-foreground">{detail}</span>}
       {action}
-      {!action && <span className="text-mute2">›</span>}
+      {!action && <span className="text-faint-foreground">›</span>}
     </div>
   );
 }
@@ -90,27 +90,27 @@ export function SettingsClient({
   return (
     <>
       <div className="px-5 pt-14 pb-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Settings</p>
-        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-ink">{businessName}</h1>
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Settings</p>
+        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-foreground">{businessName}</h1>
       </div>
 
       {/* Business card */}
-      <div className="mx-4 mb-4 flex items-center gap-3.5 rounded-2xl bg-ink p-4.5 text-cream">
-        <div className="flex h-[50px] w-[50px] items-center justify-center rounded-xl bg-terra font-serif text-[22px] font-semibold">
+      <div className="mx-4 mb-4 flex items-center gap-3.5 rounded-2xl bg-inverse p-4.5 text-inverse-foreground">
+        <div className="flex h-[50px] w-[50px] items-center justify-center rounded-xl bg-primary font-serif text-[22px] font-semibold">
           {(userName[0] || "U").toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-serif text-lg font-medium">{userName}</p>
-          <p className="text-[13px] text-cream/60">{userEmail} · {typeLabel} · {timezoneCity}</p>
+          <p className="text-[13px] text-inverse-foreground/60">{userEmail} · {typeLabel} · {timezoneCity}</p>
         </div>
-        {emailVerified && <Badge variant="gold">Verified</Badge>}
+        {emailVerified && <Badge variant="warning">Verified</Badge>}
       </div>
 
       {/* Email verification */}
       {!emailVerified && (
-        <div className="mx-4 mb-4 rounded-2xl border border-harvest/30 bg-harvest/8 p-3.5">
+        <div className="mx-4 mb-4 rounded-2xl border border-warning/30 bg-warning/8 p-3.5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-ink">Email not verified</p>
+            <p className="text-sm text-foreground">Email not verified</p>
             <Button
               variant="secondary"
               size="sm"
@@ -134,50 +134,50 @@ export function SettingsClient({
       )}
 
       {/* Business settings */}
-      <p className="mx-5 mb-2.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-warm">Business</p>
-      <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
-        <SettingsRow icon="🏪" color="#B5553A" label="Business name" detail={businessName} />
-        <SettingsRow icon="🗓" color="#6B7A3A" label="Timezone" detail={timezoneCity} />
-        <SettingsRow icon="🎯" color="#6E3A4A" label="Holiday region" detail={region} />
-        <SettingsRow icon="🌐" color="#C69840" label="Language" detail="English" last />
+      <p className="mx-5 mb-2.5 mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Business</p>
+      <div className="mx-4 overflow-hidden rounded-2xl border border-border bg-card">
+        <SettingsRow icon="🏪" tone="bg-chart-1" label="Business name" detail={businessName} />
+        <SettingsRow icon="🗓" tone="bg-chart-2" label="Timezone" detail={timezoneCity} />
+        <SettingsRow icon="🎯" tone="bg-chart-5" label="Holiday region" detail={region} />
+        <SettingsRow icon="🌐" tone="bg-chart-3" label="Language" detail="English" last />
       </div>
 
       {/* Weekly summary email: paused until it's rebuilt in Stage 4f (#42). */}
 
       {/* Data */}
-      <p className="mx-5 mb-2.5 mt-6 text-[11px] font-bold uppercase tracking-wider text-muted-warm">Data</p>
-      <div className="mx-4 overflow-hidden rounded-2xl border border-line bg-paper">
+      <p className="mx-5 mb-2.5 mt-6 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Data</p>
+      <div className="mx-4 overflow-hidden rounded-2xl border border-border bg-card">
         <SettingsRow
           icon="⬇"
-          color="#7A6F5E"
+          tone="bg-muted-foreground"
           label="Export sales as CSV"
           action={
             <button
               onClick={() => window.open("/api/sales/export", "_blank")}
-              className="text-sm font-semibold text-terra"
+              className="text-sm font-semibold text-primary"
             >
               Export
             </button>
           }
         />
-        <SettingsRow icon="🗑" color="#B5553A" label="Delete all data" last action={
+        <SettingsRow icon="🗑" tone="bg-destructive" label="Delete all data" last action={
           <button
             onClick={handleDeleteAccount}
             disabled={isDeleting}
-            className="text-sm font-semibold text-terra"
+            className="text-sm font-semibold text-destructive"
           >
             {isDeleting ? "Deleting..." : "Delete"}
           </button>
         } />
       </div>
 
-      <p className="mx-10 mt-6 text-center font-serif text-[13px] italic leading-relaxed text-muted-warm">
+      <p className="mx-10 mt-6 text-center font-serif text-[13px] italic leading-relaxed text-muted-foreground">
         Your data is private.<br />Freshcast only works for your business.
       </p>
 
       <button
         onClick={() => signOut({ callbackUrl: "/login" })}
-        className="mx-auto mt-4 block text-center text-[13px] font-semibold text-terra"
+        className="mx-auto mt-4 block text-center text-[13px] font-semibold text-primary"
       >
         Log out
       </button>

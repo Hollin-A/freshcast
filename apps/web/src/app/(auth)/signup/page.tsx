@@ -60,7 +60,7 @@ export default function SignupPage() {
       footer={
         <span>
           {t("hasAccount")}{" "}
-          <Link href="/login" className="font-semibold text-terra">{t("login")}</Link>
+          <Link href="/login" className="font-semibold text-primary">{t("login")}</Link>
         </span>
       }
     >
@@ -75,7 +75,7 @@ export default function SignupPage() {
             aria-describedby={errors.name ? "name-error" : undefined}
             {...register("name")}
           />
-          {errors.name && <p id="name-error" className="text-sm text-terra">{errors.name.message}</p>}
+          {errors.name && <p id="name-error" className="text-sm text-destructive">{errors.name.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">{t("email")}</Label>
@@ -88,7 +88,7 @@ export default function SignupPage() {
             aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
-          {errors.email && <p id="email-error" className="text-sm text-terra">{errors.email.message}</p>}
+          {errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">{t("password")}</Label>
@@ -100,14 +100,14 @@ export default function SignupPage() {
             aria-describedby={errors.password ? "password-error" : undefined}
             {...register("password")}
           />
-          {errors.password && <p id="password-error" className="text-sm text-terra">{errors.password.message}</p>}
+          {errors.password && <p id="password-error" className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
         <div className="mt-2">
           <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
             {isLoading ? t("creatingAccount") : <>{t("signup")} →</>}
           </Button>
         </div>
-        <p className="mt-1 text-center text-xs leading-relaxed text-muted-warm">
+        <p className="mt-1 text-center text-xs leading-relaxed text-muted-foreground">
           By continuing you agree to our Terms.<br />
           Your data is private — Freshcast only works for your business.
         </p>

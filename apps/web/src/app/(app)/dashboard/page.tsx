@@ -18,16 +18,16 @@ export default async function DashboardPage() {
     <div className="mx-auto max-w-md pb-28">
       <div className="flex items-center justify-between px-5 pt-14 pb-4">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-muted-warm">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground">
             Good evening, {session.user.name || "there"}
           </p>
-          <h1 className="mt-0.5 font-serif text-[26px] font-medium tracking-tight text-ink">
+          <h1 className="mt-0.5 font-serif text-[26px] font-medium tracking-tight text-foreground">
             {business.name}
           </h1>
         </div>
         <a
           href="/settings"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper font-serif text-base font-semibold text-ink"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card font-serif text-base font-semibold text-foreground"
         >
           {(session.user.name?.[0] || "U").toUpperCase()}
         </a>

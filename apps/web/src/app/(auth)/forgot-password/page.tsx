@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
         title="Check your email"
         subtitle="If an account exists with that email, we've sent a password reset link."
         footer={
-          <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
+          <Link href="/login" className="font-semibold text-primary">← Back to log in</Link>
         }
       >
         <div />
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
       title="Reset password"
       subtitle="Enter the email you signed up with and we'll send a reset link."
       footer={
-        <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
+        <Link href="/login" className="font-semibold text-primary">← Back to log in</Link>
       }
     >
       <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
             {...register("email")}
           />
           {errors.email && (
-            <p id="email-error" className="text-sm text-terra">{errors.email.message}</p>
+            <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
         <div className="mt-2">

@@ -12,23 +12,23 @@
   --font-serif: var(--font-serif);
   --font-mono: var(--font-mono);
 
-  /* Editorial palette — exposed as Tailwind utilities */
-  --color-cream: #F5EFE3;
-  --color-paper: #FAF6EC;
-  --color-shell: #EFE6D4;
-  --color-line: #E4D9C1;
-  --color-ink: #1E1A14;
-  --color-body: #3B342A;
-  --color-muted-warm: #7A6F5E;
-  --color-mute2: #A89B85;
-  --color-terra: #B5553A;
-  --color-terra-dk: #8F3F29;
-  --color-clay: #D48A5E;
-  --color-olive: #6B7A3A;
-  --color-olive-dk: #4D5928;
-  --color-harvest: #C69840;
-  --color-plum: #6E3A4A;
-  --color-sage: #C7CDA8;
+  /* Freshcast semantic colours, on top of the shadcn set below. Components
+     use only these and the shadcn tokens, never a palette value, so the
+     Brand (#98) and the dark Appearance (#99) only change the values in
+     :root and .dark. */
+  --color-soft-foreground: var(--soft-foreground);
+  --color-faint-foreground: var(--faint-foreground);
+  --color-primary-strong: var(--primary-strong);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-inverse: var(--inverse);
+  --color-inverse-raised: var(--inverse-raised);
+  --color-inverse-foreground: var(--inverse-foreground);
+  --color-inverse-success: var(--inverse-success);
 
   /* shadcn mappings */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -103,6 +103,24 @@
   --sidebar-accent-foreground: #3B342A;
   --sidebar-border: #E4D9C1;
   --sidebar-ring: #B5553A;
+
+  /* Text tiers: foreground > soft > muted > faint */
+  --soft-foreground: #3B342A;
+  --faint-foreground: #A89B85;
+  /* Hover and pressed primary, and primary text on a tinted background */
+  --primary-strong: #8F3F29;
+  /* Secondary emphasis: notes, highlighted figures */
+  --highlight: #D48A5E;
+  --highlight-foreground: #1E1A14;
+  --success: #6B7A3A;
+  --success-foreground: #4D5928;
+  --warning: #C69840;
+  --warning-foreground: #8A6520;
+  /* Dark panels on a light page (hero card, chat bubbles, selected chips) */
+  --inverse: #1E1A14;
+  --inverse-raised: #2d2418;
+  --inverse-foreground: #F5EFE3;
+  --inverse-success: #C7CDA8;
 }
 
 .dark {
@@ -137,6 +155,20 @@
   --sidebar-accent-foreground: #F5EFE3;
   --sidebar-border: rgba(245, 239, 227, 0.1);
   --sidebar-ring: #D48A5E;
+
+  --soft-foreground: #E4D9C1;
+  --faint-foreground: #7A6F5E;
+  --primary-strong: #E7A882;
+  --highlight: #D48A5E;
+  --highlight-foreground: #1E1A14;
+  --success: #A3B06A;
+  --success-foreground: #C7CDA8;
+  --warning: #C69840;
+  --warning-foreground: #E0BE77;
+  --inverse: #2d2418;
+  --inverse-raised: #3B342A;
+  --inverse-foreground: #F5EFE3;
+  --inverse-success: #C7CDA8;
 }
 
 @layer base {

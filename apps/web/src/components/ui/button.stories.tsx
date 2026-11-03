@@ -30,7 +30,7 @@ export const Variants = meta.story({
       <Button {...args} variant="ghost">Ghost</Button>
       <Button {...args} variant="destructive">Destructive</Button>
       <Button {...args} variant="link">Link</Button>
-      <Button {...args} variant="dark">Dark</Button>
+      <Button {...args} variant="inverse">Inverse</Button>
     </div>
   ),
 });
