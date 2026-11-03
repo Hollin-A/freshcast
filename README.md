@@ -68,7 +68,7 @@ Full algorithms, weights, and service contracts are documented in [Architecture]
 | Secrets | AWS Secrets Manager (vendor API keys, hybrid env→SM resolver) |
 | Monitoring | Structured JSON logs with request IDs (CloudWatch); Sentry (initialization fix pending, [#68](https://github.com/Hollin-A/freshcast/issues/68)) |
 | i18n | next-intl (externalized strings) |
-| Testing | Vitest (137 tests, including React component tests), GitHub Actions CI (lint, type check, test, build) |
+| Testing | Vitest (137 tests, including React component tests), Storybook story tests, Playwright journeys with screenshot baselines, GitHub Actions CI (lint, type check, test, build) |
 | Deployment | AWS Amplify |
 | Monorepo | pnpm workspaces + Turborepo |
 
@@ -217,7 +217,9 @@ In `apps/web`, Vitest runs two projects: `unit` (`*.test.ts`, Node) and `compone
 
 Storybook catalogues the components in `components/ui` and `components/shared`, with the same MSW handlers answering API calls. Open it with `pnpm --filter @freshcast/web storybook` (http://localhost:6006). `pnpm test:storybook` runs every story as a test in headless Chromium, once in the light and once in the dark Appearance, including each story's interaction checks. It needs Chromium once: `pnpm --filter @freshcast/web exec playwright install chromium`.
 
-CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build, plus the story tests in a separate `storybook` job. Merging to `main` requires a passing CI check.
+Playwright journeys (`apps/web/e2e/`) log in, log a sale and open the dashboard and history in a production build, at mobile and desktop sizes in both Appearances, and compare each page with a committed screenshot. They need Docker: `pnpm --filter @freshcast/web e2e:up`, then `pnpm --filter @freshcast/web test:e2e`. See [CONTRIBUTING.md](./CONTRIBUTING.md#end-to-end-tests) for updating screenshots.
+
+CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build, plus the story tests in a separate `storybook` job and the Playwright journeys in an `e2e` job. Merging to `main` requires a passing CI check.
 
 ## Current Scope
 

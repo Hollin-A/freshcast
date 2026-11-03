@@ -54,3 +54,8 @@ docs/internal/
 
 # Editor swap files
 *.swp
+
+# playwright
+apps/web/e2e/.auth/
+apps/web/e2e/.results/
+apps/web/e2e/.report/

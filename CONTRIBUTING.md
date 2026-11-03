@@ -25,7 +25,7 @@ Use kebab-case and keep branch names short.
 
 ### UI-only branches
 
-A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
+A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets, plus the tests that ship with them: component tests (`*.test.tsx`), stories (`*.stories.tsx`), Playwright journeys (`apps/web/e2e/journeys/`) and their screenshot baselines. Test config, the MSW handlers and Playwright's setup files stay out, so a UI change can't alter what the tests run against. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
 
 On top of the path list, the guard rejects a `ui/` change that:
 
@@ -100,7 +100,7 @@ ADR rule:
 
 This is a pnpm workspace managed with Turborepo:
 
-- `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`. Vitest runs `*.test.ts` files in Node (`unit` project) and `*.test.tsx` files in jsdom (`component` project). Render components with `renderWithProviders` from `src/test/render.tsx`, which supplies next-intl messages and a fresh TanStack Query client, and query by role, label or text rather than class names so restyling doesn't break tests. Component tests talk to the Legacy API through MSW handlers in `src/test/msw/`: `createHandlers(scenario)` mocks every endpoint the App calls, from the `onboarded` (default) or `empty` fixtures, and a request with no handler fails the test. Override one endpoint with `server.use(http.get(...))` and build its response with `ok()` or `fail()` from `src/test/msw/envelope.ts`, instead of stubbing `fetch`. When a component calls a new endpoint, add its handler there; when a domain moves to the API (ADR-023), switch its handlers to the new contract in the same change. Mock `next/navigation` with `vi.mock` where a component reads the route. Async Server Components can't be rendered in Vitest; cover them with end-to-end tests. Stories (`*.stories.tsx`, beside the component) use CSF Next: `preview.meta()` and `meta.story()` from `#.storybook/preview`. The preview supplies the same providers, a signed-in session and the MSW handlers; override an endpoint in a story's `beforeEach` with `msw.use(...)`, and set the route with `parameters.nextjs.navigation`. Add a `play` function for behaviour worth checking, and query by role or label as in component tests. `pnpm test:storybook` runs every story in Chromium in both Appearances. Accessibility checks report violations without failing the run until the new Brand lands (#98).
+- `apps/web`: the Next.js app (`@freshcast/web`). Its `.env` lives in `apps/web/.env`. Vitest runs `*.test.ts` files in Node (`unit` project) and `*.test.tsx` files in jsdom (`component` project). Render components with `renderWithProviders` from `src/test/render.tsx`, which supplies next-intl messages and a fresh TanStack Query client, and query by role, label or text rather than class names so restyling doesn't break tests. Component tests talk to the Legacy API through MSW handlers in `src/test/msw/`: `createHandlers(scenario)` mocks every endpoint the App calls, from the `onboarded` (default) or `empty` fixtures, and a request with no handler fails the test. Override one endpoint with `server.use(http.get(...))` and build its response with `ok()` or `fail()` from `src/test/msw/envelope.ts`, instead of stubbing `fetch`. When a component calls a new endpoint, add its handler there; when a domain moves to the API (ADR-023), switch its handlers to the new contract in the same change. Mock `next/navigation` with `vi.mock` where a component reads the route. Async Server Components can't be rendered in Vitest; cover them with the Playwright journeys (see End-to-end tests). Stories (`*.stories.tsx`, beside the component) use CSF Next: `preview.meta()` and `meta.story()` from `#.storybook/preview`. The preview supplies the same providers, a signed-in session and the MSW handlers; override an endpoint in a story's `beforeEach` with `msw.use(...)`, and set the route with `parameters.nextjs.navigation`. Add a `play` function for behaviour worth checking, and query by role or label as in component tests. `pnpm test:storybook` runs every story in Chromium in both Appearances. Accessibility checks report violations without failing the run until the new Brand lands (#98).
 - `apps/api`: the NestJS API (`@freshcast/api`), ESM, built with the Nest CLI (`tsc`). Its `.env` lives in `apps/api/.env`; the variables are validated at startup by the Zod schema in `src/config/env.schema.ts`, so add new required config there. Relative imports use `.js` extensions (NodeNext). Controllers return the response body as-is (or `paginated(items, meta)` for lists) and throw `ApiException` for expected errors; the global filter turns errors into RFC 9457 Problem Details (ADR-023). Mark routes that need no session with `@Public()`. Log through Nest's `Logger`, which writes through pino. Tests are compiled with SWC (`unplugin-swc`) so Nest's dependency injection works in Vitest.
 - `packages/db`: `@freshcast/db`, the Prisma schema, migrations, seed and a `createPrismaClient()` factory. It's a compiled package (`prisma generate` + `tsc` to `dist/`) shared by the apps; Turborepo builds it before anything that depends on it. Prisma commands read `packages/db/.env`. It must stay framework-neutral: no `server-only` (the web app keeps that guard in `src/lib/prisma.ts`).
 - `packages/shared`: `@freshcast/shared`, the Zod request schemas, response types (the Legacy `{ data }` envelope, and Problem Details and `Page` for the NestJS API) and the constants they use, shared by API routes, browser forms and the NestJS API. Compiled with `tsc` like `@freshcast/db`. It's imported by client code, so its own lint config only allows `zod` and its own modules.
@@ -108,6 +108,28 @@ This is a pnpm workspace managed with Turborepo:
 Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` and `pnpm test` run the task in every package through Turborepo, which caches results and skips unchanged packages. To target one package: `pnpm --filter @freshcast/web <script>`.
 
 The web app's `build` script runs `scripts/materialize-next-aliases.mjs` after `next build`. It replaces the alias symlinks Turbopack creates in `.next/node_modules` (for `@prisma/client`, `pg`, `@aws-sdk/client-s3` and others) with real copies. Amplify deploys the app flattened to `/var/task`, which breaks those relative links, and every route using these packages would fail to load. Keep the step unless a deployment proves it unnecessary, and recheck it on Next.js upgrades.
+
+## End-to-end tests
+
+Playwright journeys live in `apps/web/e2e/`: log in, log a sale, the dashboard and history, each at a mobile and a desktop viewport in the light and dark Appearance. They run against a production build of the App with real Auth.js and a throwaway Postgres; the setup project logs in once and saves the session. Server components read only the session and the seeded business, and every other `/api` call the browser makes is answered by the same MSW handlers as the component tests (through `@msw/playwright`), with the browser clock pinned to the fixture date. An API call without a handler fails the test. Chromium runs in Playwright's Docker image so screenshots render the same on a Mac and in CI.
+
+```bash
+pnpm --filter @freshcast/web e2e:up      # Postgres and the Playwright browser (Docker)
+pnpm --filter @freshcast/web test:e2e    # builds the App, then runs the journeys
+pnpm --filter @freshcast/web e2e:down
+```
+
+The run builds with the values in `e2e/env.ts`, which override `apps/web/.env`, so it never reaches the real database, Sentry, Claude or email.
+
+### Updating screenshot baselines
+
+Baselines are in `apps/web/e2e/__screenshots__/`, one per page, project and Appearance. When a change alters a page on purpose, regenerate them and commit the images with the change:
+
+```bash
+pnpm --filter @freshcast/web test:e2e:update
+```
+
+Only generate baselines with the Docker browser from `e2e:up`, never a local Chromium, or CI will fail on font rendering. A `ui/` branch can commit new baselines, so a restyle updates its screenshots in the same PR. Review the changed images in the PR diff. When CI fails on a screenshot, download the `playwright-report` artifact for the expected, actual and diff images. Keep the Playwright image tag in `e2e/compose.yml` in step with `@playwright/test`.
 
 ## Package manager
 

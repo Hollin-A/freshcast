@@ -85,6 +85,50 @@ jobs:
       - name: Story tests
         run: pnpm test:storybook
 
+  # Playwright journeys and screenshot baselines (apps/web/e2e). The App runs
+  # on the runner against a throwaway Postgres; Chromium runs in Playwright's
+  # Docker image, the same one used locally, so screenshots match.
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start database and browser
+        run: pnpm --filter @freshcast/web e2e:up
+
+      # Same values as E2E_APP_ENV in apps/web/e2e/env.ts.
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://e2e:e2e@localhost:54329/freshcast_e2e
+          AUTH_SECRET: e2e-only-secret
+          AUTH_URL: http://localhost:3100
+          NEXT_PUBLIC_SENTRY_DSN: ""
+
+      - name: Journeys
+        run: pnpm --filter @freshcast/web test:e2e
+
+      # Holds the expected, actual and diff images for a failed screenshot.
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/e2e/.report
+            apps/web/e2e/.results
+          retention-days: 7
+
   # ui/* branches may only change the frontend presentation files listed in
   # .github/ui-paths. Other branches pass straight through, so the job can
   # stay a required check.
