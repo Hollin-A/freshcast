@@ -33,5 +33,14 @@ apps/web/public/**
 !apps/web/public/**/*.mjs
 !apps/web/src/components/shared/sw-register.tsx
 
+# Tests and stories that ship with the UI change. Test config, the MSW
+# handlers and Playwright's setup (env, fixtures, global setup, Docker
+# compose, playwright.config.ts) stay out, so a UI branch can't change what
+# the tests run against.
+apps/web/src/**/*.test.tsx
+apps/web/src/**/*.stories.tsx
+apps/web/e2e/journeys/**
+apps/web/e2e/__screenshots__/**
+
 # Release notes for the UI change
 CHANGELOG.md
