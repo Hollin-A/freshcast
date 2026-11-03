@@ -51,3 +51,8 @@ docs/internal/
 
 # pnpm store (Amplify build cache)
 .pnpm-store
+
+# playwright
+apps/web/e2e/.auth/
+apps/web/e2e/.results/
+apps/web/e2e/.report/

@@ -1,0 +1,40 @@
+# Services for the Playwright journeys (pnpm --filter @freshcast/web e2e:up).
+# Used locally and in CI, so screenshots come from the same browser build.
+
+name: freshcast-e2e
+
+services:
+  # Throwaway database: the global setup migrates it and seeds one owner.
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: e2e
+      POSTGRES_PASSWORD: e2e
+      POSTGRES_DB: freshcast_e2e
+    ports:
+      - "54329:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U e2e -d freshcast_e2e"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # Chromium in Playwright's Linux image. Tests run on the host and connect
+  # over a WebSocket; the browser reaches the App through the host's
+  # loopback (exposeNetwork in playwright.config.ts). Keep the version in
+  # step with @playwright/test in apps/web/package.json.
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.64.1-noble
+    init: true
+    user: pwuser
+    working_dir: /home/pwuser
+    command: ["npx", "-y", "playwright@1.64.1", "run-server", "--port", "3000", "--host", "0.0.0.0"]
+    ports:
+      - "3333:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(() => process.exit(0), () => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
