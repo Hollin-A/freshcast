@@ -411,31 +411,6 @@ Returns a single sales entry.
 
 ---
 
-### `PUT /api/sales/[id]`
-
-Replaces the items in a sales entry. Only today's entry (in business timezone) can be edited.
-
-**Auth required:** Yes
-
-**Request body:**
-```json
-{
-  "items": [
-    {
-      "productId": "string",
-      "quantity": "number (positive)",
-      "unit": "string (optional)"
-    }
-  ]
-}
-```
-
-**Response `200`:** Updated SalesEntry with new items
-
-**Error codes:** `UNAUTHORIZED` (401), `NOT_FOUND` (404), `VALIDATION_ERROR` (400 — not today's entry), `INTERNAL_ERROR` (500)
-
----
-
 ### `DELETE /api/sales/[id]`
 
 Deletes a sales entry.

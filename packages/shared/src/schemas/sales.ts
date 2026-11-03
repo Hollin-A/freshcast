@@ -17,11 +17,6 @@ export const createSalesSchema = z.object({
   items: salesItemsSchema,
 });
 
-// PATCH /api/sales/[id]
-export const updateSalesItemsSchema = z.object({
-  items: salesItemsSchema,
-});
-
 // POST /api/sales/parse
 export const parseSalesSchema = z.object({
   text: z.string().min(1).max(1000),
