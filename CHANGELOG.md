@@ -29,6 +29,7 @@ All notable changes to Freshcast are documented here.
 - `ui/*` branches may now change component tests (`*.test.tsx`), stories (`*.stories.tsx`), Playwright journeys and their screenshot baselines, so a UI change ships its own tests and updated screenshots. Test config, the MSW handlers and Playwright's setup stay out of scope.
 
 ### Fixed
+- Removed `PUT /api/sales/[id]` from the Legacy API (#110). It accepted product IDs from another business, and the App never called it; `DELETE` and `GET` on the same path are unchanged, and `PUT` now returns `405`. `@freshcast/shared` no longer exports `updateSalesItemsSchema`.
 - The API now writes its startup logs when startup fails. Nest held them in a buffer that is only flushed once the server is listening, so a failed start, such as an unreachable database, exited without a log line.
 - The log in, sign up and forgot-password forms show the App's own "Please enter a valid email" message for a malformed address such as `owner@`, instead of the browser's validation tooltip. Invalid fields are marked with `aria-invalid` and linked to their message, so screen readers announce it.
 
