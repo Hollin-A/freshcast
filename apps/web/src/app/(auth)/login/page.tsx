@@ -52,7 +52,7 @@ export default function LoginPage() {
       footer={
         <span>
           {t("noAccount")}{" "}
-          <Link href="/signup" className="font-semibold text-terra">{t("signup")}</Link>
+          <Link href="/signup" className="font-semibold text-primary">{t("signup")}</Link>
         </span>
       }
     >
@@ -68,7 +68,7 @@ export default function LoginPage() {
             aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
-          {errors.email && <p id="email-error" className="text-sm text-terra">{errors.email.message}</p>}
+          {errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">{t("password")}</Label>
@@ -80,7 +80,7 @@ export default function LoginPage() {
             aria-describedby={errors.password ? "password-error" : undefined}
             {...register("password")}
           />
-          {errors.password && <p id="password-error" className="text-sm text-terra">{errors.password.message}</p>}
+          {errors.password && <p id="password-error" className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
         <div className="mt-2">
           <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
@@ -88,7 +88,7 @@ export default function LoginPage() {
           </Button>
         </div>
         <div className="mt-2 text-center">
-          <Link href="/forgot-password" className="text-sm text-body underline underline-offset-[3px]">
+          <Link href="/forgot-password" className="text-sm text-soft-foreground underline underline-offset-[3px]">
             {t("forgotPassword")}
           </Link>
         </div>

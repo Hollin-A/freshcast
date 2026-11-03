@@ -64,7 +64,7 @@ export function MobileNav() {
   const t = useTranslations("nav");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-cream/86 backdrop-blur-xl backdrop-saturate-160 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/86 backdrop-blur-xl backdrop-saturate-160 pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md">
         {tabs.map((tab) => {
           const isActive =
@@ -82,7 +82,7 @@ export function MobileNav() {
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-2 text-[10.5px] font-semibold transition-colors",
-                isActive ? "text-terra" : "text-mute2"
+                isActive ? "text-primary" : "text-faint-foreground"
               )}
             >
               <Icon />

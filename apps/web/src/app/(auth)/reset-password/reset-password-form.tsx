@@ -31,7 +31,7 @@ export function ResetPasswordForm() {
         title="Invalid reset link"
         subtitle="This link is invalid or has expired."
         footer={
-          <Link href="/forgot-password" className="font-semibold text-terra">Request a new link</Link>
+          <Link href="/forgot-password" className="font-semibold text-primary">Request a new link</Link>
         }
       >
         <div />
@@ -68,7 +68,7 @@ export function ResetPasswordForm() {
         title="Password reset"
         subtitle="Your password has been updated. You can now log in."
         footer={
-          <Link href="/login" className="font-semibold text-terra">Go to log in</Link>
+          <Link href="/login" className="font-semibold text-primary">Go to log in</Link>
         }
       >
         <div />
@@ -81,7 +81,7 @@ export function ResetPasswordForm() {
       title="Set new password"
       subtitle="Enter your new password below."
       footer={
-        <Link href="/login" className="font-semibold text-terra">← Back to log in</Link>
+        <Link href="/login" className="font-semibold text-primary">← Back to log in</Link>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
@@ -94,7 +94,7 @@ export function ResetPasswordForm() {
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-sm text-terra">{errors.password.message}</p>
+            <p className="text-sm text-destructive">{errors.password.message}</p>
           )}
         </div>
         <div className="space-y-2">
@@ -106,7 +106,7 @@ export function ResetPasswordForm() {
             {...register("confirmPassword")}
           />
           {errors.confirmPassword && (
-            <p className="text-sm text-terra">{errors.confirmPassword.message}</p>
+            <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
           )}
         </div>
         <div className="mt-2">

@@ -17,9 +17,9 @@ export default function AppError({
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="max-w-sm w-full rounded-2xl border border-line bg-paper p-10 text-center">
-        <p className="font-serif text-lg font-medium text-ink mb-2">Something went wrong</p>
-        <p className="text-sm text-muted-warm mb-6">
+      <div className="max-w-sm w-full rounded-2xl border border-border bg-card p-10 text-center">
+        <p className="font-serif text-lg font-medium text-foreground mb-2">Something went wrong</p>
+        <p className="text-sm text-muted-foreground mb-6">
           {error.message || "An unexpected error occurred. Please try again."}
         </p>
         <Button onClick={reset}>Try again</Button>

@@ -301,30 +301,30 @@ export function SalesInputClient({
     return (
       <>
         <div className="flex items-center justify-between px-5 pt-14 pb-2">
-          <button onClick={() => { setShowConfirm(false); setParsedItems(null); }} className="text-[15px] text-body">← Edit</button>
-          <span className="text-[15px] text-muted-warm">{dateLabel}</span>
+          <button onClick={() => { setShowConfirm(false); setParsedItems(null); }} className="text-[15px] text-soft-foreground">← Edit</button>
+          <span className="text-[15px] text-muted-foreground">{dateLabel}</span>
         </div>
         <div className="px-5 pt-2 pb-4">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Confirm your log</p>
-          <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-ink">Looks good?</h1>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Confirm your log</p>
+          <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-foreground">Looks good?</h1>
         </div>
 
         {inputMethod === "NATURAL_LANGUAGE" && nlText && (
-          <div className="mx-4 mb-4 rounded-xl border border-line bg-paper p-3.5">
+          <div className="mx-4 mb-4 rounded-xl border border-border bg-card p-3.5">
             {receiptKey && (
               <div className="mb-2">
-                <Badge variant="gold">From receipt</Badge>
+                <Badge variant="warning">From receipt</Badge>
               </div>
             )}
-            <p className="font-serif text-[15px] italic leading-relaxed text-body">
+            <p className="font-serif text-[15px] italic leading-relaxed text-soft-foreground">
               &ldquo;{nlText}&rdquo;
             </p>
           </div>
         )}
 
         <div className="mx-4 mb-2 flex items-center justify-between">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Parsed items</p>
-          <span className="text-[13px] font-semibold text-terra">{parsedItems.length} items</span>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Parsed items</p>
+          <span className="text-[13px] font-semibold text-primary">{parsedItems.length} items</span>
         </div>
 
         <div className="mx-4 flex flex-col gap-2">
@@ -333,14 +333,14 @@ export function SalesInputClient({
               key={index}
               className={`flex items-center gap-3 rounded-xl border p-3 ${
                 item.status === "ambiguous"
-                  ? "border-harvest/50 bg-harvest/8"
-                  : "border-line bg-paper"
+                  ? "border-warning/50 bg-warning/8"
+                  : "border-border bg-card"
               }`}
             >
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold ${
                 !item.matched
-                  ? "bg-harvest/18 text-[#8A6520]"
-                  : "bg-shell text-body"
+                  ? "bg-warning/18 text-warning-foreground"
+                  : "bg-muted text-soft-foreground"
               }`}>
                 {!item.matched ? "+" : "✓"}
               </div>
@@ -349,7 +349,7 @@ export function SalesInputClient({
                   <input
                     autoFocus
                     defaultValue={item.product}
-                    className="w-full bg-transparent text-[15px] font-medium text-ink outline-none border-b border-terra pb-0.5"
+                    className="w-full bg-transparent text-[15px] font-medium text-foreground outline-none border-b border-primary pb-0.5"
                     onBlur={(e) => updateParsedName(index, e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") updateParsedName(index, (e.target as HTMLInputElement).value);
@@ -359,17 +359,17 @@ export function SalesInputClient({
                 ) : (
                   <button
                     onClick={() => setEditingNameIndex(index)}
-                    className="text-left text-[15px] font-medium text-ink hover:text-terra transition-colors"
+                    className="text-left text-[15px] font-medium text-foreground hover:text-primary transition-colors"
                     title="Tap to edit name"
                   >
                     {item.product}
                   </button>
                 )}
                 {!item.matched && (
-                  <p className="text-[11px] text-[#8A6520]">New product — tap to confirm</p>
+                  <p className="text-[11px] text-warning-foreground">New product — tap to confirm</p>
                 )}
                 {item.clarification && (
-                  <p className="text-[11px] text-harvest">{item.clarification}</p>
+                  <p className="text-[11px] text-warning">{item.clarification}</p>
                 )}
               </div>
               <Input
@@ -377,20 +377,20 @@ export function SalesInputClient({
                 value={item.quantity || ""}
                 onChange={(e) => updateParsedQuantity(index, parseFloat(e.target.value) || 0)}
                 className={`w-20 text-center font-serif text-lg font-medium [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${
-                  item.status === "ambiguous" ? "border-harvest" : ""
+                  item.status === "ambiguous" ? "border-warning" : ""
                 }`}
                 min={0}
                 step="any"
                 autoFocus={item.status === "ambiguous"}
                 placeholder={item.status === "ambiguous" ? "?" : "0"}
               />
-              <span className="min-w-[40px] text-xs text-muted-warm">{item.unit || ""}</span>
+              <span className="min-w-[40px] text-xs text-muted-foreground">{item.unit || ""}</span>
               {!item.matched && (
-                <button onClick={() => handleAddUnmatched(item)} className="text-xs font-semibold text-terra">Add</button>
+                <button onClick={() => handleAddUnmatched(item)} className="text-xs font-semibold text-primary">Add</button>
               )}
               <button
                 onClick={() => removeParsedItem(index)}
-                className="text-lg text-mute2"
+                className="text-lg text-faint-foreground"
                 aria-label={`Remove ${item.product}`}
               >
                 ×
@@ -399,14 +399,14 @@ export function SalesInputClient({
           ))}
         </div>
 
-        <div className="mx-4 mt-4 rounded-xl border border-olive/20 bg-olive/8 p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-olive-dk">Once saved</p>
-          <p className="mt-1 font-serif text-base font-medium tracking-tight text-ink">
+        <div className="mx-4 mt-4 rounded-xl border border-success/20 bg-success/8 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-success-foreground">Once saved</p>
+          <p className="mt-1 font-serif text-base font-medium tracking-tight text-foreground">
             Tomorrow&apos;s forecast will refresh with your latest data.
           </p>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-line bg-cream px-4 pb-24 pt-4">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background px-4 pb-24 pt-4">
           <div className="mx-auto max-w-md">
             <Button
               size="lg"
@@ -430,16 +430,16 @@ export function SalesInputClient({
   return (
     <>
       <div className="px-5 pt-14 pb-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Log sales · {dateLabel}
         </p>
-        <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-ink">
+        <h1 className="mt-1 font-serif text-[26px] font-medium tracking-tight text-foreground">
           Tell me your day.
         </h1>
       </div>
 
       <div className="px-4 pb-3">
-        <Label className="mb-1.5 block text-muted-warm">Date</Label>
+        <Label className="mb-1.5 block text-muted-foreground">Date</Label>
         <Input
           type="date"
           value={selectedDate}
@@ -475,9 +475,9 @@ export function SalesInputClient({
                 }}
               />
             )}
-            <div className="rounded-2xl border border-terra bg-paper p-4 shadow-[0_0_0_4px_rgba(181,85,58,0.10)]">
+            <div className="rounded-2xl border border-primary bg-card p-4 shadow-[0_0_0_4px_color-mix(in_srgb,var(--primary)_10%,transparent)]">
               <textarea
-                className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-ink placeholder:text-mute2 focus:outline-none"
+                className="w-full min-h-[120px] resize-none bg-transparent font-serif text-lg leading-relaxed text-foreground placeholder:text-faint-foreground focus:outline-none"
                 placeholder={businessType ? (NL_PLACEHOLDERS[businessType] || DEFAULT_PLACEHOLDER) : DEFAULT_PLACEHOLDER}
                 value={nlText}
                 onChange={(e) => setNlText(e.target.value)}
@@ -485,7 +485,7 @@ export function SalesInputClient({
               <div className="mt-3 flex items-center gap-2">
                 <Badge variant="secondary">for {dateLabel.split(",")[0]}</Badge>
                 <span className="flex-1" />
-                <span className="font-mono text-[11px] text-mute2">{nlText.length} chars</span>
+                <span className="font-mono text-[11px] text-faint-foreground">{nlText.length} chars</span>
               </div>
             </div>
             {receiptUploadEnabled && (
@@ -517,7 +517,7 @@ export function SalesInputClient({
         <TabsContent value="manual">
           <div className="mt-4">
             <div className="mb-2 flex items-baseline justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Your products · {manualItems.length}
               </p>
             </div>
@@ -525,18 +525,18 @@ export function SalesInputClient({
               {manualItems.map((item, index) => (
                 <div
                   key={item.productId}
-                  className="flex items-center gap-3 rounded-xl border border-line bg-paper px-3.5 py-3"
+                  className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-medium text-ink">{item.productName}</p>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-warm">
+                    <p className="text-[15px] font-medium text-foreground">{item.productName}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {item.unit || "units"}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-shell text-lg text-body"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-lg text-soft-foreground"
                       onClick={() =>
                         setManualItems((prev) =>
                           prev.map((p, i) =>
@@ -560,7 +560,7 @@ export function SalesInputClient({
                         )
                       }
                       className={`w-14 text-center font-serif text-lg font-medium ${
-                        item.quantity ? "border-ink bg-ink text-cream" : "bg-shell text-mute2"
+                        item.quantity ? "border-inverse bg-inverse text-inverse-foreground" : "bg-muted text-faint-foreground"
                       }`}
                       min={0}
                       step="any"
@@ -568,7 +568,7 @@ export function SalesInputClient({
                     />
                     <button
                       type="button"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-terra text-lg text-[#FFF8EC]"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-lg text-primary-foreground"
                       onClick={() =>
                         setManualItems((prev) =>
                           prev.map((p, i) =>
@@ -586,7 +586,7 @@ export function SalesInputClient({
               ))}
 
               {showAddProduct ? (
-                <div className="flex items-center gap-2 rounded-xl border border-dashed border-line p-3">
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-border p-3">
                   <Input
                     placeholder="Product name"
                     value={newProductName}
@@ -620,24 +620,24 @@ export function SalesInputClient({
                   >
                     Add
                   </Button>
-                  <button onClick={() => setShowAddProduct(false)} className="text-lg text-mute2">×</button>
+                  <button onClick={() => setShowAddProduct(false)} className="text-lg text-faint-foreground">×</button>
                 </div>
               ) : (
                 <button
                   type="button"
                   onClick={() => setShowAddProduct(true)}
-                  className="flex items-center gap-2.5 rounded-xl border border-dashed border-line px-3.5 py-3 text-sm text-muted-warm"
+                  className="flex items-center gap-2.5 rounded-xl border border-dashed border-border px-3.5 py-3 text-sm text-muted-foreground"
                 >
-                  <span className="text-lg text-terra">＋</span> Add a new product
+                  <span className="text-lg text-primary">＋</span> Add a new product
                 </button>
               )}
             </div>
 
             {manualItems.some((m) => parseFloat(m.quantity) > 0) && (
-              <div className="mt-4 rounded-xl border border-line bg-paper p-3.5 flex items-center gap-2.5">
+              <div className="mt-4 rounded-xl border border-border bg-card p-3.5 flex items-center gap-2.5">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">Running total</p>
-                  <p className="font-serif text-[22px] font-medium tracking-tight text-ink">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Running total</p>
+                  <p className="font-serif text-[22px] font-medium tracking-tight text-foreground">
                     {Math.round(manualItems.reduce((s, m) => s + (parseFloat(m.quantity) || 0), 0))} units · {manualItems.filter((m) => parseFloat(m.quantity) > 0).length} products
                   </p>
                 </div>

@@ -30,9 +30,9 @@ export function DashboardClient() {
 
   if (!data.hasAnySales) {
     return (
-      <div className="mx-4 rounded-2xl border border-line bg-paper p-8 text-center">
-        <p className="font-serif text-lg font-medium text-ink">No sales logged yet</p>
-        <p className="mt-1 text-sm text-muted-warm">
+      <div className="mx-4 rounded-2xl border border-border bg-card p-8 text-center">
+        <p className="font-serif text-lg font-medium text-foreground">No sales logged yet</p>
+        <p className="mt-1 text-sm text-muted-foreground">
           Log your first sales to see insights here
         </p>
         <div className="mt-5 flex flex-col items-center gap-3">
@@ -65,7 +65,7 @@ export function DashboardClient() {
           >
             {loadingDemo ? "Loading demo..." : "Try with demo data"}
           </Button>
-          <p className="text-xs text-muted-warm">
+          <p className="text-xs text-muted-foreground">
             Sample data to preview the full dashboard experience
           </p>
         </div>
@@ -114,22 +114,22 @@ export function DashboardClient() {
 
 function PredictionProgressBar({ entries }: { entries: number }) {
   const tiers = [
-    { min: 0, max: 4, label: "Log 5 days to unlock predictions", color: "bg-terra/40" },
-    { min: 5, max: 14, label: "Basic predictions active", color: "bg-harvest/60" },
-    { min: 15, max: 29, label: "Predictions improving", color: "bg-olive/50" },
-    { min: 30, max: Infinity, label: "Predictions are reliable", color: "bg-olive" },
+    { min: 0, max: 4, label: "Log 5 days to unlock predictions", color: "bg-primary/40" },
+    { min: 5, max: 14, label: "Basic predictions active", color: "bg-warning/60" },
+    { min: 15, max: 29, label: "Predictions improving", color: "bg-success/50" },
+    { min: 30, max: Infinity, label: "Predictions are reliable", color: "bg-success" },
   ];
 
   const currentTier = tiers.find((t) => entries >= t.min && entries <= t.max) || tiers[0];
   const progress = Math.min((entries / 30) * 100, 100);
 
   return (
-    <div className="mx-4 rounded-2xl border border-line bg-paper px-4 py-3">
+    <div className="mx-4 rounded-2xl border border-border bg-card px-4 py-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold text-ink">{currentTier.label}</span>
-        <span className="font-mono text-xs text-muted-warm">{entries} entries</span>
+        <span className="text-xs font-semibold text-foreground">{currentTier.label}</span>
+        <span className="font-mono text-xs text-muted-foreground">{entries} entries</span>
       </div>
-      <div className="relative h-1.5 rounded-full bg-shell">
+      <div className="relative h-1.5 rounded-full bg-muted">
         <div
           className={`h-full rounded-full transition-all duration-500 ${currentTier.color}`}
           style={{ width: `${progress}%` }}
@@ -203,16 +203,16 @@ function ForecastHero({
   }
 
   return (
-    <div className="mx-4 relative overflow-hidden rounded-2xl bg-linear-to-br from-ink to-[#2d2418] p-5 text-cream">
+    <div className="mx-4 relative overflow-hidden rounded-2xl bg-linear-to-br from-inverse to-inverse-raised p-5 text-inverse-foreground">
       <div className="flex items-start justify-between relative">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-clay">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-highlight">
             Prep for tomorrow
           </p>
           <p className="mt-1 font-serif text-[22px] font-medium tracking-tight">
             {dateLabel}
           </p>
-          <p className="mt-0.5 text-[13px] text-cream/60">
+          <p className="mt-0.5 text-[13px] text-inverse-foreground/60">
             {forecast.holiday
               ? `📅 ${forecast.holiday.name}`
               : avgTrend !== 0
@@ -221,12 +221,12 @@ function ForecastHero({
           </p>
         </div>
         {forecast.holiday && (
-          <Badge variant="gold" className="shrink-0">
+          <Badge variant="warning" className="shrink-0">
             {forecast.holiday.type === "pre-holiday" ? "High day" : forecast.holiday.type}
           </Badge>
         )}
       </div>
-      <div className="my-5 h-px bg-cream/12" />
+      <div className="my-5 h-px bg-inverse-foreground/12" />
       <div className="flex flex-col gap-3.5">
         {forecast.predictions.slice(0, 5).map((p, i) => {
           const sparkData = p.pastWeek ?? [];
@@ -238,8 +238,8 @@ function ForecastHero({
               className="flex w-full items-center gap-3 text-left"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-cream">{p.product}</p>
-                <p className="font-mono text-[10.5px] text-cream/50 tracking-wide">
+                <p className="text-[15px] font-medium text-inverse-foreground">{p.product}</p>
+                <p className="font-mono text-[10.5px] text-inverse-foreground/50 tracking-wide">
                   vs 7d avg · {Math.round(p.confidence * 100)}% confident
                 </p>
               </div>
@@ -248,20 +248,20 @@ function ForecastHero({
                   {sparkData.map((v, si) => (
                     <div
                       key={si}
-                      className="flex-1 rounded-[1px] bg-cream/35"
+                      className="flex-1 rounded-[1px] bg-inverse-foreground/35"
                       style={{ height: `${Math.max((v / sparkMax) * 100, 8)}%` }}
                     />
                   ))}
                 </div>
               )}
               <div className="text-right min-w-[80px]">
-                <span className="font-serif text-2xl font-medium tracking-tight text-clay">
+                <span className="font-serif text-2xl font-medium tracking-tight text-highlight">
                   {p.predictedQuantity}
                 </span>
-                <p className="text-[11px] text-cream/60">
+                <p className="text-[11px] text-inverse-foreground/60">
                   {p.unit || "units"}
                   {p.trend && (
-                    <span className="ml-1 text-sage">{p.trend}</span>
+                    <span className="ml-1 text-inverse-success">{p.trend}</span>
                   )}
                 </p>
               </div>
@@ -269,17 +269,17 @@ function ForecastHero({
           );
         })}
       </div>
-      <div className="my-5 h-px bg-cream/12" />
+      <div className="my-5 h-px bg-inverse-foreground/12" />
       <div className="flex gap-2.5">
         <button
           onClick={handlePrepList}
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-clay font-semibold text-sm text-ink"
+          className="flex h-11 flex-1 items-center justify-center rounded-full bg-highlight font-semibold text-sm text-foreground"
         >
           Use as prep list
         </button>
         <button
           onClick={handleShare}
-          className="flex h-11 items-center justify-center rounded-full border border-cream/30 px-5 text-sm font-medium text-cream"
+          className="flex h-11 items-center justify-center rounded-full border border-inverse-foreground/30 px-5 text-sm font-medium text-inverse-foreground"
         >
           Share
         </button>
@@ -302,16 +302,16 @@ function TodayStatus({
 
   if (data.totalItems === 0) {
     return (
-      <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+      <div className="mx-4 rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Today · {dayLabel}
             </p>
-            <p className="mt-1 font-serif text-lg font-medium text-ink">
+            <p className="mt-1 font-serif text-lg font-medium text-foreground">
               You haven&apos;t logged yet
             </p>
-            <p className="mt-0.5 text-[13px] text-muted-warm">
+            <p className="mt-0.5 text-[13px] text-muted-foreground">
               30 seconds to keep your forecast sharp.
             </p>
           </div>
@@ -329,19 +329,19 @@ function TodayStatus({
   }
 
   return (
-    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+    <div className="mx-4 rounded-2xl border border-border bg-card p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         Today · {dayLabel}
       </p>
-      <p className="mt-1 font-serif text-lg font-medium text-ink">
+      <p className="mt-1 font-serif text-lg font-medium text-foreground">
         {data.totalItems} product{data.totalItems !== 1 ? "s" : ""} · {Math.round(data.totalQuantity)} units
       </p>
       <div className="mt-3 flex flex-col gap-1">
         {data.items.map((item, i) => (
           <div key={i} className="flex justify-between text-sm">
-            <span className="text-ink">{item.product}</span>
-            <span className="font-mono text-xs font-semibold text-body">
-              {item.quantity} <span className="text-mute2">{item.unit || ""}</span>
+            <span className="text-foreground">{item.product}</span>
+            <span className="font-mono text-xs font-semibold text-soft-foreground">
+              {item.quantity} <span className="text-faint-foreground">{item.unit || ""}</span>
             </span>
           </div>
         ))}
@@ -372,20 +372,20 @@ function WeekStory({
     : "";
 
   return (
-    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+    <div className="mx-4 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             This week&apos;s rhythm
           </p>
           {peakDayName && (
-            <p className="mt-1.5 font-serif text-[22px] font-medium leading-tight tracking-tight text-ink">
+            <p className="mt-1.5 font-serif text-[22px] font-medium leading-tight tracking-tight text-foreground">
               {peakDayName} is your<br />biggest day.
             </p>
           )}
         </div>
         {data.previousWeekQuantity > 0 && (
-          <Badge variant={isUp ? "olive" : "default"}>
+          <Badge variant={isUp ? "success" : "default"}>
             {isUp ? "↑" : "↓"} {Math.abs(data.changePercent)}%
           </Badge>
         )}
@@ -397,7 +397,7 @@ function WeekStory({
           return (
             <div key={day.date} className="flex h-full flex-col items-center justify-end">
               <div
-                className={`w-full rounded-t ${isPeak ? "bg-terra" : "bg-shell"}`}
+                className={`w-full rounded-t ${isPeak ? "bg-primary" : "bg-muted"}`}
                 style={{ height: `${Math.max(pct, 3)}%` }}
               />
             </div>
@@ -411,7 +411,7 @@ function WeekStory({
           return (
             <span
               key={day.date}
-              className={`text-center font-mono text-[10px] font-semibold ${isPeak ? "text-terra" : "text-mute2"}`}
+              className={`text-center font-mono text-[10px] font-semibold ${isPeak ? "text-primary" : "text-faint-foreground"}`}
             >
               {label}
             </span>
@@ -422,7 +422,7 @@ function WeekStory({
   );
 }
 
-const BAR_COLORS = ["bg-terra", "bg-clay", "bg-harvest", "bg-olive", "bg-plum"];
+const BAR_COLORS = ["bg-chart-1", "bg-chart-4", "bg-chart-3", "bg-chart-2", "bg-chart-5"];
 
 function TopProducts({
   products,
@@ -437,8 +437,8 @@ function TopProducts({
   const maxQty = products[0]?.totalQuantity || 1;
 
   return (
-    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+    <div className="mx-4 rounded-2xl border border-border bg-card p-4">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         Top this week
       </p>
       <div className="mt-3.5 flex flex-col gap-3">
@@ -447,12 +447,12 @@ function TopProducts({
           return (
             <div key={p.rank}>
               <div className="mb-1 flex justify-between text-sm">
-                <span className="font-medium text-ink">{p.product}</span>
-                <span className="font-mono text-xs font-semibold text-body">
-                  {p.totalQuantity} <span className="text-mute2">{p.unit || ""}</span>
+                <span className="font-medium text-foreground">{p.product}</span>
+                <span className="font-mono text-xs font-semibold text-soft-foreground">
+                  {p.totalQuantity} <span className="text-faint-foreground">{p.unit || ""}</span>
                 </span>
               </div>
-              <div className="h-1 rounded-full bg-shell">
+              <div className="h-1 rounded-full bg-muted">
                 <div
                   className={`h-full rounded-full ${BAR_COLORS[idx % BAR_COLORS.length]}`}
                   style={{ width: `${width}%` }}
@@ -473,20 +473,20 @@ function Insights({
   insights: { type: string; content: string; metadata?: Record<string, unknown> | null }[];
   lastUpdated?: string;
 }) {
-  const ACCENT_COLORS = ["bg-olive", "bg-terra", "bg-harvest"];
+  const ACCENT_COLORS = ["bg-chart-2", "bg-chart-1", "bg-chart-3"];
 
   const timeLabel = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
     : null;
 
   return (
-    <div className="mx-4 rounded-2xl border border-line bg-paper p-4">
+    <div className="mx-4 rounded-2xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           What Freshcast noticed
         </p>
         {timeLabel && (
-          <span className="font-mono text-[10px] text-mute2">updated {timeLabel}</span>
+          <span className="font-mono text-[10px] text-faint-foreground">updated {timeLabel}</span>
         )}
       </div>
       <div className="mt-3 flex flex-col gap-3.5">
@@ -496,11 +496,11 @@ function Insights({
             <div key={i} className="flex gap-3">
               <div className={`w-[3px] shrink-0 rounded-full ${ACCENT_COLORS[i % ACCENT_COLORS.length]}`} />
               <div>
-                <p className="font-serif text-base font-medium tracking-tight text-ink">
+                <p className="font-serif text-base font-medium tracking-tight text-foreground">
                   {insight.content}
                 </p>
                 {description && (
-                  <p className="mt-0.5 text-[13px] text-muted-warm">{description}</p>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>
                 )}
               </div>
             </div>

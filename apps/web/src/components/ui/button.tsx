@@ -10,17 +10,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-terra text-[#FFF8EC] hover:bg-terra-dk",
+        default: "bg-primary text-primary-foreground hover:bg-primary-strong",
         outline:
-          "border-line bg-paper text-ink hover:bg-shell",
+          "border-border bg-card text-foreground hover:bg-muted",
         secondary:
-          "bg-shell text-ink border-line hover:bg-line",
+          "bg-muted text-foreground border-border hover:bg-border",
         ghost:
-          "hover:bg-shell hover:text-ink",
+          "hover:bg-muted hover:text-foreground",
         destructive:
-          "bg-terra/10 text-terra hover:bg-terra/20 focus-visible:border-terra/40 focus-visible:ring-terra/20",
-        link: "text-terra underline-offset-4 hover:underline",
-        dark: "bg-ink text-cream hover:bg-ink/90",
+          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20",
+        link: "text-primary underline-offset-4 hover:underline",
+        inverse: "bg-inverse text-inverse-foreground hover:bg-inverse/90",
       },
       size: {
         default: "h-10 gap-2 px-4",

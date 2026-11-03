@@ -9,11 +9,11 @@ interface SectionLabelProps {
 export function SectionLabel({ children, trailing, className }: SectionLabelProps) {
   return (
     <div className={cn("flex items-baseline justify-between px-5 my-4", className)}>
-      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         {children}
       </span>
       {trailing && (
-        <span className="text-[13px] font-semibold text-terra">{trailing}</span>
+        <span className="text-[13px] font-semibold text-primary">{trailing}</span>
       )}
     </div>
   );

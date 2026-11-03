@@ -3,6 +3,7 @@ import { getMessages, getLocale } from "next-intl/server";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { ServiceWorkerRegister } from "@/components/shared/sw-register";
+import { THEME_COLOR } from "@/components/shared/theme-color";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 
@@ -30,7 +31,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#F5EFE3",
+  themeColor: THEME_COLOR,
 };
 
 export default async function RootLayout({
@@ -54,9 +55,9 @@ export default async function RootLayout({
             richColors
             toastOptions={{
               style: {
-                background: "#FAF6EC",
-                border: "1px solid #E4D9C1",
-                color: "#1E1A14",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
                 fontFamily: "var(--font-sans), ui-sans-serif, system-ui, sans-serif",
               },
             }}

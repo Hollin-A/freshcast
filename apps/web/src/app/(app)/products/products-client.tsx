@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts, useAddProduct, useUpdateProduct } from "@/hooks/use-products";
 
-const ACCENT_COLORS = ["bg-terra", "bg-clay", "bg-harvest", "bg-olive", "bg-plum", "bg-muted-warm"];
+const ACCENT_COLORS = ["bg-chart-1", "bg-chart-4", "bg-chart-3", "bg-chart-2", "bg-chart-5", "bg-muted-foreground"];
 
 export function ProductsClient() {
   const t = useTranslations("products");
@@ -68,20 +68,20 @@ export function ProductsClient() {
   return (
     <>
       <div className="px-5 pt-14 pb-2">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-warm">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Catalog · {products.length} products
         </p>
-        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-ink">
+        <h1 className="mt-1 font-serif text-[32px] font-medium tracking-tight text-foreground">
           Your products
         </h1>
       </div>
 
       <div className="mx-4 mb-4">
-        <div className="flex gap-2 rounded-xl border border-line bg-paper p-1.5">
+        <div className="flex gap-2 rounded-xl border border-border bg-card p-1.5">
           <div className="flex flex-1 items-center gap-2 px-2.5">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="11" cy="11" r="7" stroke="#7A6F5E" strokeWidth="1.6"/>
-              <path d="M20 20l-4-4" stroke="#7A6F5E" strokeWidth="1.6" strokeLinecap="round"/>
+              <circle cx="11" cy="11" r="7" className="stroke-muted-foreground" strokeWidth="1.6"/>
+              <path d="M20 20l-4-4" className="stroke-muted-foreground" strokeWidth="1.6" strokeLinecap="round"/>
             </svg>
             <Input
               placeholder="Add product or search…"
@@ -108,24 +108,24 @@ export function ProductsClient() {
       ) : (
         <div className="flex flex-col gap-2.5 px-4">
           {products.map((product, idx) => (
-            <div key={product.id} className="rounded-2xl border border-line bg-paper p-3.5">
+            <div key={product.id} className="rounded-2xl border border-border bg-card p-3.5">
               {editingId === product.id ? (
                 <div className="flex items-center gap-2">
                   <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="flex-1" />
                   <Input value={editUnit} onChange={(e) => setEditUnit(e.target.value)} placeholder="unit" className="w-20" />
                   <Button size="sm" onClick={handleSaveEdit}>{tc("save")}</Button>
-                  <button onClick={() => setEditingId(null)} className="text-lg text-mute2">×</button>
+                  <button onClick={() => setEditingId(null)} className="text-lg text-faint-foreground">×</button>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
                   <div className={`h-9 w-2 shrink-0 rounded-sm ${ACCENT_COLORS[idx % ACCENT_COLORS.length]}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-medium text-ink">{product.name}</p>
+                    <p className="text-[15px] font-medium text-foreground">{product.name}</p>
                     {product.avgPerDay !== null && product.avgPerDay > 0 && (
-                      <p className="mt-0.5 font-mono text-[11px] text-muted-warm">
+                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                         avg {product.avgPerDay} {product.defaultUnit || "units"}/day
                         {product.trend !== null && product.trend !== 0 && (
-                          <span className={product.trend > 0 ? " text-olive" : " text-terra"}>
+                          <span className={product.trend > 0 ? " text-success" : " text-destructive"}>
                             {" · "}{product.trend > 0 ? "+" : ""}{product.trend}%
                           </span>
                         )}
@@ -133,14 +133,14 @@ export function ProductsClient() {
                     )}
                   </div>
                   {product.defaultUnit && <Badge variant="secondary">{product.defaultUnit}</Badge>}
-                  <button onClick={() => startEdit(product)} className="text-xs font-semibold text-muted-warm">Edit</button>
-                  <button onClick={() => handleDeactivate(product.id)} className="text-lg text-mute2">×</button>
+                  <button onClick={() => startEdit(product)} className="text-xs font-semibold text-muted-foreground">Edit</button>
+                  <button onClick={() => handleDeactivate(product.id)} className="text-lg text-faint-foreground">×</button>
                 </div>
               )}
             </div>
           ))}
           {products.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-warm">{t("noProducts")}</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t("noProducts")}</p>
           )}
         </div>
       )}

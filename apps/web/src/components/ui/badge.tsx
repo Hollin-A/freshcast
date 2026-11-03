@@ -9,20 +9,19 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-terra/10 text-terra-dk border-terra/25",
+        default: "bg-primary/10 text-primary-strong border-primary/25",
         secondary:
-          "bg-shell text-body border-line",
+          "bg-muted text-soft-foreground border-border",
         destructive:
-          "bg-terra/10 text-terra border-terra/25",
+          "bg-destructive/10 text-destructive border-destructive/25",
         outline:
-          "border-line text-ink",
+          "border-border text-foreground",
         ghost:
-          "hover:bg-shell hover:text-body",
-        link: "text-terra underline-offset-4 hover:underline",
-        olive: "bg-olive/10 text-olive-dk border-olive/25",
-        gold: "bg-harvest/12 text-[#8A6520] border-harvest/30",
-        plum: "bg-plum/10 text-plum border-plum/25",
-        ink: "bg-ink text-cream border-ink",
+          "hover:bg-muted hover:text-soft-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+        success: "bg-success/10 text-success-foreground border-success/25",
+        warning: "bg-warning/12 text-warning-foreground border-warning/30",
+        inverse: "bg-inverse text-inverse-foreground border-inverse",
       },
     },
     defaultVariants: {
