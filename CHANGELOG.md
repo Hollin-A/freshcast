@@ -24,6 +24,7 @@ All notable changes to Freshcast are documented here.
 - The Log screen's free-text tab is now "In your words" instead of "Speak or type", and onboarding no longer says logging can be spoken: the App has no voice input.
 - The API's startup database check retries with exponential backoff (5 attempts, about 55s at worst) before stopping the process, and each new database connection now times out after 5s (`createPrismaAdapter()` accepts `connectionTimeoutMillis`).
 - The `ui/*` scope guard is harder to get around: CI judges a branch with `main`'s copy of the script and allowlist, a `pull_request_target` workflow (`scope-guard-main`) runs it even if a pull request edits `ci.yml`, and it now rejects server actions, any `route.*` or `actions.*` file, scripts in `public/`, the guard's own files, and changed lines that touch auth, Prisma, S3, the session or redirects. The Claude Code hook fails closed, resolves symlinks and blocks edits in other checkouts of the repo. Dot folders such as `public/.well-known` are no longer blocked by mistake.
+- `ui/*` branches may now change component tests (`*.test.tsx`), stories (`*.stories.tsx`), Playwright journeys and their screenshot baselines, so a UI change ships its own tests and updated screenshots. Test config, the MSW handlers and Playwright's setup stay out of scope.
 
 ### Fixed
 - The API now writes its startup logs when startup fails. Nest held them in a buffer that is only flushed once the server is listening, so a failed start, such as an unreachable database, exited without a log line.

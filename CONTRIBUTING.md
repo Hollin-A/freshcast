@@ -25,7 +25,7 @@ Use kebab-case and keep branch names short.
 
 ### UI-only branches
 
-A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
+A `ui/` branch may only change the frontend presentation files listed in [`.github/ui-paths`](.github/ui-paths): styles, components, pages and layouts, copy and static assets, plus the tests that ship with them: component tests (`*.test.tsx`), stories (`*.stories.tsx`), Playwright journeys (`apps/web/e2e/journeys/`) and their screenshot baselines. Test config, the MSW handlers and Playwright's setup files stay out, so a UI change can't alter what the tests run against. Route handlers, `services/`, `lib/`, `proxy.ts`, the service worker, `apps/api`, `packages/*`, dependencies and config are out of scope, so UI work can't reach the backend while the migration is in progress. Commits still use the usual types, such as `feat(web):`, `fix(web):` or `style(web):`.
 
 On top of the path list, the guard rejects a `ui/` change that:
 
@@ -129,7 +129,7 @@ Baselines are in `apps/web/e2e/__screenshots__/`, one per page, project and Appe
 pnpm --filter @freshcast/web test:e2e:update
 ```
 
-Only generate baselines with the Docker browser from `e2e:up`, never a local Chromium, or CI will fail on font rendering. Review the changed images in the PR diff. When CI fails on a screenshot, download the `playwright-report` artifact for the expected, actual and diff images. Keep the Playwright image tag in `e2e/compose.yml` in step with `@playwright/test`.
+Only generate baselines with the Docker browser from `e2e:up`, never a local Chromium, or CI will fail on font rendering. A `ui/` branch can commit new baselines, so a restyle updates its screenshots in the same PR. Review the changed images in the PR diff. When CI fails on a screenshot, download the `playwright-report` artifact for the expected, actual and diff images. Keep the Playwright image tag in `e2e/compose.yml` in step with `@playwright/test`.
 
 ## Package manager
 
