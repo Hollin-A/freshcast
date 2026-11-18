@@ -1,18 +1,20 @@
-import { Logger, type INestApplication } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Logger as PinoLogger } from "nestjs-pino";
 import { AppModule } from "./app.module.js";
 import type { Env } from "./config/env.schema.js";
 import { setupOpenApi } from "./openapi/openapi.js";
+import { trustProxy } from "./rate-limit/rate-limit.module.js";
 
 async function bootstrap(): Promise<void> {
-  let app: INestApplication;
+  let app: NestExpressApplication;
   try {
     // abortOnError: false makes startup errors (such as invalid config)
     // reject instead of aborting the process. Nest has already logged them.
     // bufferLogs holds startup logs until pino is ready, so they share its format.
-    app = await NestFactory.create(AppModule, { abortOnError: false, bufferLogs: true });
+    app = await NestFactory.create<NestExpressApplication>(AppModule, { abortOnError: false, bufferLogs: true });
   } catch {
     process.exit(1);
   }
@@ -24,6 +26,7 @@ async function bootstrap(): Promise<void> {
   // Run onModuleDestroy hooks on SIGTERM, which ECS sends before stopping a task.
   app.enableShutdownHooks();
 
+  trustProxy(app);
   setupOpenApi(app);
 
   const config = app.get<ConfigService<Env, true>>(ConfigService);
