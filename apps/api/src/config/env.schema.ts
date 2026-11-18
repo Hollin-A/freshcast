@@ -24,6 +24,10 @@ export const envSchema = z.object({
   AUTH_SECRET: z
     .string({ error: "is required" })
     .min(32, "must be at least 32 characters (generate one with `npx auth secret`)"),
+  // Shared with the App's /api/* proxy (#35), which sends it with the
+  // browser's IP so rate limits count per browser rather than per App
+  // server (see rate-limit/client-ip.ts). Unset: the header is ignored.
+  PROXY_SECRET: z.string().min(32, "must be at least 32 characters").optional(),
   AWS_REGION: z.string().min(1).default("ap-southeast-2"),
   // The deployed build, reported by /health/live. The deploy pipeline sets
   // the git SHA (#34); without it the package.json version is used.

@@ -1,21 +1,25 @@
 import { Controller, Get, Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import request from "supertest";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SessionBusiness } from "../auth/auth-context.js";
-import { AuthModule } from "../auth/auth.module.js";
 import { SessionCookieReader } from "../auth/session-cookie.js";
 import { HTTP_PIPELINE } from "../common/http-pipeline.js";
 import { Public } from "../common/public.decorator.js";
 import { PrismaService } from "../database/prisma.service.js";
-import { RateLimitModule, trustProxy } from "./rate-limit.module.js";
+import { GuardsModule } from "../guards/guards.module.js";
+import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from "./client-ip.js";
+import { trustProxy } from "./rate-limit.module.js";
 import { RateLimit, RATE_LIMITS } from "./rate-limits.js";
 
-// The real AuthModule and RateLimitModule, imported in AppModule's order, so
-// the tests also cover SessionGuard running first. The session cookie and
-// database are stubbed: the x-test-user header names the signed-in user.
+// The real GuardsModule, so the tests also cover RequestGuard running
+// SessionGuard first. The session cookie and database are stubbed: the
+// x-test-user header names the signed-in user.
+
+const PROXY_SECRET = "test-proxy-secret-at-least-32-characters";
 
 const USERS: Record<string, { id: string; business: SessionBusiness | null }> = {
   alice: { id: "alice", business: { id: "biz_a", timezone: "UTC", region: "AU-VIC" } },
@@ -65,7 +69,10 @@ class TestController {
 }
 
 @Module({
-  imports: [AuthModule, RateLimitModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, load: [() => ({ PROXY_SECRET })] }),
+    GuardsModule,
+  ],
   controllers: [TestController],
   providers: [...HTTP_PIPELINE],
 })
@@ -88,14 +95,21 @@ async function createApp(): Promise<NestExpressApplication> {
 
 // Each test gets a fresh app, so counts never carry over.
 let app: NestExpressApplication;
-afterEach(() => app?.close());
+afterEach(async () => {
+  vi.useRealTimers();
+  await app?.close();
+});
 
-const get = (path: string, user?: string, ip?: string) => {
-  const req = request(app.getHttpServer()).get(path);
+const get = (path: string, user?: string, ip?: string, headers: Record<string, string> = {}) => {
+  const req = request(app.getHttpServer()).get(path).set(headers);
   if (user) req.set("x-test-user", user);
   if (ip) req.set("x-forwarded-for", ip);
   return req;
 };
+
+// A request through the App's proxy: the ALB sees the App's address.
+const viaProxy = (path: string, browserIp: string, secret = PROXY_SECRET) =>
+  get(path, undefined, "192.0.2.10", { [PROXY_SECRET_HEADER]: secret, [CLIENT_IP_HEADER]: browserIp });
 
 describe("RateLimitGuard", () => {
   it("answers 429 Problem Details with Retry-After once the limit is used up", async () => {
@@ -160,6 +174,24 @@ describe("RateLimitGuard", () => {
     await get("/test/public", undefined, "198.51.100.9, 203.0.113.1").expect(429);
   });
 
+  it("limits clients behind the App's proxy per browser IP", async () => {
+    app = await createApp();
+    await viaProxy("/test/public", "203.0.113.1").expect(200);
+    await viaProxy("/test/public", "203.0.113.1").expect(200);
+    await viaProxy("/test/public", "203.0.113.1").expect(429);
+
+    // Same App address, another browser: its own allowance.
+    await viaProxy("/test/public", "203.0.113.2").expect(200);
+  });
+
+  it("ignores the client IP header without the proxy secret", async () => {
+    app = await createApp();
+    await viaProxy("/test/public", "203.0.113.1", "wrong-secret").expect(200);
+    await viaProxy("/test/public", "203.0.113.2", "wrong-secret").expect(200);
+    // Both counted under the App's address, so a forged header buys nothing.
+    await viaProxy("/test/public", "203.0.113.3", "wrong-secret").expect(429);
+  });
+
   it("keeps a separate count per route", async () => {
     app = await createApp();
     await get("/test/tight", "alice").expect(200);
@@ -168,9 +200,35 @@ describe("RateLimitGuard", () => {
     await get("/test/other", "alice").expect(200);
   });
 
-  it("doesn't count requests SessionGuard rejects", async () => {
+  it("counts requests SessionGuard rejects, per IP", async () => {
     app = await createApp();
-    for (let i = 0; i < 3; i++) await get("/test/tight").expect(401);
+    await get("/test/tight", undefined, "203.0.113.1").expect(401);
+    await get("/test/tight", undefined, "203.0.113.1").expect(401);
+    await get("/test/tight", undefined, "203.0.113.1").expect(429);
+
+    await get("/test/tight", undefined, "203.0.113.2").expect(401);
+    // Signed-in users of the route keep their own allowance.
+    await get("/test/tight", "alice", "203.0.113.1").expect(200);
+  });
+
+  it("slides the window: refuses only until the oldest request expires", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const start = new Date("2026-01-01T10:00:00Z").getTime();
+    vi.setSystemTime(start);
+    app = await createApp();
+
+    for (let i = 0; i < RATE_LIMITS.costly.limit - 1; i++) {
+      await get("/test/costly", "alice").expect(200);
+    }
+    vi.setSystemTime(start + 59 * 60_000);
+    await get("/test/costly", "alice").expect(200);
+
+    const res = await get("/test/costly", "alice").expect(429);
+    // Until 11:00, when the first requests expire, not an hour from now.
+    expect(Number(res.headers["retry-after"])).toBe(60);
+
+    vi.setSystemTime(start + 60 * 60_000 + 1_000);
+    await get("/test/costly", "alice").expect(200);
   });
 
   it("applies the standard limit by default and the costly one where declared", async () => {

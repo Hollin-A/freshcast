@@ -1,12 +1,11 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { AuthModule } from "./auth/auth.module.js";
 import { HTTP_PIPELINE } from "./common/http-pipeline.js";
 import { validateEnv } from "./config/env.schema.js";
 import { DatabaseModule } from "./database/database.module.js";
+import { GuardsModule } from "./guards/guards.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { LoggingModule } from "./logging/logging.module.js";
-import { RateLimitModule } from "./rate-limit/rate-limit.module.js";
 import { SecretsModule } from "./secrets/secrets.module.js";
 
 @Module({
@@ -17,9 +16,8 @@ import { SecretsModule } from "./secrets/secrets.module.js";
     LoggingModule,
     DatabaseModule,
     SecretsModule,
-    AuthModule,
-    // After AuthModule: its guard keys limits by the session SessionGuard attaches.
-    RateLimitModule,
+    // Session authentication, then rate limiting, on every route.
+    GuardsModule,
     HealthModule,
   ],
   providers: [...HTTP_PIPELINE],

@@ -14,8 +14,8 @@ const DESCRIPTION = `The Freshcast API (ADR-023).
   \`__Secure-authjs.session-token\`.
 - Errors are RFC 9457 Problem Details (\`application/problem+json\`) with a
   stable \`code\`; see the \`ProblemDetailsDto\` schema for the list.
-- Requests are rate limited per route: per business when signed in, per IP
-  otherwise. Responses carry \`X-RateLimit-Limit\`, \`X-RateLimit-Remaining\`
+- Requests are rate limited per route over a sliding window: per business
+  when signed in, per user before onboarding, per client IP otherwise. Responses carry \`X-RateLimit-Limit\`, \`X-RateLimit-Remaining\`
   and \`X-RateLimit-Reset\`; over the limit, the API answers
   \`429 RATE_LIMITED\` with a \`Retry-After\` header in seconds.`;
 

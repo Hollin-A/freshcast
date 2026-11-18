@@ -298,7 +298,7 @@ Reset:      POST /api/auth/forgot-password → generate token → send email via
 Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js session cookie, which reaches it through the App's `/api/*` proxy (#35) because the cookie is host-only.
 
 - **`SessionCookieReader`** decrypts the cookie with `getToken()` from `@auth/core/jwt`, using `AUTH_SECRET` and the cookie name as the salt: `__Secure-authjs.session-token` when `NODE_ENV=production`, `authjs.session-token` otherwise. A missing, tampered or expired cookie (or one without the `id` claim) counts as no session.
-- **`SessionGuard`** (global `APP_GUARD`) skips `@Public()` routes. Otherwise it loads the user with their business in one query, answers `401 UNAUTHORIZED` if there's no session or the user no longer exists, and attaches `{ userId, business }` to the request.
+- **`SessionGuard`** (run on every route by the global `RequestGuard`, see Rate Limiting) skips `@Public()` routes. Otherwise it loads the user with their business in one query, answers `401 UNAUTHORIZED` if there's no session or the user no longer exists, and attaches `{ userId, business }` to the request.
 - **`@CurrentBusiness()`** gives handlers `{ id, timezone, region }` and is the only source of a business ID (ADR-008); it answers `403 BUSINESS_REQUIRED` before onboarding. **`@CurrentUser()`** gives `{ id }` for the few routes that work without a business.
 - **Pinned bridge** (ADR-023 §10): `next-auth` is pinned to an exact version, and `apps/api` depends on the exact `@auth/core` it uses. `src/auth/auth-bridge.test.ts` fails if they drift apart.
 
@@ -308,10 +308,12 @@ Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js sessio
 - Signup: 10 per IP per hour
 - Forgot password: 3 per email per hour (silently drops excess to prevent enumeration)
 
-**NestJS API** (`apps/api/src/rate-limit`, ADR-023 §9). `@nestjs/throttler` behind a global `RateLimitGuard`:
-- **Keyed by business** when signed in, by user before onboarding, and by client IP otherwise. The guard reads the session `SessionGuard` attached, so `RateLimitModule` is imported after `AuthModule`; requests `SessionGuard` rejects aren't counted.
+**NestJS API** (`apps/api/src/rate-limit`, ADR-023 §9). `@nestjs/throttler` behind `RateLimitGuard`:
+- **One global guard.** `RequestGuard` (`src/guards/`) is the only `APP_GUARD`. It runs `SessionGuard` and then `RateLimitGuard`, so the order doesn't depend on module imports.
+- **Keyed by business** when signed in, by user before onboarding, and by client IP otherwise. Requests `SessionGuard` rejects are counted too, by client IP; over the limit they get `429` instead of `401`.
 - **Per-route limits sized to cost**: `standard` (120 per minute) on every route, and `@RateLimit("costly")` (30 per hour) on routes that call Claude or OCR. Each route keeps its own count. Health routes use `@SkipThrottle()`.
-- **Client IP**: `trust proxy` is set to one hop, so the IP comes from the entry the ALB appends to `X-Forwarded-For`.
+- **Sliding window** (`blockDuration: 0`): a request over the limit is refused until the oldest counted request expires, and refused requests aren't counted.
+- **Client IP**: requests through the App's `/api/*` proxy (#35) reach the ALB from the App's servers, so the proxy sends the browser's IP in `X-Freshcast-Client-IP` with `PROXY_SECRET` in `X-Freshcast-Proxy-Secret`. The API uses that IP only when the secret matches. Otherwise `trust proxy` is set to one hop, so the IP comes from the entry the ALB appends to `X-Forwarded-For`.
 - **Responses** carry `X-RateLimit-Limit`/`-Remaining`/`-Reset`. Over the limit: `429 RATE_LIMITED` Problem Details with `Retry-After` in seconds.
 - **In-memory storage** is correct only while the service runs one ECS task; with more, each task allows the full limit. A shared Redis store comes with the second task (ADR-020 D8).
 
@@ -577,6 +579,7 @@ Locally, the web app reads `apps/web/.env` and Prisma commands read `packages/db
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon PostgreSQL connection string |
 | `AUTH_SECRET` | Yes | Auth.js session encryption key. `apps/api` needs the same value to read the session cookie (at least 32 characters) |
+| `PROXY_SECRET` | No | Shared by the App's `/api/*` proxy and `apps/api` (at least 32 characters). The proxy sends it with the browser's IP so the API rate-limits anonymous requests per browser. Unset in `apps/api`: the client IP header is ignored |
 | `AUTH_URL` | Yes | Application URL (e.g., `https://freshcast.site`) |
 | `ANTHROPIC_API_KEY` | No | Claude API key (LLM features degrade gracefully without it) |
 | `APP_AWS_REGION` | No | Preferred AWS region variable (use when `AWS_*` is reserved by hosting platform) |

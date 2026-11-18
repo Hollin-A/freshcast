@@ -1,12 +1,15 @@
 import { Module } from "@nestjs/common";
-import { APP_GUARD } from "@nestjs/core";
 import { DatabaseModule } from "../database/database.module.js";
 import { SessionCookieReader } from "./session-cookie.js";
 import { SessionGuard } from "./session.guard.js";
 
-/** Session authentication for every route; opt out with @Public(). */
+/**
+ * Session authentication. SessionGuard runs on every route (opt out with
+ * @Public()), through RequestGuard in GuardsModule.
+ */
 @Module({
   imports: [DatabaseModule],
-  providers: [SessionCookieReader, { provide: APP_GUARD, useClass: SessionGuard }],
+  providers: [SessionCookieReader, SessionGuard],
+  exports: [SessionGuard],
 })
 export class AuthModule {}
