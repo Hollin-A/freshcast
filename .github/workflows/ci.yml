@@ -129,6 +129,31 @@ jobs:
             apps/web/e2e/.results
           retention-days: 7
 
+  # HTTP-level tests of the NestJS API (apps/api/test) against a throwaway
+  # Postgres: the real AppModule, guards and pipeline, with session cookies
+  # made the way the App's Auth.js makes them.
+  api-e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start database
+        run: pnpm --filter @freshcast/api e2e:up
+
+      # Through Turborepo so @freshcast/db and @freshcast/shared are built first.
+      - name: API e2e tests
+        run: pnpm exec turbo run test:e2e --filter=@freshcast/api
+
   # ui/* branches may only change the frontend presentation files listed in
   # .github/ui-paths. Other branches pass straight through, so the job can
   # stay a required check.
