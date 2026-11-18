@@ -304,9 +304,16 @@ Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js sessio
 
 ### Rate Limiting
 
-In-memory sliding window rate limiter (`apps/web/src/lib/rate-limit.ts`):
+**Legacy API.** In-memory sliding window rate limiter (`apps/web/src/lib/rate-limit.ts`):
 - Signup: 10 per IP per hour
 - Forgot password: 3 per email per hour (silently drops excess to prevent enumeration)
+
+**NestJS API** (`apps/api/src/rate-limit`, ADR-023 §9). `@nestjs/throttler` behind a global `RateLimitGuard`:
+- **Keyed by business** when signed in, by user before onboarding, and by client IP otherwise. The guard reads the session `SessionGuard` attached, so `RateLimitModule` is imported after `AuthModule`; requests `SessionGuard` rejects aren't counted.
+- **Per-route limits sized to cost**: `standard` (120 per minute) on every route, and `@RateLimit("costly")` (30 per hour) on routes that call Claude or OCR. Each route keeps its own count. Health routes use `@SkipThrottle()`.
+- **Client IP**: `trust proxy` is set to one hop, so the IP comes from the entry the ALB appends to `X-Forwarded-For`.
+- **Responses** carry `X-RateLimit-Limit`/`-Remaining`/`-Reset`. Over the limit: `429 RATE_LIMITED` Problem Details with `Retry-After` in seconds.
+- **In-memory storage** is correct only while the service runs one ECS task; with more, each task allows the full limit. A shared Redis store comes with the second task (ADR-020 D8).
 
 ---
 

@@ -6,6 +6,7 @@ import { validateEnv } from "./config/env.schema.js";
 import { DatabaseModule } from "./database/database.module.js";
 import { HealthModule } from "./health/health.module.js";
 import { LoggingModule } from "./logging/logging.module.js";
+import { RateLimitModule } from "./rate-limit/rate-limit.module.js";
 import { SecretsModule } from "./secrets/secrets.module.js";
 
 @Module({
@@ -17,6 +18,8 @@ import { SecretsModule } from "./secrets/secrets.module.js";
     DatabaseModule,
     SecretsModule,
     AuthModule,
+    // After AuthModule: its guard keys limits by the session SessionGuard attaches.
+    RateLimitModule,
     HealthModule,
   ],
   providers: [...HTTP_PIPELINE],

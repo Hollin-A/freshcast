@@ -6,6 +6,7 @@ import {
   PrismaHealthIndicator,
 } from "@nestjs/terminus";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { SkipThrottle } from "@nestjs/throttler";
 import { ZodResponse } from "nestjs-zod";
 import type { HealthLive, HealthReady } from "@freshcast/shared";
 import { ApiException } from "../common/api-exception.js";
@@ -26,8 +27,10 @@ type Checks = HealthReady["checks"];
  * Liveness and readiness (ADR-023 §7). The ALB checks /health/live, which
  * never touches a dependency, so a database outage doesn't make ECS replace
  * healthy tasks. The deploy pipeline and monitoring use /health/ready.
+ * Not rate limited: the ALB and monitoring poll them from shared addresses.
  */
 @Public()
+@SkipThrottle()
 @ApiTags("health")
 @Controller("health")
 export class HealthController {
