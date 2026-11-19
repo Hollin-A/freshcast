@@ -11,15 +11,7 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 
 ## File structure
 
-Single-context repo:
-
-```
-/
-├── GLOSSARY.md
-├── docs/adr/            ← system-wide decisions (001-…, 021-…; see docs/adr/README.md)
-├── apps/{api,web}/
-└── packages/{db,shared}/
-```
+Single context: one `GLOSSARY.md` at the repo root, and system-wide ADRs in `docs/adr/` (index in `docs/adr/README.md`). The repository layout is in [Architecture §2.2](../ARCHITECTURE.md#22-project-structure).
 
 ## Use the glossary's vocabulary
 

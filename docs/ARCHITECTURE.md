@@ -68,14 +68,20 @@ freshcast/
 │   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §11)
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
-│       └── src/                 # main.ts, app.module.ts, config/, database/, secrets/
+│       ├── src/                 # main.ts, app.module.ts, auth/, common/, config/, database/, health/, logging/, openapi/, rate-limit/, secrets/
+│       └── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
 │   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
 │   │   └── src/                 # client factory + generated client (gitignored)
 │   └── shared/                  # @freshcast/shared: Zod schemas, response types, constants
 │       └── src/schemas/         # auth, business, products, sales, receipts, chat, api
-├── docs/                        # ARCHITECTURE, API, ADRs
+├── docs/                        # ARCHITECTURE, API, TESTING, ADRs, agents/ (issue-tracker, triage and domain notes for agent skills)
+├── scripts/                     # ui/ scope guard and PR body check, with their tests
+├── .github/                     # CI workflows, ui-paths, PR template, CODEOWNERS
+├── .claude/settings.json        # Claude Code hooks and plugins
+├── CLAUDE.md                    # agent workflow rules; each package has its own CLAUDE.md
+├── GLOSSARY.md                  # domain vocabulary
 ├── amplify.yml                  # Amplify monorepo build (appRoot: apps/web)
 ├── turbo.json                   # Turborepo task graph
 └── pnpm-workspace.yaml          # workspace packages, allowBuilds, nodeLinker: hoisted
@@ -133,7 +139,7 @@ src/
 │   │   ├── products/route.ts       # GET + POST + PATCH
 │   │   ├── sales/
 │   │   │   ├── route.ts            # POST (create) + GET (list)
-│   │   │   ├── [id]/route.ts       # GET + PUT + DELETE
+│   │   │   ├── [id]/route.ts       # GET + DELETE
 │   │   │   ├── parse/route.ts      # POST (NL parse)
 │   │   │   └── export/route.ts     # GET (CSV download)
 │   │   ├── receipts/
@@ -621,7 +627,7 @@ The `api-e2e` job starts a throwaway Postgres (`apps/api/test/compose.yml`), app
 
 A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 
-A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` and `scope-guard` jobs must pass, and force-pushes and branch deletion are blocked.
+A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` and `scope-guard` jobs and the `pr-body` check must pass, and force-pushes and branch deletion are blocked.
 
 ### 11.3 AWS Amplify (production)
 
