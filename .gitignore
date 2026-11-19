@@ -46,9 +46,6 @@ packages/db/src/generated/prisma
 packages/*/dist
 apps/*/dist
 
-# internal docs (local-only, not public-facing)
-docs/internal/
-
 # pnpm store (Amplify build cache)
 .pnpm-store
 

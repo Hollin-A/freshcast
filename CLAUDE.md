@@ -12,4 +12,4 @@ Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `
 
 ### Domain docs
 
-Single-context: one root `CONTEXT.md` + system-wide ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: one root `GLOSSARY.md` + system-wide ADRs in `docs/adr/`. See `docs/agents/domain.md`.
