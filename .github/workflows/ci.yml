@@ -36,6 +36,9 @@ jobs:
       - name: Scope guard tests
         run: node --test scripts/check-ui-scope.test.mjs
 
+      - name: PR body check tests
+        run: node --test scripts/check-pr-body.test.mjs
+
       # Catches build-only failures before Amplify does. Placeholder values
       # satisfy the env checks that run when routes load; the build never
       # connects to the database.

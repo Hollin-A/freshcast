@@ -9,7 +9,19 @@
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-ui-scope.mjs\" --hook"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/check-pr-body.mjs\" --hook"
+          }
+        ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "mattpocock-skills@claude-plugins-official": true
   }
 }
