@@ -1,5 +1,6 @@
 import { type INestApplication, Module, type Type } from "@nestjs/common";
 import type { NestExpressApplication } from "@nestjs/platform-express";
+import { ConfigService } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import { encode } from "@auth/core/jwt";
 import { LoggerModule, Logger as PinoLogger } from "nestjs-pino";
@@ -8,7 +9,7 @@ import { AppModule } from "../src/app.module.js";
 import { PrismaService } from "../src/database/prisma.service.js";
 import { LoggingModule, pinoParams } from "../src/logging/logging.module.js";
 import { trustProxy } from "../src/rate-limit/rate-limit.module.js";
-import { assertLocalDatabase, E2E_AUTH_SECRET, E2E_DATABASE_URL } from "./env.js";
+import { assertLocalDatabase, E2E_AUTH_SECRET, E2E_DATABASE_NAME } from "./env.js";
 
 // Boots the real AppModule (config, database, guards, HTTP pipeline) against
 // the throwaway Postgres. Tests call it with Supertest:
@@ -45,7 +46,10 @@ export async function createE2eApp({ imports = [] }: { imports?: Type[] } = {}):
     .overrideModule(LoggingModule)
     .useModule(E2eLoggingModule)
     .compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>({ bufferLogs: true });
+  // Check the URL the app actually got, not the one setup-env.ts meant to
+  // set: if apps/api/.env won, stop before init() opens a connection.
+  assertLocalDatabase(moduleRef.get(ConfigService).getOrThrow<string>("DATABASE_URL"));
+  const app = moduleRef.createNestApplication<NestExpressApplication>();
   // Nest's Logger writes through pino, as in main.ts, so E2E_LOG covers both.
   app.useLogger(app.get(PinoLogger));
   trustProxy(app);
@@ -58,7 +62,12 @@ export async function createE2eApp({ imports = [] }: { imports?: Type[] } = {}):
  * beforeEach so each test starts from its own fixtures.
  */
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
-  assertLocalDatabase(E2E_DATABASE_URL);
+  // Ask the server which database this client is connected to, so the
+  // check holds whatever URL it was built from.
+  const [{ name }] = await prisma.$queryRaw<{ name: string }[]>`SELECT current_database() AS name`;
+  if (name !== E2E_DATABASE_NAME) {
+    throw new Error(`resetDatabase only empties ${E2E_DATABASE_NAME} (connected to ${name})`);
+  }
   const tables = await prisma.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'`;

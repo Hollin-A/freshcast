@@ -657,7 +657,8 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 | Task | What runs | Order |
 |---|---|---|
 | `build` | `@freshcast/db`: `prisma generate && tsc` · `@freshcast/shared`: `tsc` · `@freshcast/web`: `next build && node scripts/materialize-next-aliases.mjs` · `@freshcast/api`: `nest build` | Dependencies first (`^build`) |
-| `lint`, `typecheck`, `test`, `test:e2e`, `dev` | Per package (`test:e2e` uncached; run it with `--filter`) | After dependencies are built |
+| `lint`, `typecheck`, `test`, `dev` | Per package | After dependencies are built |
+| `@freshcast/api#test:e2e` | The API's e2e tests, uncached. Scoped to the API, so `turbo run test:e2e` doesn't start the web app's Playwright journeys (run those with `pnpm --filter @freshcast/web test:e2e`) | After dependencies are built |
 
 - **Compiled packages:** both packages compile to `dist/`, with `exports` pointing types at `apps/web/src/` and runtime at `dist/`.
 - **Caching:** Turborepo caches task outputs (`.next/**`, `dist/**`, and the generated Prisma client), so unchanged packages are skipped.

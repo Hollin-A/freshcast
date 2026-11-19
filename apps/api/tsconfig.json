@@ -9,7 +9,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    // Only tsconfig.build.json emits, so a plain `tsc` can't write test/
+    // into dist/ next to the build.
+    "noEmit": true
   },
   // Type checks the e2e tests in test/ too; the build compiles src/ only.
   "include": ["src", "test"],
