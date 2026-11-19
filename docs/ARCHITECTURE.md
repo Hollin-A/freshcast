@@ -658,6 +658,7 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 |---|---|---|
 | `build` | `@freshcast/db`: `prisma generate && tsc` · `@freshcast/shared`: `tsc` · `@freshcast/web`: `next build && node scripts/materialize-next-aliases.mjs` · `@freshcast/api`: `nest build` | Dependencies first (`^build`) |
 | `lint`, `typecheck`, `test`, `dev` | Per package | After dependencies are built |
+| `@freshcast/api#test:e2e` | The API's e2e tests, uncached. Scoped to the API, so `turbo run test:e2e` doesn't start the web app's Playwright journeys (run those with `pnpm --filter @freshcast/web test:e2e`) | After dependencies are built |
 
 - **Compiled packages:** both packages compile to `dist/`, with `exports` pointing types at `apps/web/src/` and runtime at `dist/`.
 - **Caching:** Turborepo caches task outputs (`.next/**`, `dist/**`, and the generated Prisma client), so unchanged packages are skipped.
@@ -666,6 +667,8 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 ### 12.2 CI and branch rules
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push to `main`: frozen `pnpm install`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` with placeholder env values. The build checks that env vars exist when routes load but never connects to the database.
+
+The `api-e2e` job starts a throwaway Postgres (`apps/api/test/compose.yml`), applies the migrations and runs the API's e2e tests (`turbo run test:e2e --filter=@freshcast/api`). They boot the full `AppModule` with Supertest and check that a session can't read or change another business's rows. The `e2e` and `storybook` jobs run the web app's Playwright journeys and story tests.
 
 A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 

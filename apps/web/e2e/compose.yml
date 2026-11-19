@@ -16,7 +16,7 @@ services:
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U e2e -d freshcast_e2e"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U e2e -d freshcast_e2e"]
       interval: 2s
       timeout: 5s
       retries: 15

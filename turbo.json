@@ -16,6 +16,10 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "@freshcast/api#test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "test:storybook": {
       "dependsOn": ["^build"]
     },
