@@ -1,0 +1,36 @@
+name: PR body
+
+# Every PR body follows .github/pull_request_template.md (the
+# mattpocock-skills:pr template). Runs on description edits too, so fixing
+# the body doesn't need a new commit.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-body:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Runs main's copy of the check, so a PR can't loosen the rules that
+      # judge it. Falls back to the PR's copy until the check is on main.
+      - name: Check PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          git fetch --depth=1 origin main
+          if git show origin/main:scripts/check-pr-body.mjs > "$RUNNER_TEMP/check-pr-body.mjs" 2>/dev/null; then
+            node "$RUNNER_TEMP/check-pr-body.mjs"
+          else
+            node scripts/check-pr-body.mjs
+          fi

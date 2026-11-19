@@ -63,12 +63,13 @@ Rules:
 
 ## Pull requests
 
-PRs should be small and focused. Include:
+PRs should be small and focused. The body follows [`.github/pull_request_template.md`](.github/pull_request_template.md), the template of the `mattpocock-skills:pr` skill:
 
-- What changed
-- Why it changed
-- How you verified it
-- Any follow-up work
+- **Summary**: the smallest view that makes the change clear (a diagram, diff sketch, call tree or pseudocode)
+- **Evidence**: before and after for each claim (a screenshot, command output or test run)
+- **Merge Danger**: **Door** (one-way or two-way) and **Blast Radius** (one word)
+
+The `PR body` workflow fails a PR whose body is missing a section, leaves one empty, or gives a Door other than one-way or two-way. It runs again when you edit the description. In Claude Code, a `PreToolUse` hook (`scripts/check-pr-body.mjs`) blocks `gh pr create` and `gh pr edit --body` until the session has loaded the skill, and also blocks if it can't read the session transcript. The project settings enable the `mattpocock-skills` plugin so the skill is available.
 
 Recommended checklist:
 
