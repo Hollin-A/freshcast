@@ -115,7 +115,7 @@ packages/shared   Zod request schemas, API response types, constants (@freshcast
 docs/             Architecture, API reference, ADRs
 ```
 
-The repo is a pnpm workspace built with Turborepo. Build, deployment and preview-branch practice are described in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#12-build-and-deployment); day-to-day commands are in the [Contributing Guide](CONTRIBUTING.md#repository-layout).
+The repo is a pnpm workspace built with Turborepo. Build, deployment and preview-branch practice are described in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#11-build-and-deployment); day-to-day commands are in the [Contributing Guide](CONTRIBUTING.md#repository-layout).
 
 Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
@@ -124,7 +124,7 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 - **[Glossary](GLOSSARY.md)** — the words Freshcast uses for its domain, surfaces and presentation, and the synonyms to avoid
 - **[Architecture](docs/ARCHITECTURE.md)** — system architecture, data model, service algorithms, security, and operations
 - **[API Reference](docs/API.md)** — request/response shapes, error codes, and data models for every endpoint
-- **[Architecture Decision Records](docs/adr/README.md)** — 21 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, env loading on Amplify, secrets management, receipt OCR hardening, the NestJS backend migration and its hosting and infrastructure-as-code choices, and more
+- **[Architecture Decision Records](docs/adr/README.md)** — the index of architectural decisions and their status
 - **[Changelog](CHANGELOG.md)** — shipped changes by release
 - **[Contributing Guide](CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
 

@@ -78,7 +78,7 @@ Recommended checklist:
 - [ ] `pnpm test`
 - [ ] `pnpm build`
 - [ ] Manual smoke test for affected user flow
-- [ ] For changes to the build, package layout or deployment config: verified on an Amplify preview branch (see [Architecture §12.4](docs/ARCHITECTURE.md#124-preview-branches))
+- [ ] For changes to the build, package layout or deployment config: verified on an Amplify preview branch (see [Architecture §11.4](docs/ARCHITECTURE.md#114-preview-branches))
 
 ## Documentation sync requirements
 
@@ -185,5 +185,5 @@ git pull
 git branch -d <your-branch>
 ```
 
-Merges to `main` deploy to production through AWS Amplify (see [Architecture §12](docs/ARCHITECTURE.md#12-build-and-deployment)).
+Merges to `main` deploy to production through AWS Amplify (see [Architecture §11](docs/ARCHITECTURE.md#11-build-and-deployment)).
 
