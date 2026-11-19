@@ -121,6 +121,7 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
 ## Project Documentation
 
+- **[Glossary](GLOSSARY.md)** — the words Freshcast uses for its domain, surfaces and presentation, and the synonyms to avoid
 - **[Architecture](docs/ARCHITECTURE.md)** — system architecture, data model, service algorithms, security, and operations
 - **[API Reference](docs/API.md)** — request/response shapes, error codes, and data models for every endpoint
 - **[Architecture Decision Records](docs/adr/README.md)** — 21 ADRs covering auth strategy, NL parsing, editorial rebrand, data isolation, env loading on Amplify, secrets management, receipt OCR hardening, the NestJS backend migration and its hosting and infrastructure-as-code choices, and more
@@ -135,6 +136,7 @@ To avoid duplication and stale docs, each topic has a single home:
 - Endpoint contracts live in `docs/API.md`
 - Architectural decisions live in `docs/adr/`
 - Release deltas live in `CHANGELOG.md`
+- Domain vocabulary lives in `GLOSSARY.md`
 
 ## Getting Started
 
@@ -229,6 +231,16 @@ Freshcast is production-ready for single-business usage with:
 - Forecasting, insights, and AI chat grounded in business data
 - Privacy and safety controls (business isolation, rate limits, account safeguards)
 - Operational foundations (structured logging, health checks, CI-gated deploys, testing)
+
+### Non-goals
+
+Freshcast deliberately does not:
+
+- Replace a POS system
+- Manage inventory, suppliers or purchase orders
+- Require a full product catalogue before a Vendor can log sales
+- Track prices or revenue (quantities only, [ADR-004](docs/adr/004-quantity-only-tracking.md))
+- Compare one Business with another ([ADR-008](docs/adr/008-data-isolation-privacy.md))
 
 The backend is moving to a dedicated NestJS API ([ADR-020](docs/adr/020-dedicated-nestjs-backend.md)). Planned work is tracked in [GitHub Issues](https://github.com/Hollin-A/freshcast/issues) and on the [project board](https://github.com/users/Hollin-A/projects/1).
 
