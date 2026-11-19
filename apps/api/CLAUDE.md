@@ -1,0 +1,18 @@
+# apps/api: the API (NestJS)
+
+The API replaces the Legacy API one domain at a time (ADR-020). ADR-023 owns its contract; read it before adding a route.
+
+## Conventions
+
+- ESM with NodeNext: relative imports end in `.js`.
+- Env lives in `apps/api/.env` and is validated at startup by the Zod schema in `src/config/env.schema.ts`; add new required config there.
+- Controllers return the resource as-is, or `paginated(items, meta)` from `src/common/pagination.ts` for lists.
+- Expected errors throw `ApiException` with a code from `PROBLEM_CODES` (`@freshcast/shared`); the global filter turns every error into RFC 9457 Problem Details.
+- Every route needs a session by default. Mark public routes with `@Public()`, and get the Business with `@CurrentBusiness()` (ADR-008).
+- Request DTOs are Zod schemas through `nestjs-zod`; document success responses with `@ZodResponse`.
+- Mark Claude and OCR routes `@RateLimit("costly")`.
+- Log through Nest's `Logger`, which writes through pino.
+
+## Tests
+
+Unit tests sit beside the code; every Business-owned route also gets isolation e2e tests. See [docs/TESTING.md](../../docs/TESTING.md#api-tests).

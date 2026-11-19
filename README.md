@@ -107,15 +107,7 @@ Client (Browser, PWA) — forms validate with @freshcast/shared
 
 ### Repository layout
 
-```
-apps/web          Next.js app: pages, API routes, services (@freshcast/web)
-apps/api          NestJS API, being introduced per ADR-020; not deployed yet (@freshcast/api)
-packages/db       Prisma schema, migrations, seed and client factory (@freshcast/db)
-packages/shared   Zod request schemas, API response types, constants (@freshcast/shared)
-docs/             Architecture, API reference, ADRs
-```
-
-The repo is a pnpm workspace built with Turborepo. Build, deployment and preview-branch practice are described in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#11-build-and-deployment); day-to-day commands are in the [Contributing Guide](CONTRIBUTING.md#repository-layout).
+A pnpm workspace built with Turborepo: the App (`apps/web`), the API (`apps/api`, replacing the Legacy API per ADR-020) and two shared packages (`packages/db`, `packages/shared`). The full layout is in [Architecture → Project Structure](docs/ARCHITECTURE.md#22-project-structure); build, deployment and preview branches are in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#11-build-and-deployment).
 
 Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 
@@ -125,18 +117,11 @@ Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 - **[Architecture](docs/ARCHITECTURE.md)** — system architecture, data model, service algorithms, security, and operations
 - **[API Reference](docs/API.md)** — request/response shapes, error codes, and data models for every endpoint
 - **[Architecture Decision Records](docs/adr/README.md)** — the index of architectural decisions and their status
+- **[Testing](docs/TESTING.md)** — how each kind of test is written and run
 - **[Changelog](CHANGELOG.md)** — shipped changes by release
-- **[Contributing Guide](CONTRIBUTING.md)** — branch strategy, PR checklist, and doc-sync rules
+- **[Contributing Guide](CONTRIBUTING.md)** — branch strategy, PR format, and the documentation sync table
 
-### Documentation ownership
-
-To avoid duplication and stale docs, each topic has a single home:
-
-- Architecture, runtime details, and the data model live in `docs/ARCHITECTURE.md`
-- Endpoint contracts live in `docs/API.md`
-- Architectural decisions live in `docs/adr/`
-- Release deltas live in `CHANGELOG.md`
-- Domain vocabulary lives in `GLOSSARY.md`
+Each topic has one home; the [documentation sync table](CONTRIBUTING.md#documentation-sync-requirements) says which file owns what.
 
 ## Getting Started
 
@@ -207,21 +192,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Testing
 
-Run the test suite:
-
-```bash
-pnpm test
-```
-
-Tests cover core business logic (sales parsers, product matcher, prediction engine, unit normalizer, date utilities, holiday multipliers, Textract `AnalyzeExpense` mapping, rule-based receipt parser) and platform code (rate limiter, API client, request logging and IDs, logger, receipt cost controls). All tests are pure unit tests with no database or network calls.
-
-In `apps/web`, Vitest runs two projects: `unit` (`*.test.ts`, Node) and `component` (`*.test.tsx`, jsdom with React Testing Library). Component tests cover the bottom nav, `BigNumber`, the forgot-password form and the products catalog, with API calls answered by MSW handlers and fixtures in `apps/web/src/test/msw/`.
-
-Storybook catalogues the components in `components/ui` and `components/shared`, with the same MSW handlers answering API calls. Open it with `pnpm --filter @freshcast/web storybook` (http://localhost:6006). `pnpm test:storybook` runs every story as a test in headless Chromium, once in the light and once in the dark Appearance, including each story's interaction checks. It needs Chromium once: `pnpm --filter @freshcast/web exec playwright install chromium`.
-
-Playwright journeys (`apps/web/e2e/`) log in, log a sale and open the dashboard and history in a production build, at mobile and desktop sizes in both Appearances, and compare each page with a committed screenshot. They need Docker: `pnpm --filter @freshcast/web e2e:up`, then `pnpm --filter @freshcast/web test:e2e`. See [CONTRIBUTING.md](./CONTRIBUTING.md#end-to-end-tests) for updating screenshots.
-
-CI runs on every pull request and push to `main` via GitHub Actions: lint, type check, tests and a production build, plus the story tests in a separate `storybook` job and the Playwright journeys in an `e2e` job. Merging to `main` requires a passing CI check.
+`pnpm test` runs every package's unit and component tests. Stories, Playwright journeys with screenshot baselines, and the API's e2e tests are covered in [docs/TESTING.md](docs/TESTING.md). CI runs all of them on every pull request.
 
 ## Current Scope
 
