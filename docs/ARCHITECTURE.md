@@ -4,31 +4,6 @@
 
 This is the canonical technical reference for Freshcast: system architecture, data model, core service algorithms, frontend structure, security, and operational concerns. Endpoint-level request/response contracts live in the [API Reference](./API.md); the decisions behind the architecture are recorded in the [Architecture Decision Records](./adr/README.md).
 
-### Referenced ADRs
-
-| ADR | Decision |
-|-----|----------|
-| [001](adr/001-authentication-strategy.md) | Email/password via Auth.js |
-| [002](adr/002-sales-input-dual-mode.md) | Dual-mode sales input (NL + manual form) |
-| [003](adr/003-rule-based-nl-parser.md) | Rule-based NL parser (now fallback for the typed Log/NL tab; superseded by 011 as primary; receipt-path scope clarified by 019) |
-| [004](adr/004-quantity-only-tracking.md) | Quantity-only tracking, no pricing |
-| [005](adr/005-batch-processing-over-realtime.md) | Daily batch processing for insights |
-| [006](adr/006-demand-prediction-approach.md) | Statistical demand prediction |
-| [007](adr/007-tech-stack.md) | Next.js, Prisma, Neon, shadcn/ui |
-| [008](adr/008-data-isolation-privacy.md) | Shared DB with application-level isolation |
-| [009](adr/009-localization-architecture.md) | Localization-ready from day one |
-| [011](adr/011-llm-integration-claude.md) | Claude Haiku for insights + NL parsing |
-| [012](adr/012-ai-chat-implemented.md) | AI chat interface |
-| [013](adr/013-timezone-aware-dates.md) | Timezone-aware date handling |
-| [014](adr/014-multiple-daily-entries.md) | Multiple sales entries per day |
-| [015](adr/015-holiday-aware-predictions.md) | Region-based holiday multipliers on predictions |
-| [016](adr/016-editorial-rebrand.md) | Editorial rebrand (warm palette, serif headings) |
-| [017](adr/017-next-config-no-env.md) | No `next.config` `env`; route via `amplify.yml` → `.env.production` |
-| [018](adr/018-secrets-manager.md) | Hybrid env→Secrets Manager resolver for vendor API keys + cron secret |
-| [019](adr/019-receipt-ocr-hardening.md) | Receipt OCR is LLM-only by default; Textract migrated to `AnalyzeExpense` |
-| [020](adr/020-dedicated-nestjs-backend.md) | Dedicated NestJS backend, migrated incrementally in a pnpm + Turborepo monorepo |
-| [021](adr/021-api-hosting-and-infrastructure-as-code.md) | API on ECS Fargate + ALB; infrastructure as code with AWS CDK from Stage 3; DNS via the existing Route 53 zone |
-
 ---
 
 ## 2. System Architecture
@@ -90,7 +65,7 @@ freshcast/
 ├── apps/
 │   ├── web/                     # @freshcast/web: Next.js app (pages, API routes, services)
 │   │   ├── src/                 # see the tree below
-│   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §12)
+│   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §11)
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
 │       └── src/                 # main.ts, app.module.ts, config/, database/, secrets/
@@ -622,35 +597,9 @@ The Amplify SSR Lambda execution role has a least-privilege inline policy granti
 
 ---
 
-## 11. ADR Cross-Reference
+## 11. Build and Deployment
 
-| Concern | Decision | ADR |
-|---------|----------|-----|
-| Auth | Email/password via Auth.js | 001 |
-| Sales input | Dual mode (NL + manual form) | 002 |
-| NL parsing | LLM primary, rule-based fallback | 003 → 011 |
-| Data tracking | Quantity only, no pricing | 004 |
-| Insight timing | Daily batch, on-demand trigger | 005 |
-| Predictions | Statistical (moving avg + weekday) | 006 |
-| Tech stack | Next.js 16, Prisma 7, Neon, shadcn/ui | 007 |
-| Data privacy | Shared DB, app-level business isolation | 008 |
-| Localization | Architecture-ready, English only | 009 |
-| AI chat | Implemented with Claude + data context | 012 |
-| Timezones | Business timezone stored, all dates TZ-aware | 013 |
-| Daily entries | Multiple per day, no unique constraint | 014 |
-| Holidays | Region-based holiday multipliers on predictions | 015 |
-| Editorial rebrand | Warm palette, serif headings | 016 |
-| Env on Amplify | No `next.config` `env`; route via `amplify.yml` → `.env.production` | 017 |
-| Secrets at runtime | Hybrid env→Secrets Manager resolver for vendor API keys and cron secret | 018 |
-| Receipt OCR fallback | LLM-only by default; Textract migrated to `AnalyzeExpense`; structured rule-based fallback opt-in via `RECEIPT_FALLBACK=structured` | 019 |
-| Backend architecture | Dedicated NestJS API, migrated incrementally; monorepo with `@freshcast/db` and `@freshcast/shared` | 020 |
-| API hosting & infrastructure | ECS Fargate + ALB (rolling deploys, circuit breaker); AWS CDK in `infra/`; CDK references the existing Route 53 zone | 021 |
-
----
-
-## 12. Build and Deployment
-
-### 12.1 Workspace and task graph
+### 11.1 Workspace and task graph
 
 The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.json`). Root scripts run each task across all packages:
 
@@ -664,7 +613,7 @@ The repo is a pnpm workspace (`apps/*`, `packages/*`) with Turborepo (`turbo.jso
 - **Caching:** Turborepo caches task outputs (`.next/**`, `dist/**`, and the generated Prisma client), so unchanged packages are skipped.
 - **Environment mode:** `envMode: loose` passes the full environment to tasks, as plain `next build` did. `.env*` files count as build inputs.
 
-### 12.2 CI and branch rules
+### 11.2 CI and branch rules
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push to `main`: frozen `pnpm install`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` with placeholder env values. The build checks that env vars exist when routes load but never connects to the database.
 
@@ -674,7 +623,7 @@ A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` 
 
 A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` and `scope-guard` jobs must pass, and force-pushes and branch deletion are blocked.
 
-### 12.3 AWS Amplify (production)
+### 11.3 AWS Amplify (production)
 
 `amplify.yml` uses Amplify's monorepo format:
 - **`appRoot: apps/web`.** The Amplify environment variable `AMPLIFY_MONOREPO_APP_ROOT=apps/web` (all branches) must match it.
@@ -686,7 +635,7 @@ A repository ruleset protects `main`: changes arrive through pull requests, the 
 
 **Post-build alias step:** Turbopack externalizes some packages (`@prisma/client`, `pg`, `@aws-sdk/client-s3`, OpenTelemetry hooks) through hashed alias symlinks in `.next/node_modules`, with relative targets sized for the `apps/web` depth. Amplify deploys the app root flattened to `/var/task`, which breaks those links: in #67, every route using these packages failed to load. `scripts/materialize-next-aliases.mjs` replaces the links with real copies, and the build fails if any remain. Recheck it on Next.js upgrades.
 
-### 12.4 Preview branches
+### 11.4 Preview branches
 
 Changes to the build, package layout or deployment config are deployed to an **Amplify preview branch** before merging, because local runs don't reproduce Amplify's runtime layout:
 1. **Connect the feature branch** in Amplify. It gets its own URL, `https://<branch>.<app-id>.amplifyapp.com`.
@@ -697,7 +646,7 @@ Changes to the build, package layout or deployment config are deployed to an **A
 
 Ordinary code changes don't need a preview; CI covers them.
 
-### 12.5 Rollback and migrations
+### 11.5 Rollback and migrations
 
 - **Rollback:** Amplify's "Redeploy this version" **rebuilds** that commit with the current environment variables. A commit from before the monorepo needs `AMPLIFY_MONOREPO_APP_ROOT` removed first.
 - **Production migrations** are a separate, deliberate step, never part of the build: `pnpm --filter @freshcast/db migrate:deploy`, with the production `DATABASE_URL` set for that command only. Schema changes go through migrations, never `db push` (see CONTRIBUTING).
