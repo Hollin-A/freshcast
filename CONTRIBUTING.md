@@ -138,7 +138,7 @@ Freshcast uses [semantic versioning](https://semver.org/). All workspace package
 
 ## Merge flow
 
-`main` is protected: changes land through pull requests, and the CI `check` job (lint, type check, tests, build), the `scope-guard` job and the `pr-body` check must pass before merging. Merge on GitHub, then update your local copy:
+`main` is protected: changes land through pull requests, and the required CI checks must pass before merging (see [Architecture §11.2](docs/ARCHITECTURE.md#112-ci-and-branch-rules)). Jobs whose area a pull request doesn't change are skipped, which counts as passing. Merge on GitHub, then update your local copy:
 
 ```bash
 git checkout main

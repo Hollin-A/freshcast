@@ -7,7 +7,76 @@ on:
     branches: [main]
 
 jobs:
+  # Sorts a pull request's changed files into areas so each job below runs
+  # only when its area changed. A skipped job counts as passing for a
+  # required check, which is why the filtering happens here and not through
+  # `paths` on the trigger (a workflow that never starts leaves its required
+  # checks waiting forever). Pushes to main skip this job and run everything.
+  #
+  # Every job below runs when this job didn't succeed, so a broken filter
+  # fails closed. `common` matches any non-docs file outside the areas, so a
+  # file nobody sorted runs every job.
+  changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
+      common: ${{ steps.filter.outputs.common }}
+
+    steps:
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          # A file matches a filter when it matches an include pattern and
+          # none of the "!" excludes.
+          predicate-quantifier: some-with-excludes
+          filters: |
+            # Anything CI can test: all but docs and editor or agent config.
+            # The PR template is code here, since check-pr-body's tests read it.
+            code:
+              - '**'
+              - '!*.md'
+              - '!apps/**/*.md'
+              - '!packages/**/*.md'
+              - '!docs/**'
+              - '!LICENSE'
+              - '!.claude/**'
+              - '!.vscode/**'
+            web:
+              - 'apps/web/**'
+              - '!apps/web/**/*.md'
+            api:
+              - 'apps/api/**'
+              - '!apps/api/**/*.md'
+            # What every job depends on: packages/*, dependencies, Turborepo
+            # and CI config, and any file not sorted into an area.
+            common:
+              - '**'
+              - '!*.md'
+              - '!apps/**/*.md'
+              - '!packages/**/*.md'
+              - '!docs/**'
+              - '!LICENSE'
+              - '!.claude/**'
+              - '!.vscode/**'
+              - '!apps/web/**'
+              - '!apps/api/**'
+              - '!scripts/**'
+              - '!.github/pull_request_template.md'
+              - '!.github/ui-paths'
+              - '!.github/CODEOWNERS'
+
+  # Lint, type check, unit tests, guard script tests and build: any change
+  # but docs.
   check:
+    needs: changes
+    if: >-
+      !cancelled() && (needs.changes.result != 'success'
+      || needs.changes.outputs.code == 'true')
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +121,10 @@ jobs:
   # Runs every story as a test in Chromium, once per Appearance (light and
   # dark). Separate from `check` so the browser download stays out of it.
   storybook:
+    needs: changes
+    if: >-
+      !cancelled() && (needs.changes.result != 'success'
+      || needs.changes.outputs.web == 'true' || needs.changes.outputs.common == 'true')
     runs-on: ubuntu-latest
 
     steps:
@@ -90,8 +163,13 @@ jobs:
 
   # Playwright journeys and screenshot baselines (apps/web/e2e). The App runs
   # on the runner against a throwaway Postgres; Chromium runs in Playwright's
-  # Docker image, the same one used locally, so screenshots match.
+  # Docker image, the same one used locally, so screenshots match. MSW
+  # answers the browser's API calls, so apps/api changes don't affect it.
   e2e:
+    needs: changes
+    if: >-
+      !cancelled() && (needs.changes.result != 'success'
+      || needs.changes.outputs.web == 'true' || needs.changes.outputs.common == 'true')
     runs-on: ubuntu-latest
 
     steps:
@@ -136,6 +214,10 @@ jobs:
   # Postgres: the real AppModule, guards and pipeline, with session cookies
   # made the way the App's Auth.js makes them.
   api-e2e:
+    needs: changes
+    if: >-
+      !cancelled() && (needs.changes.result != 'success'
+      || needs.changes.outputs.api == 'true' || needs.changes.outputs.common == 'true')
     runs-on: ubuntu-latest
 
     steps:

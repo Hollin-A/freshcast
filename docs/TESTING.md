@@ -86,4 +86,4 @@ The values in `test/env.ts` override `apps/api/.env`, and the harness refuses an
 
 ## CI
 
-GitHub Actions runs on every pull request and push to `main`: the `check` job (lint, type check, unit and component tests, guard script tests, build), `storybook`, `e2e` and `api-e2e`. See [Architecture §11.2](ARCHITECTURE.md#112-ci-and-branch-rules) for the jobs that must pass before merging.
+GitHub Actions runs on every pull request and push to `main`: the `check` job (lint, type check, unit and component tests, guard script tests, build), `storybook`, `e2e` and `api-e2e`. On a pull request each job runs only when the files it tests changed, so an `apps/api` change skips `storybook` and `e2e`, and a docs-only change skips all four. See [Architecture §11.2](ARCHITECTURE.md#112-ci-and-branch-rules) for the jobs that must pass before merging.

@@ -625,9 +625,11 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push 
 
 The `api-e2e` job starts a throwaway Postgres (`apps/api/test/compose.yml`), applies the migrations and runs the API's e2e tests (`turbo run test:e2e --filter=@freshcast/api`). They boot the full `AppModule` with Supertest and check that a session can't read or change another business's rows. The `e2e` and `storybook` jobs run the web app's Playwright journeys and story tests.
 
+On a pull request, a `changes` job (`dorny/paths-filter`) first sorts the changed files into areas, and each job runs only when its area changed: `check` for any change but docs, `storybook` and `e2e` for `apps/web`, `api-e2e` for `apps/api`. Changes to `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas run every job. Docs here are Markdown files (except the PR template, which the `check` tests read), `docs/`, `LICENSE`, `.claude/` and `.vscode/`, so a docs-only pull request runs only `scope-guard` and `pr-body`. A skipped job counts as passing for a required check, which is why the filter sits on the jobs and not on the workflow's trigger. If `changes` fails, every job runs, and pushes to `main` always run everything.
+
 A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 
-A repository ruleset protects `main`: changes arrive through pull requests, the CI `check` and `scope-guard` jobs and the `pr-body` check must pass, and force-pushes and branch deletion are blocked.
+A repository ruleset protects `main`: changes arrive through pull requests, the CI `check`, `storybook`, `e2e`, `api-e2e` and `scope-guard` jobs and the `pr-body` check must pass (or be skipped because their area didn't change), and force-pushes and branch deletion are blocked.
 
 ### 11.3 AWS Amplify (production)
 

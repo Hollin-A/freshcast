@@ -192,7 +192,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Testing
 
-`pnpm test` runs every package's unit and component tests. Stories, Playwright journeys with screenshot baselines, and the API's e2e tests are covered in [docs/TESTING.md](docs/TESTING.md). CI runs all of them on every pull request.
+`pnpm test` runs every package's unit and component tests. Stories, Playwright journeys with screenshot baselines, and the API's e2e tests are covered in [docs/TESTING.md](docs/TESTING.md). CI runs the ones a pull request's changes affect.
 
 ## Current Scope
 
