@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ClsModule } from "nestjs-cls";
 import { HTTP_PIPELINE } from "./common/http-pipeline.js";
 import { validateEnv } from "./config/env.schema.js";
 import { DatabaseModule } from "./database/database.module.js";
@@ -14,6 +15,9 @@ import { SecretsModule } from "./secrets/secrets.module.js";
     // ECS task definition. Invalid values stop startup (see env.schema.ts).
     ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
     LoggingModule,
+    // A context per request (AsyncLocalStorage). SessionGuard puts the
+    // session's Business in it for the scoped Prisma client.
+    ClsModule.forRoot({ global: true, middleware: { mount: true } }),
     DatabaseModule,
     SecretsModule,
     // Session authentication, then rate limiting, on every route.

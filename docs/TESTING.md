@@ -74,6 +74,7 @@ The e2e tests live in `apps/api/test/`. Each file boots the real `AppModule` (co
 - `seedFixtures()` (`test/fixtures.ts`) creates two onboarded Businesses, `alpha` and `beta`, each with a Product, plus a signed-in user with no Business. Each fixture carries a session cookie made the way the App's Auth.js makes it.
 - Call `resetDatabase()` in `beforeEach`: the files share one database and run one at a time.
 - Every Business-owned route gets e2e tests that sign in as `alpha` and check that `beta`'s IDs return 404 and leave `beta`'s rows unchanged (the ADR-023 slice checklist).
+- `test/isolation.e2e-spec.ts` covers the scoped Prisma client itself against the real database: its probe routes leave `businessId` out of every query, and the tests check reads, writes, transactions, foreign-key ownership, `$assertOwned()` and the fail-closed cases. The rules for each model and operation are unit-tested in `src/database/business-scope.test.ts`.
 - Logs are silent; run with `E2E_LOG=error` to see why a request returned a 500.
 
 ```bash

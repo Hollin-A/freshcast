@@ -3,6 +3,7 @@ import { ConfigModule } from "@nestjs/config";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { SkipThrottle, Throttle } from "@nestjs/throttler";
+import { ClsModule } from "nestjs-cls";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SessionBusiness } from "../auth/auth-context.js";
@@ -10,6 +11,7 @@ import { SessionCookieReader } from "../auth/session-cookie.js";
 import { HTTP_PIPELINE } from "../common/http-pipeline.js";
 import { Public } from "../common/public.decorator.js";
 import { PrismaService } from "../database/prisma.service.js";
+import { SCOPED_PRISMA } from "../database/scoped-prisma.js";
 import { GuardsModule } from "../guards/guards.module.js";
 import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from "./client-ip.js";
 import { trustProxy } from "./rate-limit.module.js";
@@ -71,6 +73,7 @@ class TestController {
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, load: [() => ({ PROXY_SECRET })] }),
+    ClsModule.forRoot({ global: true, middleware: { mount: true } }),
     GuardsModule,
   ],
   controllers: [TestController],
@@ -86,6 +89,8 @@ async function createApp(): Promise<NestExpressApplication> {
     .useValue({
       user: { findUnique: async ({ where }: { where: { id: string } }) => USERS[where.id] ?? null },
     })
+    .overrideProvider(SCOPED_PRISMA)
+    .useValue({})
     .compile();
   const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
   trustProxy(app);

@@ -230,7 +230,7 @@ The complete Prisma schema is in `packages/db/prisma/schema.prisma`, and the ful
 
 - **Prisma v7** with `prisma-client` generator (ESM, Rust-free) and `PrismaPg` adapter
 - **`@db.Date`** for sales dates — stores calendar date only, no time component
-- **Business isolation** — every data table has `businessId` foreign key; all queries scoped
+- **Business isolation** — every data table has `businessId` foreign key (Sales items through their Sales entry); all queries scoped, in the API by the scoped Prisma client (§4, ADR-025)
 - **Multiple entries per day** — no unique constraint on `(businessId, date)` for SalesEntry
 - **Insight dedup** — `@@unique([businessId, date, type])` on DailyInsight prevents duplicates
 - **Cascade deletes** — SalesItem cascades from SalesEntry; all business data cascades from Business
@@ -280,8 +280,33 @@ Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js sessio
 
 - **`SessionCookieReader`** decrypts the cookie with `getToken()` from `@auth/core/jwt`, using `AUTH_SECRET` and the cookie name as the salt: `__Secure-authjs.session-token` when `NODE_ENV=production`, `authjs.session-token` otherwise. A missing, tampered or expired cookie (or one without the `id` claim) counts as no session.
 - **`SessionGuard`** (run on every route by the global `RequestGuard`, see Rate Limiting) skips `@Public()` routes. Otherwise it loads the user with their business in one query, answers `401 UNAUTHORIZED` if there's no session or the user no longer exists, and attaches `{ userId, business }` to the request.
-- **`@CurrentBusiness()`** gives handlers `{ id, timezone, region }` and is the only source of a business ID (ADR-008); it answers `403 BUSINESS_REQUIRED` before onboarding. **`@CurrentUser()`** gives `{ id }` for the few routes that work without a business.
+- **`SessionGuard`** also puts the user and business IDs in the request context (`nestjs-cls`), where the scoped Prisma client reads them (see below).
+- **`@CurrentBusiness()`** gives handlers `{ id, timezone, region }`; it answers `403 BUSINESS_REQUIRED` before onboarding. **`@CurrentUser()`** gives `{ id }` for the few routes that work without a business.
 - **Pinned bridge** (ADR-023 §10): `next-auth` is pinned to an exact version, and `apps/api` depends on the exact `@auth/core` it uses. `src/auth/auth-bridge.test.ts` fails if they drift apart.
+
+### Business isolation in the API
+
+ADR-008's isolation is enforced in one place, `apps/api/src/database/` ([ADR-025](./adr/025-business-scoping-through-a-scoped-prisma-client.md)). Services inject the **scoped client** with `@InjectScopedPrisma()` and leave `businessId` out of `where`, except inside a compound unique key such as `businessId_date_type`, where Prisma needs it:
+
+- `scoped-prisma.ts` is a Prisma client extension that applies `business-scope.ts`'s rules to every query: `businessId` added to `where` (through `salesEntry` for Sales items, and by `id` for the Business), set on creates, and never changed by updates.
+- Nested writes are refused except a Sales entry's own items, whose data is checked the same way. Every `productId` a write stores, nested or not, must be the Business's, or the write answers `400 VALIDATION_ERROR`.
+- `include` and `select` can't reach the auth tables, and the auth-table delegates aren't on the client.
+- It reads the Business from the request context on each query, so it is one singleton rather than a request-scoped provider (which would make every provider that injects it request-scoped too).
+- It fails closed: `403 BUSINESS_REQUIRED` before onboarding, and a 500 with no session (a `@Public()` route or a job).
+- It exposes only the Business-owned delegates, `$transaction` and `$assertOwned()`; raw SQL and `$extends` throw, including on the transaction client.
+- `$assertOwned("product", ids, field)` checks IDs from a request body up front, on the client or the transaction client, and answers `400 VALIDATION_ERROR` naming `field` and the unknown IDs.
+- Prisma's types still require `businessId` on creates: pass `@CurrentBusiness().id`, and the client checks it matches.
+
+Unscoped database access is allowed only in these files under `apps/api/src/`:
+
+| File | Why |
+|---|---|
+| `auth/session.guard.ts` | Auth bridge: loads the user and their business before the Business is known |
+| `database/database.module.ts` | Provides `PrismaService` and builds the scoped client on it |
+| `health/health.controller.ts` | Readiness check: `SELECT 1` |
+| `database/prisma.service.ts` | The client itself; its startup check runs `SELECT 1` |
+
+`src/database/unscoped-uses.test.ts` holds the same list and fails when another file injects `PrismaService` or builds a Prisma client. Add a row to both when a job that works across businesses lands, such as the Weekly summary (#42). The e2e tests in `apps/api/test/` use `PrismaService` to seed and empty their database.
 
 ### Rate Limiting
 
@@ -522,8 +547,8 @@ Settings accessible from dashboard header (⚙ Settings link).
 - Input sanitization: `apps/web/src/lib/sanitize.ts` strips control chars + clamps length on user-facing text (business name, product name)
 - SQL injection: Prisma parameterized queries
 - XSS: React default escaping + sanitization above
-- Data isolation: every query scoped to `businessId` from session
-- Product ownership: verified before creating SalesItems
+- Data isolation: every query scoped to `businessId` from session; in the API, enforced by the scoped Prisma client ([§4](#business-isolation-in-the-api), ADR-025)
+- Product ownership: verified before creating SalesItems (in the API, by the scoped client on every write that stores a `productId`)
 - Timezone validation: IANA string validated server-side via `Intl.DateTimeFormat`
 - Atomic operations: sales updates wrapped in `$transaction`
 - Token security: password reset tokens deleted atomically before password update

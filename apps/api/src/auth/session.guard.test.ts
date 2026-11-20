@@ -3,10 +3,12 @@ import { ConfigService } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { encode } from "@auth/core/jwt";
+import { ClsModule, ClsService } from "nestjs-cls";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { HTTP_PIPELINE } from "../common/http-pipeline.js";
 import { Public } from "../common/public.decorator.js";
+import type { RequestContext } from "../database/business-context.js";
 import { PrismaService } from "../database/prisma.service.js";
 import type { SessionBusiness } from "./auth-context.js";
 import { CurrentBusiness, CurrentUser, type SessionUser } from "./current-session.decorator.js";
@@ -31,6 +33,8 @@ const findUnique = vi.fn(async ({ where }: { where: { id: string } }) => USERS[w
 
 @Controller("test")
 class TestController {
+  constructor(private readonly cls: ClsService<RequestContext>) {}
+
   @Public()
   @Get("public")
   open() {
@@ -46,6 +50,12 @@ class TestController {
   business(@CurrentBusiness() business: SessionBusiness) {
     return business;
   }
+
+  /** What the scoped Prisma client would scope this request to. */
+  @Get("context")
+  context() {
+    return { userId: this.cls.get("userId") ?? null, businessId: this.cls.get("businessId") ?? null };
+  }
 }
 
 function sessionCookie(
@@ -59,6 +69,7 @@ async function createApp(nodeEnv: string): Promise<INestApplication> {
   const env: Record<string, string> = { AUTH_SECRET: SECRET, NODE_ENV: nodeEnv };
 
   @Module({
+    imports: [ClsModule.forRoot({ middleware: { mount: true } })],
     controllers: [TestController],
     providers: [
       ...HTTP_PIPELINE,
@@ -144,6 +155,14 @@ describe("SessionGuard", () => {
     await get("/test/user", cookie).expect(200, { id: "user_new" });
     const res = await get("/test/business", cookie).expect(403);
     expect(res.body).toMatchObject({ status: 403, code: "BUSINESS_REQUIRED" });
+  });
+
+  it("puts the session's business in the request context for the scoped client", async () => {
+    await get("/test/context", await sessionCookie({ id: "user_1" })).expect(200, { userId: "user_1", businessId: "biz_1" });
+  });
+
+  it("leaves the request context without a business before onboarding", async () => {
+    await get("/test/context", await sessionCookie({ id: "user_new" })).expect(200, { userId: "user_new", businessId: null });
   });
 
   it("takes the business from the session, never from the request", async () => {

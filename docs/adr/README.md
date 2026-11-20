@@ -13,7 +13,7 @@ This directory contains the architectural decisions made for Freshcast.
 | [005](005-batch-processing-over-realtime.md) | Daily Batch Processing Over Real-Time Insights | Accepted |
 | [006](006-demand-prediction-approach.md) | Statistical Demand Prediction (No ML in MVP) | Accepted |
 | [007](007-tech-stack.md) | Technical Stack Selection | Partially superseded by ADR-020 |
-| [008](008-data-isolation-privacy.md) | Business Data Isolation & Privacy Model | Accepted |
+| [008](008-data-isolation-privacy.md) | Business Data Isolation & Privacy Model | Accepted (implementation approach superseded by ADR-025) |
 | [009](009-localization-architecture.md) | Localization-Ready Architecture from Day One | Accepted |
 | [010](010-ai-chat-deferred.md) | AI Chat Feature Deferred to Future Phase | Superseded by ADR-012 |
 | [011](011-llm-integration-claude.md) | LLM Integration with Claude Haiku | Accepted |
@@ -29,6 +29,7 @@ This directory contains the architectural decisions made for Freshcast.
 | [021](021-api-hosting-and-infrastructure-as-code.md) | API Hosting on ECS Fargate, Infrastructure as Code with AWS CDK | Accepted |
 | [022](022-app-and-landing-site-domains.md) | App on `app.freshcast.site`, Landing Site at the Root Domain | Accepted |
 | [023](023-api-contract-owned-by-nestjs.md) | API Contract Owned by the NestJS API | Accepted |
+| [025](025-business-scoping-through-a-scoped-prisma-client.md) | Business Scoping Through a Scoped Prisma Client | Accepted |
 
 ## Format
 

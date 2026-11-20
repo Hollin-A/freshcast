@@ -1,5 +1,5 @@
 import { createParamDecorator, type ExecutionContext } from "@nestjs/common";
-import { ApiException } from "../common/api-exception.js";
+import { businessRequired } from "../database/business-context.js";
 import type { AuthContext, AuthenticatedRequest, SessionBusiness } from "./auth-context.js";
 
 export interface SessionUser {
@@ -16,20 +16,15 @@ export const CurrentUser = createParamDecorator(
 );
 
 /**
- * The signed-in user's business. Handlers scope every query by its `id` and
- * never take a business ID from the request (ADR-008). Answers 403
- * BUSINESS_REQUIRED if the user hasn't finished onboarding.
+ * The signed-in user's business, for what a handler needs to know about it
+ * (its timezone, say). Queries don't need its `id`: the scoped Prisma
+ * client adds it (ADR-025). Answers 403 BUSINESS_REQUIRED if the user
+ * hasn't finished onboarding.
  */
 export const CurrentBusiness = createParamDecorator(
   (_data: unknown, context: ExecutionContext): SessionBusiness => {
     const { business } = authOf(context);
-    if (!business) {
-      throw new ApiException(
-        "BUSINESS_REQUIRED",
-        "Set up your business before using this feature.",
-        403
-      );
-    }
+    if (!business) throw businessRequired();
     return business;
   }
 );
