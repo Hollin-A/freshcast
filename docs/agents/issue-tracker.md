@@ -16,7 +16,7 @@ Infer the repo from `git remote -v`; `gh` does this automatically when run insid
 ## Repo conventions
 
 - **Title**: conventional-commit style, `type(scope): subject` (e.g. `feat(api): signup hardening`, `chore(infra): …`). Scope is optional.
-- **Labels**: exactly one `type:*` (`feat`, `refactor`, `chore`, `test`) and at least one `area:*` (`api`, `web`, `db`, `infra`, `docs`). Add `migration` for work under the NestJS backend migration (ADR-020).
+- **Labels**: exactly one `type:*` (`feat`, `fix`, `refactor`, `chore`, `test`) and at least one `area:*` (`api`, `web`, `db`, `infra`, `docs`). Add `migration` for work under the NestJS backend migration (ADR-020).
 - Triage labels (see `triage-labels.md`) are applied in addition to these, never instead of them.
 
 ## Tracks
