@@ -3,6 +3,8 @@
 ## Status
 Accepted
 
+*Implementation approach superseded by [ADR-025](025-business-scoping-through-a-scoped-prisma-client.md): the API enforces scoping with a scoped Prisma client extension instead of Prisma middleware, which was never built. The decision itself stands.*
+
 ## Date
 2026-03-29
 

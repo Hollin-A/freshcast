@@ -9,6 +9,7 @@ The API replaces the Legacy API one domain at a time (ADR-020). ADR-023 owns its
 - Controllers return the resource as-is, or `paginated(items, meta)` from `src/common/pagination.ts` for lists.
 - Expected errors throw `ApiException` with a code from `PROBLEM_CODES` (`@freshcast/shared`); the global filter turns every error into RFC 9457 Problem Details.
 - Every route needs a session by default. Mark public routes with `@Public()`, and get the Business with `@CurrentBusiness()` (ADR-008).
+- Query through the scoped client (`@InjectScopedPrisma()`), which adds the Business to every query (ADR-025). `businessId` isn't needed in `where`, except inside a compound unique key such as `businessId_date_type`; creates still pass `@CurrentBusiness().id`. Call `$assertOwned()` to reject IDs from a request body under their field name. Use `PrismaService` only in the places listed in [Architecture §4](../../docs/ARCHITECTURE.md#business-isolation-in-the-api).
 - Request DTOs are Zod schemas through `nestjs-zod`; document success responses with `@ZodResponse`.
 - Mark Claude and OCR routes `@RateLimit("costly")`.
 - Log through Nest's `Logger`, which writes through pino.
