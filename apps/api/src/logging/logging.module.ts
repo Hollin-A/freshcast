@@ -35,6 +35,8 @@ export function pinoParams(nodeEnv: Env["NODE_ENV"], stream?: DestinationStream)
     level: nodeEnv === "production" ? "info" : "debug",
     messageKey: "message",
     base: undefined,
+    // Log time is real time, even when a test pins the Clock.
+    // eslint-disable-next-line no-restricted-syntax
     timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
     formatters: { level: (label) => ({ level: label }) },
 

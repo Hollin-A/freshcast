@@ -75,6 +75,7 @@ The e2e tests live in `apps/api/test/`. Each file boots the real `AppModule` (co
 - Call `resetDatabase()` in `beforeEach`: the files share one database and run one at a time.
 - Every Business-owned route gets e2e tests that sign in as `alpha` and check that `beta`'s IDs return 404 and leave `beta`'s rows unchanged (the ADR-023 slice checklist).
 - `test/isolation.e2e-spec.ts` covers the scoped Prisma client itself against the real database: its probe routes leave `businessId` out of every query, and the tests check reads, writes, transactions, foreign-key ownership, `$assertOwned()` and the fail-closed cases. The rules for each model and operation are unit-tested in `src/database/business-scope.test.ts`.
+- To pin "now", pass a `FixedClock` as `createE2eApp({ clock })` and move it with `clock.set()`; don't fake the global clock (`vi.setSystemTime`), which also moves session expiry, log timestamps and Prisma's `updatedAt`. `test/calendar.e2e-spec.ts` shows the pattern. Unit tests construct `BusinessCalendar` with a `FixedClock` directly.
 - Logs are silent; run with `E2E_LOG=error` to see why a request returned a 500.
 
 ```bash

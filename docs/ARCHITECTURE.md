@@ -68,7 +68,7 @@ freshcast/
 │   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §11)
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
-│       ├── src/                 # main.ts, app.module.ts, auth/, common/, config/, database/, health/, logging/, openapi/, rate-limit/, secrets/
+│       ├── src/                 # main.ts, app.module.ts, auth/, calendar/, common/, config/, database/, health/, logging/, openapi/, rate-limit/, secrets/
 │       └── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
@@ -480,6 +480,13 @@ The route never throws on per-business failure; it logs and continues, returning
 - `getTodayUTC(timezone)` — UTC midnight Date for today in business timezone
 - `getDaysAgoUTC(timezone, n)` — UTC midnight Date for N days ago
 - `getDayOfWeekFromDate(date)` — parses YYYY-MM-DD directly to avoid JS Date timezone issues
+
+These are frozen (ADR-023 §4) and go with #43. The API uses `apps/api/src/calendar/` instead:
+
+- **`Clock`** is the only place the API reads "now". `CalendarModule` provides `SystemClock`; tests replace it with a `FixedClock` (`overrideProvider(Clock)`, or `createE2eApp({ clock })`), so the global clock, session expiry and log timestamps stay real. A lint rule rejects `new Date()` and `Date.now()` elsewhere in `src/` (the logger's timestamp is the one exception, disabled on its line). It catches reading "now", not `new Date(value)`, so review still watches for dates formatted from a `Date`.
+- **`BusinessDate`** is a branded `YYYY-MM-DD` string with `parse`, `is`, `addDays`, `weekday` (0 = Sunday), `compare`, and `toDbDate`/`fromDbDate` for Prisma's `@db.Date` (UTC midnight). Data access code converts explicitly; there is no Prisma extension for it.
+- **`BusinessCalendar.forBusiness({ timezone })`** reads the Clock once and returns a `CalendarSnapshot`: `today`, `tomorrow` (the Next-day forecast date), `weekAhead()` (the 7 dates starting tomorrow), `isFuture(date)`, `trailing(days, { weeksBack })` and `daysOf(window)`. Windows are inclusive `{ from, to }`; `trailing(7)` is 6 days ago through today, and `trailing(7, { weeksBack: 1 })` the week before. Call it once per request and pass the snapshot down, so "today" can't change mid-request.
+- `BusinessCalendar` is a singleton, so services that inject it stay singletons. An unknown timezone throws a `RangeError` (a 500) rather than falling back to UTC. Timezones are checked when the Business is created (`Intl.DateTimeFormat` in the Legacy business route; the API's route must keep that check, #36), so a bad one is a data bug.
 
 ---
 
