@@ -6,6 +6,7 @@ import { encode } from "@auth/core/jwt";
 import { LoggerModule, Logger as PinoLogger } from "nestjs-pino";
 import type { Options } from "pino-http";
 import { AppModule } from "../src/app.module.js";
+import { Clock } from "../src/calendar/clock.js";
 import { PrismaService } from "../src/database/prisma.service.js";
 import { LoggingModule, pinoParams } from "../src/logging/logging.module.js";
 import { trustProxy } from "../src/rate-limit/rate-limit.module.js";
@@ -39,13 +40,15 @@ export interface E2eApp {
 /**
  * The API as main.ts sets it up, minus OpenAPI and listen(). `imports`
  * adds modules with test-only routes, which go through the same global
- * guards and pipeline as real ones.
+ * guards and pipeline as real ones. `clock` replaces the Clock provider,
+ * usually with a FixedClock the test moves; global time stays real.
  */
-export async function createE2eApp({ imports = [] }: { imports?: Type[] } = {}): Promise<E2eApp> {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule, ...imports] })
+export async function createE2eApp({ imports = [], clock }: { imports?: Type[]; clock?: Clock } = {}): Promise<E2eApp> {
+  let builder = Test.createTestingModule({ imports: [AppModule, ...imports] })
     .overrideModule(LoggingModule)
-    .useModule(E2eLoggingModule)
-    .compile();
+    .useModule(E2eLoggingModule);
+  if (clock) builder = builder.overrideProvider(Clock).useValue(clock);
+  const moduleRef = await builder.compile();
   // Check the URL the app actually got, not the one setup-env.ts meant to
   // set: if apps/api/.env won, stop before init() opens a connection.
   assertLocalDatabase(moduleRef.get(ConfigService).getOrThrow<string>("DATABASE_URL"));

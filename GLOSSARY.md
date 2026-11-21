@@ -28,6 +28,10 @@ _Avoid_: item, SKU, catalogue entry
 One act of logging sales for a date. It holds one or more Sales items, and a Business can make several in a day.
 _Avoid_: sale, transaction, order, log entry
 
+**Business date**:
+A calendar date as it is where the Business trades, in the Business's timezone. A Sales entry's date, "today", "tomorrow" and every week or window are Business dates, so two Businesses can be on different dates at the same moment.
+_Avoid_: local date, server date, UTC date
+
 **Sales item**:
 One line of a Sales entry: a Product and the quantity sold.
 _Avoid_: line item, sale
