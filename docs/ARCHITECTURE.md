@@ -438,6 +438,8 @@ Two parsers with automatic fallback:
 - `getWeekSummary(businessId, timezone)` — 7-day totals with week-over-week comparison
 - `getTopProducts(businessId, timezone, limit)` — ranked by quantity
 
+The API replaces these with Sales history (§6.10).
+
 ### 6.5 Chat Context Builder (ADR-012)
 
 `services/chat-context.ts` — Queries all relevant business data and formats as structured text for Claude.
@@ -490,7 +492,7 @@ The route never throws on per-business failure; it logs and continues, returning
 These are frozen (ADR-023 §4) and go with #43. The API uses `apps/api/src/calendar/` instead:
 
 - **`Clock`** is the only place the API reads "now". `CalendarModule` provides `SystemClock`; tests replace it with a `FixedClock` (`overrideProvider(Clock)`, or `createE2eApp({ clock })`), so the global clock, session expiry and log timestamps stay real. A lint rule rejects `new Date()` and `Date.now()` elsewhere in `src/` (the logger's timestamp is the one exception, disabled on its line). It catches reading "now", not `new Date(value)`, so review still watches for dates formatted from a `Date`.
-- **`BusinessDate`** is a branded `YYYY-MM-DD` string with `parse`, `is`, `addDays`, `weekday` (0 = Sunday), `compare`, and `toDbDate`/`fromDbDate` for Prisma's `@db.Date` (UTC midnight). Data access code converts explicitly; there is no Prisma extension for it.
+- **`BusinessDate`** is a branded `YYYY-MM-DD` string with `parse`, `is`, `addDays`, `daysOf(window)` (every date of a `DateWindow`), `weekday` (0 = Sunday), `compare`, and `toDbDate`/`fromDbDate` for Prisma's `@db.Date` (UTC midnight). Data access code converts explicitly; there is no Prisma extension for it.
 - **`BusinessCalendar.forBusiness({ timezone })`** reads the Clock once and returns a `CalendarSnapshot`: `today`, `tomorrow` (the Next-day forecast date), `weekAhead()` (the 7 dates starting tomorrow), `isFuture(date)`, `trailing(days, { weeksBack })` and `daysOf(window)`. Windows are inclusive `{ from, to }`; `trailing(7)` is 6 days ago through today, and `trailing(7, { weeksBack: 1 })` the week before. Call it once per request and pass the snapshot down, so "today" can't change mid-request.
 - `BusinessCalendar` is a singleton, so services that inject it stay singletons. An unknown timezone throws a `RangeError` (a 500) rather than falling back to UTC. Timezones are checked when the Business is created (`Intl.DateTimeFormat` in the Legacy business route; the API's route must keep that check, #36), so a bad one is a data bug.
 
@@ -505,6 +507,16 @@ The Legacy services above call Claude through `apps/web/src/lib/claude.ts`, whic
 - **Adapters.** `LlmAdapter` is the injection token. `AnthropicAdapter` is the only file that imports `@anthropic-ai/sdk` (a lint rule enforces it). It resolves `ANTHROPIC_API_KEY` once at startup through `SecretsService`; without a key the API still starts, logs one warning and every call returns `unconfigured`. `FakeLlmAdapter` is the scripted test double (see [Testing](TESTING.md#api-tests)).
 - **Config** (`llm.config.ts`): the model (`claude-haiku-4-5-20251001`, the Legacy snapshot; the Haiku 5.5 evaluation is #147), the deadline and the retry count.
 - **Feature modules own the rest.** Each imports `LlmModule` and owns its prompt, schema and fallback, and returns how its result was made (`parseMethod` or `generationMethod`), so a controller makes one call. The fallbacks stay as they are: Natural language falls back to the rule-based parser; Receipt photo to the structured rule-based parser when `RECEIPT_FALLBACK=structured`, otherwise 503; Insights to templates; Chat answers 503 Problem Details.
+
+### 6.10 Sales history (API, #162)
+
+The Legacy API totals Sales items in seven places (four functions in `analytics.ts`, two reads in `insight-generator.ts`, one in `chat-context.ts`), each with its own query, loop and window edges. The API has one read path in `apps/api/src/sales-history/`; the products (#36), dashboard and Insights (#39), Chat (#41) and Weekly summary (#42) slices use it and delete their Legacy copies.
+
+- **`SalesHistory.read(window)`** takes a `DateWindow` from `BusinessCalendar` (both ends included, for example `trailing(7)`) and returns `{ byProduct, byDay, byProductByDay }`. `byDay` and each Product's `daily` have one number for every day of the window, 0 when nothing sold. Products appear in the order they're first seen. To compare two weeks, call it twice in parallel; weekday totals come from `byDay` with `BusinessDate.weekday`.
+- **One query, through the scoped client.** A single `salesEntry.findMany` selects only the date, each Sales item's Product, quantity and unit, and the Product's name and default unit. The Business comes from the scoped client (ADR-025), never from an argument. No `groupBy` (it can't group Sales items by their entry's date) and no raw SQL (it would skip the scope).
+- **Totalling is a pure function** (`sales-totals.ts`), unit tested without a database.
+- **Kept from the Legacy API (ADR-023 §2):** quantities are not rounded (each caller rounds as its Legacy copy did), a Product's unit is the first one seen (the Sales item's unit, else the Product's default unit), and quantities in different units are added together. Rows are read in date and creation order, so "first seen" is the same on every read.
+- **Not here:** the paginated Sales list and CSV export (#37), the Forecast readiness count, and the Forecast's 60-day read (#39).
 
 ---
 

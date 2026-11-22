@@ -1,12 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { BusinessDate } from "./business-date.js";
+import { BusinessDate, type DateWindow } from "./business-date.js";
 import { Clock } from "./clock.js";
 
-/** A run of Business dates, both ends included. */
-export interface DateWindow {
-  from: BusinessDate;
-  to: BusinessDate;
-}
+export type { DateWindow } from "./business-date.js";
 
 /**
  * Dates as one Business sees them, fixed to one reading of the Clock, so
@@ -47,13 +43,8 @@ export class CalendarSnapshot {
   }
 
   /** Every date in `window`, in order, both ends included. */
-  daysOf({ from, to }: DateWindow): BusinessDate[] {
-    if (BusinessDate.compare(from, to) > 0) throw new RangeError(`Window ends before it starts: ${from} to ${to}`);
-    const days: BusinessDate[] = [];
-    for (let day = from; BusinessDate.compare(day, to) <= 0; day = BusinessDate.addDays(day, 1)) {
-      days.push(day);
-    }
-    return days;
+  daysOf(window: DateWindow): BusinessDate[] {
+    return BusinessDate.daysOf(window);
   }
 }
 

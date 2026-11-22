@@ -46,10 +46,24 @@ function weekday(date: BusinessDate): number {
   return toDbDate(date).getUTCDay();
 }
 
+/** A run of Business dates, both ends included. */
+export interface DateWindow {
+  from: BusinessDate;
+  to: BusinessDate;
+}
+
+/** Every date in `window`, in order, both ends included. */
+function daysOf({ from, to }: DateWindow): BusinessDate[] {
+  if (compare(from, to) > 0) throw new RangeError(`Window ends before it starts: ${from} to ${to}`);
+  const days: BusinessDate[] = [];
+  for (let day = from; compare(day, to) <= 0; day = addDays(day, 1)) days.push(day);
+  return days;
+}
+
 /** Calendar order, usable with `Array#sort`. */
 function compare(a: BusinessDate, b: BusinessDate): -1 | 0 | 1 {
   // Fixed-width YYYY-MM-DD strings sort in calendar order.
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-export const BusinessDate = { parse, is, addDays, weekday, compare, toDbDate, fromDbDate };
+export const BusinessDate = { parse, is, addDays, daysOf, weekday, compare, toDbDate, fromDbDate };
