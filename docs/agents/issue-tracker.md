@@ -13,6 +13,8 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
+Run each `gh` call as its own command. The sandbox exempts only commands that start with `gh`, and a sandboxed `gh` cannot read its token from the macOS Keychain. Use `-R Hollin-A/freshcast` instead of `cd`, and `--jq` or `--template` instead of piping to `jq`.
+
 ## Repo conventions
 
 - **Title**: conventional-commit style, `type(scope): subject` (e.g. `feat(api): signup hardening`, `chore(infra): …`). Scope is optional.
