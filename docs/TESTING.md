@@ -10,6 +10,7 @@ How Freshcast is tested, and how to write and run each kind of test.
 | Playwright journeys | `apps/web/e2e/` | `pnpm --filter @freshcast/web test:e2e` |
 | Unit (API) | `apps/api/src/**/*.test.ts` | `pnpm test` |
 | API e2e | `apps/api/test/*.e2e-spec.ts` | `pnpm --filter @freshcast/api test:e2e` |
+| Infrastructure (CDK) | `infra/test/*.test.ts` | `pnpm test` |
 | Guard scripts | `scripts/*.test.mjs` | `node --test scripts/<name>.test.mjs` |
 
 `pnpm test` runs every package's unit and component tests through Turborepo. Unit tests are pure: no database or network calls.
@@ -98,6 +99,14 @@ pnpm --filter @freshcast/api e2e:down
 
 The values in `test/env.ts` override `apps/api/.env`, and the harness refuses any database that isn't on localhost, because the tests empty every table.
 
+## Infrastructure tests
+
+`infra/test/` builds the CDK app with `buildApp()` from `lib/app.ts`, the same function the CLI uses, and asserts on the synthesized templates with `aws-cdk-lib/assertions` (`Template.fromStack`, `Match`).
+
+- Pass the account ID and every lookup result as context on `new App({ context })`, the way `cdk.context.json` holds them, so tests never call AWS. A missing lookup fails the test.
+- Synth runs cdk-nag and CDK's CloudFormation validation, so any violation fails the test that synthesizes the stack.
+- Test what matters for safety and cost: who can assume a role and what it can do, what is created and what is only looked up, tags. Don't snapshot whole templates; a snapshot changes with every CDK upgrade.
+
 ## CI
 
-GitHub Actions runs on every pull request and push to `main`: the `check` job (lint, type check, unit and component tests, guard script tests, build), `storybook`, `e2e` and `api-e2e`. On a pull request each job runs only when the files it tests changed, so an `apps/api` change skips `storybook` and `e2e`, and a docs-only change skips all four. See [Architecture §11.2](ARCHITECTURE.md#112-ci-and-branch-rules) for the jobs that must pass before merging.
+GitHub Actions runs on every pull request and push to `main`: the `check` job (lint, type check, unit and component tests, guard script tests, build), `storybook`, `e2e` and `api-e2e`. Pull requests from this repository also run `infra-diff`, which synthesizes the CDK app and shows what the pull request would change in AWS. On a pull request each job runs only when the files it tests changed, so an `apps/api` change skips `storybook`, `e2e` and `infra-diff`, and a docs-only change skips all five. See [Architecture §11.2](ARCHITECTURE.md#112-ci-and-branch-rules) for the jobs that must pass before merging.

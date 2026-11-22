@@ -25,6 +25,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       web: ${{ steps.filter.outputs.web }}
       api: ${{ steps.filter.outputs.api }}
+      infra: ${{ steps.filter.outputs.infra }}
       common: ${{ steps.filter.outputs.common }}
 
     steps:
@@ -42,6 +43,7 @@ jobs:
               - '!*.md'
               - '!apps/**/*.md'
               - '!packages/**/*.md'
+              - '!infra/**/*.md'
               - '!docs/**'
               - '!LICENSE'
               - '!.claude/**'
@@ -52,6 +54,9 @@ jobs:
             api:
               - 'apps/api/**'
               - '!apps/api/**/*.md'
+            infra:
+              - 'infra/**'
+              - '!infra/**/*.md'
             # What every job depends on: packages/*, dependencies, Turborepo
             # and CI config, and any file not sorted into an area.
             common:
@@ -59,12 +64,14 @@ jobs:
               - '!*.md'
               - '!apps/**/*.md'
               - '!packages/**/*.md'
+              - '!infra/**/*.md'
               - '!docs/**'
               - '!LICENSE'
               - '!.claude/**'
               - '!.vscode/**'
               - '!apps/web/**'
               - '!apps/api/**'
+              - '!infra/**'
               - '!scripts/**'
               - '!.github/pull_request_template.md'
               - '!.github/ui-paths'
@@ -238,6 +245,64 @@ jobs:
       # Through Turborepo so @freshcast/db and @freshcast/shared are built first.
       - name: API e2e tests
         run: pnpm exec turbo run test:e2e --filter=@freshcast/api
+
+  # Shows what a pull request would change in AWS: synthesizes the CDK app
+  # (infra/) and diffs it against the deployed stacks. Signs in through
+  # GitHub OIDC as a role that can only read (FreshcastAccount stack), so no
+  # AWS keys are stored here. Synth runs before sign-in, so lookups can't
+  # call AWS: their results must be committed in infra/cdk.context.json.
+  # Pull requests only; the deploy on main comes with #34.
+  #
+  # GitHub gives no OIDC token to pull requests from forks, so those skip
+  # the job (a skipped required check passes) instead of failing to sign in.
+  infra-diff:
+    needs: changes
+    if: >-
+      github.event_name == 'pull_request' && !cancelled()
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (needs.changes.result != 'success'
+      || needs.changes.outputs.infra == 'true' || needs.changes.outputs.common == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Runs cdk-nag and CloudFormation validation; writes infra/cdk.out.
+      - name: cdk synth
+        run: pnpm --filter @freshcast/infra synth
+        env:
+          # No credentials yet: skip the slow EC2 metadata probe.
+          AWS_EC2_METADATA_DISABLED: "true"
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_CDK_DIFF_ROLE_ARN }}
+          aws-region: ap-southeast-2
+
+      # Diffs the assembly from the synth step. The output goes to the log
+      # and the job summary.
+      - name: cdk diff
+        run: |
+          set -o pipefail
+          pnpm --filter @freshcast/infra diff --app cdk.out 2>&1 | tee "$RUNNER_TEMP/cdk-diff.txt"
+          {
+            echo '## cdk diff'
+            echo '```'
+            cat "$RUNNER_TEMP/cdk-diff.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ui/* branches may only change the frontend presentation files listed in
   # .github/ui-paths. Other branches pass straight through, so the job can

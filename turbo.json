@@ -21,6 +21,9 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "@freshcast/infra#synth": {
+      "cache": false
+    },
     "test:storybook": {
       "dependsOn": ["^build"]
     },

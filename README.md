@@ -107,7 +107,7 @@ Client (Browser, PWA) — forms validate with @freshcast/shared
 
 ### Repository layout
 
-A pnpm workspace built with Turborepo: the App (`apps/web`), the API (`apps/api`, replacing the Legacy API per ADR-020) and two shared packages (`packages/db`, `packages/shared`). The full layout is in [Architecture → Project Structure](docs/ARCHITECTURE.md#22-project-structure); build, deployment and preview branches are in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#11-build-and-deployment).
+A pnpm workspace built with Turborepo: the App (`apps/web`), the API (`apps/api`, replacing the Legacy API per ADR-020), two shared packages (`packages/db`, `packages/shared`), and the API's AWS infrastructure as CDK code (`infra`, ADR-021). The full layout is in [Architecture → Project Structure](docs/ARCHITECTURE.md#22-project-structure); build, deployment and preview branches are in [Architecture → Build and Deployment](docs/ARCHITECTURE.md#11-build-and-deployment).
 
 Key architectural decisions are documented in [ADRs](docs/adr/README.md).
 

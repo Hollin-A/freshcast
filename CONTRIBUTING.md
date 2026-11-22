@@ -106,9 +106,11 @@ This is a pnpm workspace built with Turborepo; [Architecture §2.2](docs/ARCHITE
 
 Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck` and `pnpm test` run the task in every package through Turborepo, which caches results and skips unchanged packages. To target one package: `pnpm --filter @freshcast/web <script>`.
 
+The `infra` package holds the API's AWS infrastructure as CDK code. See [Infrastructure](#infrastructure-aws-cdk) below.
+
 ## Testing
 
-[docs/TESTING.md](docs/TESTING.md) covers every kind of test: unit and component tests, stories, Playwright journeys and screenshot baselines, and the API's e2e tests.
+[docs/TESTING.md](docs/TESTING.md) covers every kind of test: unit and component tests, stories, Playwright journeys and screenshot baselines, the API's e2e tests, and the infrastructure tests.
 
 ## Package manager
 
@@ -128,9 +130,54 @@ Schema changes go through Prisma migrations. Don't use `prisma db push` against 
 3. Commit the schema and the migration together.
 4. Production applies migrations with `pnpm --filter @freshcast/db migrate:deploy` (with the production `DATABASE_URL` set for that command only). Applying to production is a separate, deliberate step, not part of the build.
 
+## Infrastructure (AWS CDK)
+
+The API's AWS resources are defined in `infra/` and change only through pull requests ([Architecture §12](docs/ARCHITECTURE.md#12-infrastructure)). Don't create or edit them in the console.
+
+### AWS access on your machine
+
+Use IAM Identity Center (AWS's single sign-on) with a `freshcast` CLI profile. Don't use the root user or long-lived access keys.
+
+```bash
+aws configure sso                      # once: start URL, ap-southeast-2, AdministratorAccess, profile "freshcast"
+aws sso login --profile freshcast      # when the session expires
+aws sts get-caller-identity --profile freshcast
+```
+
+### Day to day
+
+```bash
+pnpm --filter @freshcast/infra test                              # template assertions, no AWS calls
+pnpm synth                                                       # CloudFormation templates in infra/cdk.out
+pnpm --filter @freshcast/infra diff --profile freshcast          # compare with what is deployed
+```
+
+- **CI:** a pull request that touches `infra/`, `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas, runs `cdk synth` and shows the same diff in its `infra-diff` job (log and job summary). Read it before you merge. Pull requests from forks skip the job, because GitHub gives them no OIDC token.
+- **New lookups:** if a change adds a lookup (`fromLookup`), run `pnpm --filter @freshcast/infra synth --profile freshcast` once and commit the updated `infra/cdk.context.json`. CI synthesizes before it signs in to AWS, so a missing entry fails the job.
+- **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
+- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below.
+
+### One-time setup (already done once per account)
+
+1. Bootstrap CDK for the account and AWS Region, then turn on termination protection for the `CDKToolkit` stack:
+   ```bash
+   pnpm --filter @freshcast/infra cdk bootstrap aws://<account-id>/ap-southeast-2 --profile freshcast
+   aws cloudformation update-termination-protection --enable-termination-protection --stack-name CDKToolkit --profile freshcast --region ap-southeast-2
+   ```
+2. Store the budget alert address, which stays out of the public repo:
+   ```bash
+   aws ssm put-parameter --name /freshcast/budget-alert-email --type String --value <email> --profile freshcast --region ap-southeast-2
+   ```
+3. Put the account ID in `infra/cdk.json` (`"freshcast:awsAccountId"` under `context`), run `pnpm --filter @freshcast/infra synth --profile freshcast` to cache the hosted zone lookup, and commit both `cdk.json` and `cdk.context.json`.
+4. Deploy the account stack. CI can't create the role it signs in with, so this first deploy is done by hand:
+   ```bash
+   pnpm --filter @freshcast/infra cdk deploy FreshcastAccount --profile freshcast
+   ```
+5. Set the stack's `CdkDiffRoleArn` output as the `AWS_CDK_DIFF_ROLE_ARN` repository variable in GitHub (Settings → Secrets and variables → Actions → Variables).
+
 ## Versioning and releases
 
-Freshcast uses [semantic versioning](https://semver.org/). All workspace packages (root, `apps/web`, `packages/*`) share one version, which the health endpoint reports.
+Freshcast uses [semantic versioning](https://semver.org/). All workspace packages (root, `apps/*`, `packages/*`, `infra`) share one version, which the health endpoint reports.
 
 1. Changes accumulate under **Unreleased** in `CHANGELOG.md`, updated in the PR that ships them.
 2. **To release:** a PR bumps every `package.json` to the new version and renames "Unreleased" to `vX.Y.Z — <date> — <title>` (with a fresh empty "Unreleased" above it).
