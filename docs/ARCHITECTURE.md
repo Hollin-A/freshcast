@@ -68,7 +68,7 @@ freshcast/
 │   │   ├── scripts/             # materialize-next-aliases.mjs (post-build, see §11)
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
-│       ├── src/                 # main.ts, app.module.ts, auth/, calendar/, common/, config/, database/, health/, logging/, openapi/, rate-limit/, secrets/
+│       ├── src/                 # main.ts, app.module.ts, auth/, calendar/, common/, config/, database/, health/, llm/, logging/, openapi/, rate-limit/, secrets/
 │       └── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
@@ -280,7 +280,7 @@ Until Stage 6, the API doesn't sign anyone in. It reads the App's Auth.js sessio
 
 - **`SessionCookieReader`** decrypts the cookie with `getToken()` from `@auth/core/jwt`, using `AUTH_SECRET` and the cookie name as the salt: `__Secure-authjs.session-token` when `NODE_ENV=production`, `authjs.session-token` otherwise. A missing, tampered or expired cookie (or one without the `id` claim) counts as no session.
 - **`SessionGuard`** (run on every route by the global `RequestGuard`, see Rate Limiting) skips `@Public()` routes. Otherwise it loads the user with their business in one query, answers `401 UNAUTHORIZED` if there's no session or the user no longer exists, and attaches `{ userId, business }` to the request.
-- **`SessionGuard`** also puts the user and business IDs in the request context (`nestjs-cls`), where the scoped Prisma client reads them (see below).
+- **`SessionGuard`** also puts the user and business IDs in the request context (`nestjs-cls`), where the scoped Prisma client reads them (see below). It adds the business ID to the request's log context (`PinoLogger.assign`), so every line logged after the guard, such as `llm.call`, carries `businessId`.
 - **`@CurrentBusiness()`** gives handlers `{ id, timezone, region }`; it answers `403 BUSINESS_REQUIRED` before onboarding. **`@CurrentUser()`** gives `{ id }` for the few routes that work without a business.
 - **Pinned bridge** (ADR-023 §10): `next-auth` is pinned to an exact version, and `apps/api` depends on the exact `@auth/core` it uses. `src/auth/auth-bridge.test.ts` fails if they drift apart.
 
@@ -356,7 +356,7 @@ Every API request produces one `request completed` log line with `method`, `path
 - **Response schemas.** `@ZodResponse({ status, type: SomeDto })` declares a route's success response: the return value is parsed with the schema (unknown fields are stripped, so internal fields can't leak), TypeScript checks the handler's return type against it, and it appears in the docs. A response that breaks its schema is logged and returned as `500 INTERNAL_ERROR`. `@ApiProblemResponse(status, description, type?)` documents an error response as `application/problem+json`. The filter, pipe and serializer are registered together as `HTTP_PIPELINE` in `src/common/http-pipeline.ts`.
 - **OpenAPI** (`src/openapi/`). Swagger UI at `/docs` and the OpenAPI 3.1 document at `/docs/json`, generated from the DTOs and decorators with `@nestjs/swagger` and nestjs-zod's `cleanupOpenApiDoc()`. Public in every environment. Every route documents a Problem Details 500, and the `ProblemDetailsDto` schema lists every `code`.
 - **Authentication** (`src/auth/`, see §4). A global `SessionGuard` requires a valid session on every route; `@Public()` on a route or controller opts out, and in OpenAPI gives it an empty security requirement.
-- **`nestjs-pino`** (`src/logging/logging.module.ts`) assigns the request ID, writes the `request completed` line and tags every log line with `requestId` through AsyncLocalStorage. Only the request ID is bound to log lines, never request headers. Development uses `pino-pretty`. Errors use pino's `err` field (`type`, `message`, `stack`).
+- **`nestjs-pino`** (`src/logging/logging.module.ts`) assigns the request ID, writes the `request completed` line and tags every log line with `requestId` through AsyncLocalStorage. Only the request ID, and once `SessionGuard` accepts a session the `businessId`, are bound to log lines, never request headers. Development uses `pino-pretty`. Errors use pino's `err` field (`type`, `message`, `stack`).
 - **Health** (`src/health/`, ADR-023 §7). `GET /health/live` returns `{ status, version, uptimeSeconds }` and never touches a dependency; the ALB checks it, so a database outage doesn't make ECS replace healthy tasks. It isn't logged. `GET /health/ready` pings the database through `@nestjs/terminus` (3s timeout) and returns `{ status, checks }`, or `503 SERVICE_UNAVAILABLE` Problem Details with each check's status; the deploy pipeline and monitoring use it. Both are `@Public()`. `version` is `APP_VERSION` (the git SHA in deploys) or the `package.json` version.
 - **Startup database check.** `PrismaService` runs `SELECT 1` before the API listens, retrying 5 times with exponential backoff (2s to 16s, 5s connection timeout, about 55s at worst). A brief outage or Neon cold start is ridden out; a database that stays unreachable, such as a wrong `DATABASE_URL`, stops the task so the deploy fails and ECS rolls back (#33).
 
@@ -488,6 +488,18 @@ These are frozen (ADR-023 §4) and go with #43. The API uses `apps/api/src/calen
 - **`BusinessCalendar.forBusiness({ timezone })`** reads the Clock once and returns a `CalendarSnapshot`: `today`, `tomorrow` (the Next-day forecast date), `weekAhead()` (the 7 dates starting tomorrow), `isFuture(date)`, `trailing(days, { weeksBack })` and `daysOf(window)`. Windows are inclusive `{ from, to }`; `trailing(7)` is 6 days ago through today, and `trailing(7, { weeksBack: 1 })` the week before. Call it once per request and pass the snapshot down, so "today" can't change mid-request.
 - `BusinessCalendar` is a singleton, so services that inject it stay singletons. An unknown timezone throws a `RangeError` (a 500) rather than falling back to UTC. Timezones are checked when the Business is created (`Intl.DateTimeFormat` in the Legacy business route; the API's route must keep that check, #36), so a bad one is a data bug.
 
+### 6.9 LLM module (API, #145)
+
+The Legacy services above call Claude through `apps/web/src/lib/claude.ts`, which returns `null` for every failure. The API's features call it through `apps/api/src/llm/` instead:
+
+- **`LlmService.generate({ feature, system, messages, schema?, maxTokens })`** is the port. It returns `{ ok: true, value, usage }` or `{ ok: false, reason }`, where `reason` is `unconfigured` (no API key), `upstream` (the API failed or the deadline passed), `invalid_output` (an empty reply, not JSON, or JSON that breaks `schema`) or `refused` (`stop_reason: "refusal"`). Expected failures are never thrown. Messages are text only; #63 adds images if its ADR picks vision.
+- **Output checking keeps Legacy behaviour (ADR-023 §2).** With a `schema`, the JSON is read from the first code fence or the whole reply (`json-output.ts`) and checked with `safeParse`; the schema must be no stricter than the Legacy caller was. Without one (Chat) the value is the reply text. Structured outputs are #146.
+- **Deadline.** Each call gets 20s, retries included, so a fallback runs well before the ALB's 60s idle timeout. The SDK retries up to twice, and its timeout applies to each attempt, so retries only fit after fast failures (429, 5xx, a dropped connection). `LlmService` aborts the call when the 20s pass and returns `upstream`, even if the adapter ignores the abort.
+- **`llm.call` log line.** One per call, at `info` on success and `warn` on failure: `data: { feature, model, outcome, inputTokens, outputTokens, latencyMs }` (tokens are `null` when no reply came back), plus `businessId` from the request context. The prompt and reply are never logged. #137 adds the cost query on top.
+- **Adapters.** `LlmAdapter` is the injection token. `AnthropicAdapter` is the only file that imports `@anthropic-ai/sdk` (a lint rule enforces it). It resolves `ANTHROPIC_API_KEY` once at startup through `SecretsService`; without a key the API still starts, logs one warning and every call returns `unconfigured`. `FakeLlmAdapter` is the scripted test double (see [Testing](TESTING.md#api-tests)).
+- **Config** (`llm.config.ts`): the model (`claude-haiku-4-5-20251001`, the Legacy snapshot; the Haiku 5.5 evaluation is #147), the deadline and the retry count.
+- **Feature modules own the rest.** Each imports `LlmModule` and owns its prompt, schema and fallback, and returns how its result was made (`parseMethod` or `generationMethod`), so a controller makes one call. The fallbacks stay as they are: Natural language falls back to the rule-based parser; Receipt photo to the structured rule-based parser when `RECEIPT_FALLBACK=structured`, otherwise 503; Insights to templates; Chat answers 503 Problem Details.
+
 ---
 
 ## 7. Frontend Architecture
@@ -606,7 +618,7 @@ Locally, the web app reads `apps/web/.env` and Prisma commands read `packages/db
 | `RECEIPT_UPLOAD_ENABLED` | No | Set to `true` to enable receipt photo upload and parsing. Off by default: when unset, the Log page hides the upload button and both receipt endpoints return `503 FEATURE_DISABLED`. To enable in production it must also be added to the `amplify.yml` env allowlist (ADR-017). |
 | `RESEND_API_KEY` | No | Fallback provider API key (used when SES is unavailable) |
 | `CRON_SECRET` | No | Shared secret for invoking cron-triggered routes (e.g. weekly summary) |
-| `RECEIPT_FALLBACK` | No | Set to `structured` to enable the structured rule-based fallback on `/api/receipts/parse` when the LLM is unavailable. Off by default per ADR-019 — see Phase 32.1.3 for the broader feature-flag plan. |
+| `RECEIPT_FALLBACK` | No | Set to `structured` to enable the structured rule-based fallback on `/api/receipts/parse` when the LLM is unavailable. Off by default per ADR-019 — see Phase 32.1.3 for the broader feature-flag plan. `apps/api` validates it at startup: any value other than `structured` stops the API |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry DSN — intentionally exposed to the browser; the only `NEXT_PUBLIC_*` value in the app |
 
 ### Loading mechanism (Amplify SSR)
@@ -623,7 +635,7 @@ Per **ADR-018**, three secrets are sourced from **AWS Secrets Manager** at runti
 
 | SM secret ID | Reads as env | Consumer |
 |---|---|---|
-| `freshcast/anthropic-api-key` | `ANTHROPIC_API_KEY` | `apps/web/src/lib/claude.ts` |
+| `freshcast/anthropic-api-key` | `ANTHROPIC_API_KEY` | `apps/web/src/lib/claude.ts`; in the API, `apps/api/src/llm/anthropic.adapter.ts` (resolved once at startup) |
 | `freshcast/resend-api-key` | `RESEND_API_KEY` | `apps/web/src/lib/email.ts` |
 | `freshcast/cron-secret` | `CRON_SECRET` | `apps/web/src/app/api/email/weekly-summary/route.ts` |
 

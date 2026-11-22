@@ -34,6 +34,14 @@ describe("validateEnv", () => {
     expect(() => validateEnv({ ...required, PORT: "70000" })).toThrow(/PORT/);
   });
 
+  it("accepts RECEIPT_FALLBACK=structured", () => {
+    expect(validateEnv({ ...required, RECEIPT_FALLBACK: "structured" }).RECEIPT_FALLBACK).toBe("structured");
+  });
+
+  it("rejects any other RECEIPT_FALLBACK, so a typo can't turn it off", () => {
+    expect(() => validateEnv({ ...required, RECEIPT_FALLBACK: "structred" })).toThrow(/RECEIPT_FALLBACK/);
+  });
+
   it("names a missing AUTH_SECRET in the error", () => {
     expect(() => validateEnv({ DATABASE_URL })).toThrow(/AUTH_SECRET/);
   });

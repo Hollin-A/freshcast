@@ -4,6 +4,7 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import { ClsModule } from "nestjs-cls";
+import { LoggerModule } from "nestjs-pino";
 import request from "supertest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SessionBusiness } from "../auth/auth-context.js";
@@ -74,6 +75,8 @@ class TestController {
   imports: [
     ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true, load: [() => ({ PROXY_SECRET })] }),
     ClsModule.forRoot({ global: true, middleware: { mount: true } }),
+    // SessionGuard tags log lines with the Business.
+    LoggerModule.forRoot({ pinoHttp: { level: "silent" } }),
     GuardsModule,
   ],
   controllers: [TestController],

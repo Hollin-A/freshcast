@@ -32,6 +32,11 @@ export const envSchema = z.object({
   // The deployed build, reported by /health/live. The deploy pipeline sets
   // the git SHA (#34); without it the package.json version is used.
   APP_VERSION: z.string().min(1).optional(),
+  // "structured": when Claude can't read a Receipt photo, fall back to the
+  // structured rule-based parser instead of answering 503 (ADR-019). Unset:
+  // no fallback. Any other value stops startup, so a typo can't silently
+  // turn it off.
+  RECEIPT_FALLBACK: z.enum(["structured"], { error: 'must be "structured" or unset' }).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

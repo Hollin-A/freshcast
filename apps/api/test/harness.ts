@@ -8,6 +8,8 @@ import type { Options } from "pino-http";
 import { AppModule } from "../src/app.module.js";
 import { Clock } from "../src/calendar/clock.js";
 import { PrismaService } from "../src/database/prisma.service.js";
+import { FakeLlmAdapter } from "../src/llm/fake-llm.adapter.js";
+import { LlmAdapter } from "../src/llm/llm-adapter.js";
 import { LoggingModule, pinoParams } from "../src/logging/logging.module.js";
 import { trustProxy } from "../src/rate-limit/rate-limit.module.js";
 import { assertLocalDatabase, E2E_AUTH_SECRET, E2E_DATABASE_NAME } from "./env.js";
@@ -42,12 +44,19 @@ export interface E2eApp {
  * adds modules with test-only routes, which go through the same global
  * guards and pipeline as real ones. `clock` replaces the Clock provider,
  * usually with a FixedClock the test moves; global time stays real.
+ * `llm` replaces the Claude adapter; without it every LLM call gets an
+ * empty FakeLlmAdapter, so no e2e test reaches Anthropic or Secrets Manager.
  */
-export async function createE2eApp({ imports = [], clock }: { imports?: Type[]; clock?: Clock } = {}): Promise<E2eApp> {
+export async function createE2eApp({
+  imports = [],
+  clock,
+  llm = new FakeLlmAdapter(),
+}: { imports?: Type[]; clock?: Clock; llm?: LlmAdapter } = {}): Promise<E2eApp> {
   let builder = Test.createTestingModule({ imports: [AppModule, ...imports] })
     .overrideModule(LoggingModule)
     .useModule(E2eLoggingModule);
   if (clock) builder = builder.overrideProvider(Clock).useValue(clock);
+  builder = builder.overrideProvider(LlmAdapter).useValue(llm);
   const moduleRef = await builder.compile();
   // Check the URL the app actually got, not the one setup-env.ts meant to
   // set: if apps/api/.env won, stop before init() opens a connection.

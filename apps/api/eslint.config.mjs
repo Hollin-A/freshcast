@@ -21,5 +21,24 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // Features call Claude through LlmService, so tests can swap in
+    // FakeLlmAdapter and every call is deadlined, checked and logged (#145).
+    files: ["src/**/*.ts", "test/**/*.ts"],
+    ignores: ["src/llm/anthropic.adapter.ts", "src/llm/anthropic.adapter.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@anthropic-ai/sdk", "@anthropic-ai/sdk/*"],
+              message: "Call Claude through LlmService (src/llm/); only AnthropicAdapter imports the SDK.",
+            },
+          ],
+        },
+      ],
+    },
   }
 );

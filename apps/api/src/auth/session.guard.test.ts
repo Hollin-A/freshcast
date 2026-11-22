@@ -1,15 +1,18 @@
-import { Controller, Get, type INestApplication, Module } from "@nestjs/common";
+import { Writable } from "node:stream";
+import { Controller, Get, type INestApplication, Logger, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { encode } from "@auth/core/jwt";
 import { ClsModule, ClsService } from "nestjs-cls";
+import { LoggerModule, Logger as PinoLogger } from "nestjs-pino";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { HTTP_PIPELINE } from "../common/http-pipeline.js";
 import { Public } from "../common/public.decorator.js";
 import type { RequestContext } from "../database/business-context.js";
 import { PrismaService } from "../database/prisma.service.js";
+import { pinoParams } from "../logging/logging.module.js";
 import type { SessionBusiness } from "./auth-context.js";
 import { CurrentBusiness, CurrentUser, type SessionUser } from "./current-session.decorator.js";
 import { SessionCookieReader } from "./session-cookie.js";
@@ -28,6 +31,14 @@ const USERS: Record<string, { id: string; business: SessionBusiness | null }> = 
   user_1: { id: "user_1", business: BUSINESS },
   user_new: { id: "user_new", business: null },
 };
+
+const lines: Record<string, unknown>[] = [];
+const sink = new Writable({
+  write(chunk: Buffer, _encoding, done) {
+    for (const line of chunk.toString().split("\n").filter(Boolean)) lines.push(JSON.parse(line));
+    done();
+  },
+});
 
 const findUnique = vi.fn(async ({ where }: { where: { id: string } }) => USERS[where.id] ?? null);
 
@@ -56,6 +67,13 @@ class TestController {
   context() {
     return { userId: this.cls.get("userId") ?? null, businessId: this.cls.get("businessId") ?? null };
   }
+
+  /** Writes a log line, as a feature's service would (e.g. llm.call). */
+  @Get("log")
+  log() {
+    new Logger("probe").log("probe line");
+    return { ok: true };
+  }
 }
 
 function sessionCookie(
@@ -69,7 +87,7 @@ async function createApp(nodeEnv: string): Promise<INestApplication> {
   const env: Record<string, string> = { AUTH_SECRET: SECRET, NODE_ENV: nodeEnv };
 
   @Module({
-    imports: [ClsModule.forRoot({ middleware: { mount: true } })],
+    imports: [ClsModule.forRoot({ middleware: { mount: true } }), LoggerModule.forRoot(pinoParams("production", sink))],
     controllers: [TestController],
     providers: [
       ...HTTP_PIPELINE,
@@ -82,7 +100,8 @@ async function createApp(nodeEnv: string): Promise<INestApplication> {
   class TestAppModule {}
 
   const moduleRef = await Test.createTestingModule({ imports: [TestAppModule] }).compile();
-  const app = moduleRef.createNestApplication({ logger: false });
+  const app = moduleRef.createNestApplication({ bufferLogs: true });
+  app.useLogger(app.get(PinoLogger));
   await app.init();
   return app;
 }
@@ -163,6 +182,18 @@ describe("SessionGuard", () => {
 
   it("leaves the request context without a business before onboarding", async () => {
     await get("/test/context", await sessionCookie({ id: "user_new" })).expect(200, { userId: "user_new", businessId: null });
+  });
+
+  it("tags the request's log lines with the session's business", async () => {
+    lines.length = 0;
+    await get("/test/log", await sessionCookie({ id: "user_1" })).expect(200);
+    expect(lines.find((l) => l.message === "probe line")).toMatchObject({ context: "probe", businessId: "biz_1" });
+  });
+
+  it("leaves log lines untagged before onboarding", async () => {
+    lines.length = 0;
+    await get("/test/log", await sessionCookie({ id: "user_new" })).expect(200);
+    expect(lines.find((l) => l.message === "probe line")).not.toHaveProperty("businessId");
   });
 
   it("takes the business from the session, never from the request", async () => {
