@@ -80,6 +80,10 @@ _Avoid_: locale (that is the language setting), country, location
 
 ### Understanding sales
 
+**Sales history**:
+A Business's Sales items totalled over a window of Business dates, per Product and per day. Insights, Chat and the Weekly summary read it.
+_Avoid_: analytics, sales summary, aggregates
+
 **Insight**:
 A short generated observation about a Business's recent sales, such as "Friday is your strongest day".
 _Avoid_: tip, AI insight, summary

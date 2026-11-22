@@ -89,4 +89,26 @@ describe("BusinessDate", () => {
       expect(() => BusinessDate.fromDbDate(new Date(Number.NaN))).toThrow(RangeError);
     });
   });
+
+  describe("daysOf", () => {
+    it("lists every date in a window, both ends included", () => {
+      expect(BusinessDate.daysOf({ from: d("2028-02-27"), to: d("2028-03-01") })).toEqual([
+        "2028-02-27",
+        "2028-02-28",
+        "2028-02-29",
+        "2028-03-01",
+      ]);
+      expect(BusinessDate.daysOf({ from: d("2026-12-30"), to: d("2027-01-02") })).toEqual([
+        "2026-12-30",
+        "2026-12-31",
+        "2027-01-01",
+        "2027-01-02",
+      ]);
+      expect(BusinessDate.daysOf({ from: d("2026-11-21"), to: d("2026-11-21") })).toEqual(["2026-11-21"]);
+    });
+
+    it("rejects a window that ends before it starts", () => {
+      expect(() => BusinessDate.daysOf({ from: d("2026-11-22"), to: d("2026-11-21") })).toThrow(RangeError);
+    });
+  });
 });

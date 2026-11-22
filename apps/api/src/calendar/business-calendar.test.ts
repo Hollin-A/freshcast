@@ -131,26 +131,13 @@ describe("BusinessCalendar", () => {
     });
   });
 
+  // The window edge cases are BusinessDate.daysOf's (business-date.test.ts).
   describe("daysOf", () => {
-    it("lists every date in a window, both ends included", () => {
-      expect(calendar().daysOf({ from: d("2026-12-30"), to: d("2027-01-02") })).toEqual([
-        "2026-12-30",
-        "2026-12-31",
-        "2027-01-01",
-        "2027-01-02",
-      ]);
-      expect(calendar().daysOf({ from: d("2026-11-21"), to: d("2026-11-21") })).toEqual(["2026-11-21"]);
-    });
-
     it("lists the days of a trailing window", () => {
       const days = calendar().daysOf(calendar().trailing(7));
       expect(days).toHaveLength(7);
       expect(days[0]).toBe("2026-11-15");
       expect(days[6]).toBe("2026-11-21");
-    });
-
-    it("rejects a window that ends before it starts", () => {
-      expect(() => calendar().daysOf({ from: d("2026-11-22"), to: d("2026-11-21") })).toThrow(RangeError);
     });
   });
 });
