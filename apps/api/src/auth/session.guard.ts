@@ -1,6 +1,7 @@
 import { type CanActivate, type ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { ClsService } from "nestjs-cls";
+import { PinoLogger } from "nestjs-pino";
 import { ApiException } from "../common/api-exception.js";
 import { IS_PUBLIC_KEY } from "../common/public.decorator.js";
 import type { RequestContext } from "../database/business-context.js";
@@ -12,7 +13,9 @@ import { SessionCookieReader } from "./session-cookie.js";
  * Global guard: every route needs a valid session unless it is marked
  * @Public(). Resolves the user and their business once per request, so
  * @CurrentUser() and @CurrentBusiness() read it without another query, and
- * puts the business in the request context for the scoped Prisma client.
+ * puts the business in the request context for the scoped Prisma client
+ * and the request's log lines (`businessId`, so per-Business LLM cost can
+ * be queried from `llm.call` lines).
  * This is the auth bridge: it uses the unscoped PrismaService because the
  * business isn't known until the query returns.
  */
@@ -22,7 +25,8 @@ export class SessionGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly cookies: SessionCookieReader,
     private readonly prisma: PrismaService,
-    private readonly cls: ClsService<RequestContext>
+    private readonly cls: ClsService<RequestContext>,
+    private readonly logContext: PinoLogger
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -46,7 +50,10 @@ export class SessionGuard implements CanActivate {
 
     request.auth = { userId: user.id, business: user.business };
     this.cls.set("userId", user.id);
-    if (user.business) this.cls.set("businessId", user.business.id);
+    if (user.business) {
+      this.cls.set("businessId", user.business.id);
+      this.logContext.assign({ businessId: user.business.id });
+    }
     return true;
   }
 }

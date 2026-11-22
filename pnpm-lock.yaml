@@ -14,6 +14,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.89.0
+        version: 0.89.0(zod@4.3.6)
       '@auth/core':
         specifier: 0.41.0
         version: 0.41.0

@@ -67,6 +67,17 @@ pnpm --filter @freshcast/web test:e2e:update
 
 API tests are compiled with SWC (`unplugin-swc`) so Nest's dependency injection works in Vitest. Unit tests (`src/**/*.test.ts`) run without a database.
 
+Nothing in the API tests calls Claude. Replace the LLM adapter with `FakeLlmAdapter` (`src/llm/fake-llm.adapter.ts`) and queue one step per expected call: `reply(text)`, `replyJson(value)`, `refuse()`, `unconfigured()`, `fail(error)` or `hang()` (only the deadline ends it). `calls` records what was sent (model, system prompt, messages, `maxTokens`). The real `LlmService` still runs, so a feature test covers its JSON checks and fallback too. A call with nothing queued returns `upstream`.
+
+```ts
+const llm = new FakeLlmAdapter().replyJson([{ product: "Eggs", quantity: 20 }]);
+const moduleRef = await Test.createTestingModule({ imports: [SalesModule] })
+  .overrideProvider(LlmAdapter).useValue(llm)
+  .compile();
+```
+
+`AnthropicAdapter`'s own tests stub `Anthropic.Messages.prototype.create`, so they check the real client's options without the network.
+
 ### API e2e tests
 
 The e2e tests live in `apps/api/test/`. Each file boots the real `AppModule` (config, guards, HTTP pipeline, Prisma) with `createE2eApp()` from `test/harness.ts` and calls it with Supertest, against a throwaway Postgres migrated with `prisma migrate deploy`.
@@ -76,6 +87,7 @@ The e2e tests live in `apps/api/test/`. Each file boots the real `AppModule` (co
 - Every Business-owned route gets e2e tests that sign in as `alpha` and check that `beta`'s IDs return 404 and leave `beta`'s rows unchanged (the ADR-023 slice checklist).
 - `test/isolation.e2e-spec.ts` covers the scoped Prisma client itself against the real database: its probe routes leave `businessId` out of every query, and the tests check reads, writes, transactions, foreign-key ownership, `$assertOwned()` and the fail-closed cases. The rules for each model and operation are unit-tested in `src/database/business-scope.test.ts`.
 - To pin "now", pass a `FixedClock` as `createE2eApp({ clock })` and move it with `clock.set()`; don't fake the global clock (`vi.setSystemTime`), which also moves session expiry, log timestamps and Prisma's `updatedAt`. `test/calendar.e2e-spec.ts` shows the pattern. Unit tests construct `BusinessCalendar` with a `FixedClock` directly.
+- `createE2eApp()` always replaces the LLM adapter with a `FakeLlmAdapter`, so no e2e test reaches Anthropic or Secrets Manager. Pass `createE2eApp({ llm })` with queued replies to drive a feature's LLM path.
 - Logs are silent; run with `E2E_LOG=error` to see why a request returned a 500.
 
 ```bash
