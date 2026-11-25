@@ -94,6 +94,62 @@ describe("FreshcastAccount", () => {
   });
 });
 
+describe("FreshcastShared", () => {
+  const { shared } = testApp();
+  const template = Template.fromStack(shared);
+
+  it("holds one image repository for every API environment", () => {
+    template.resourceCountIs("AWS::ECR::Repository", 1);
+    template.hasResourceProperties("AWS::ECR::Repository", {
+      RepositoryName: "freshcast-api",
+    });
+  });
+
+  it("never overwrites a pushed tag, so a git SHA names one image", () => {
+    template.hasResourceProperties("AWS::ECR::Repository", {
+      ImageTagMutability: "IMMUTABLE",
+    });
+  });
+
+  it("scans every pushed image", () => {
+    template.hasResourceProperties("AWS::ECR::Repository", {
+      ImageScanningConfiguration: { ScanOnPush: true },
+    });
+  });
+
+  it("expires untagged images after a day and keeps the last 10 images", () => {
+    const [repository] = Object.values(template.findResources("AWS::ECR::Repository"));
+    const { rules } = JSON.parse(repository.Properties.LifecyclePolicy.LifecyclePolicyText);
+    expect(rules).toEqual([
+      expect.objectContaining({
+        selection: expect.objectContaining({
+          tagStatus: "untagged",
+          countType: "sinceImagePushed",
+          countNumber: 1,
+          countUnit: "days",
+        }),
+        action: { type: "expire" },
+      }),
+      expect.objectContaining({
+        selection: expect.objectContaining({
+          tagStatus: "any",
+          countType: "imageCountMoreThan",
+          countNumber: 10,
+        }),
+        action: { type: "expire" },
+      }),
+    ]);
+  });
+
+  it("keeps the repository and its images if the stack is deleted", () => {
+    template.hasResource("AWS::ECR::Repository", {
+      DeletionPolicy: "Retain",
+      UpdateReplacePolicy: "Retain",
+    });
+    expect(shared.terminationProtection).toBe(true);
+  });
+});
+
 describe("FreshcastApi", () => {
   const { api } = testApp();
   const template = Template.fromStack(api);
@@ -110,8 +166,8 @@ describe("FreshcastApi", () => {
 });
 
 describe("every stack", () => {
-  const { account, api } = testApp();
-  const stacks = [account, api];
+  const { account, shared, api } = testApp();
+  const stacks = [account, shared, api];
 
   // Validation plugins (cdk-nag, CloudFormation validation) run during synth
   // and make it throw on any violation.
@@ -133,6 +189,12 @@ describe("every stack", () => {
     }
     template.hasResourceProperties("AWS::Budgets::Budget", {
       ResourceTags: Match.arrayWith(Object.entries(tagged).map(([Key, Value]) => ({ Key, Value }))),
+    });
+    Template.fromStack(shared).hasResourceProperties("AWS::ECR::Repository", {
+      Tags: Match.arrayWith([
+        { Key: "project", Value: "freshcast" },
+        { Key: "stage", Value: "shared" },
+      ]),
     });
   });
 });

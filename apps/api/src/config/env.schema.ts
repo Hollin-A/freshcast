@@ -30,8 +30,10 @@ export const envSchema = z.object({
   PROXY_SECRET: z.string().min(32, "must be at least 32 characters").optional(),
   AWS_REGION: z.string().min(1).default("ap-southeast-2"),
   // The deployed build, reported by /health/live. The deploy pipeline sets
-  // the git SHA (#34); without it the package.json version is used.
-  APP_VERSION: z.string().min(1).optional(),
+  // the git SHA (#34); without it the package.json version is used. The
+  // image sets it from a build argument, which is empty when a build doesn't
+  // pass one, so empty means unset.
+  APP_VERSION: z.preprocess((value) => (value === "" ? undefined : value), z.string().optional()),
   // "structured": when Claude can't read a Receipt photo, fall back to the
   // structured rule-based parser instead of answering 503 (ADR-019). Unset:
   // no fallback. Any other value stops startup, so a typo can't silently

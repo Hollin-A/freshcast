@@ -157,6 +157,22 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
 - **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below.
 
+### API image on your machine
+
+The API's production image (`apps/api/Dockerfile`, [Architecture §12.4](docs/ARCHITECTURE.md#124-api-image)) builds from the repository root. To run it, use the e2e database or the dev Neon branch, never production:
+
+```bash
+docker build -f apps/api/Dockerfile --build-arg APP_VERSION=$(git rev-parse HEAD) -t freshcast-api .
+pnpm --filter @freshcast/api e2e:up                    # throwaway Postgres on localhost:54330
+docker run --rm -p 4000:4000 \
+  -e DATABASE_URL=postgresql://e2e:e2e@host.docker.internal:54330/freshcast_api_e2e \
+  -e AUTH_SECRET=$(openssl rand -base64 32) \
+  freshcast-api
+curl localhost:4000/health/live                        # reports the git SHA
+```
+
+The image doesn't run migrations. CI builds it on every pull request that changes `apps/api`, `packages/*` or dependencies (`api-image` job) and checks that it starts and answers its health checks, but doesn't push it.
+
 ### One-time setup (already done once per account)
 
 1. Bootstrap CDK for the account and AWS Region, then turn on termination protection for the `CDKToolkit` stack:
@@ -174,6 +190,10 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
    pnpm --filter @freshcast/infra cdk deploy FreshcastAccount --profile freshcast
    ```
 5. Set the stack's `CdkDiffRoleArn` output as the `AWS_CDK_DIFF_ROLE_ARN` repository variable in GitHub (Settings → Secrets and variables → Actions → Variables).
+6. Deploy the shared stack (the API's image repository), so the deploy pipeline (#34) has somewhere to push:
+   ```bash
+   pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
+   ```
 
 ## Versioning and releases
 

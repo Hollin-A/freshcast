@@ -42,6 +42,12 @@ describe("validateEnv", () => {
     expect(() => validateEnv({ ...required, RECEIPT_FALLBACK: "structred" })).toThrow(/RECEIPT_FALLBACK/);
   });
 
+  // The image sets APP_VERSION from a build argument, which is empty when a
+  // build doesn't pass one (a local `docker build`).
+  it("treats an empty APP_VERSION as unset", () => {
+    expect(validateEnv({ ...required, APP_VERSION: "" }).APP_VERSION).toBeUndefined();
+  });
+
   it("names a missing AUTH_SECRET in the error", () => {
     expect(() => validateEnv({ DATABASE_URL })).toThrow(/AUTH_SECRET/);
   });
