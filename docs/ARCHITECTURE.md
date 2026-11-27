@@ -69,7 +69,8 @@ freshcast/
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
 │       ├── src/                 # main.ts, app.module.ts, auth/, calendar/, common/, config/, database/, health/, llm/, logging/, openapi/, rate-limit/, secrets/
-│       └── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
+│       ├── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
+│       └── Dockerfile           # production image, built from the repo root (§12.4)
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
 │   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
@@ -688,9 +689,11 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push 
 
 The `api-e2e` job starts a throwaway Postgres (`apps/api/test/compose.yml`), applies the migrations and runs the API's e2e tests (`turbo run test:e2e --filter=@freshcast/api`). They boot the full `AppModule` with Supertest and check that a session can't read or change another business's rows. The `e2e` and `storybook` jobs run the web app's Playwright journeys and story tests.
 
+The `api-image` job builds the API's production image (§12.4) on an ARM64 runner, starts it against an unmigrated throwaway Postgres and checks `/health/live` and `/health/ready`. Nothing is pushed.
+
 The `infra-diff` job runs on pull requests from this repository only (GitHub gives forks no OIDC token, so their pull requests skip it). It runs `cdk synth` without AWS credentials, then signs in through GitHub OIDC as a read-only role and prints `cdk diff` for every stack to the log and the job summary (§12.3).
 
-On a pull request, a `changes` job (`dorny/paths-filter`) first sorts the changed files into areas, and each job runs only when its area changed: `check` for any change but docs, `storybook` and `e2e` for `apps/web`, `api-e2e` for `apps/api`, `infra-diff` for `infra`. Changes to `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas run every job. Docs here are Markdown files anywhere (except the PR template, which the `check` tests read), plus `docs/`, `LICENSE`, `.claude/` and `.vscode/`, so a docs-only pull request runs only `scope-guard` and `pr-body`. A skipped job counts as passing for a required check, which is why the filter sits on the jobs and not on the workflow's trigger. If `changes` fails, every job runs. Pushes to `main` run every job except `infra-diff`, which is for pull requests only.
+On a pull request, a `changes` job (`dorny/paths-filter`) first sorts the changed files into areas, and each job runs only when its area changed: `check` for any change but docs, `storybook` and `e2e` for `apps/web`, `api-e2e` and `api-image` for `apps/api`, `infra-diff` for `infra`. Changes to `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas run every job. Docs here are Markdown files anywhere (except the PR template, which the `check` tests read), plus `docs/`, `LICENSE`, `.claude/` and `.vscode/`, so a docs-only pull request runs only `scope-guard` and `pr-body`. A skipped job counts as passing for a required check, which is why the filter sits on the jobs and not on the workflow's trigger. If `changes` fails, every job runs. Pushes to `main` run every job except `infra-diff`, which is for pull requests only.
 
 A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 
@@ -752,3 +755,13 @@ Every synth (CLI and tests) runs CDK's built-in CloudFormation validation and cd
 ### 12.3 CI access
 
 CI holds no AWS keys. GitHub OIDC gives each job a short-lived token, and the `FreshcastAccount` stack's diff role trusts only tokens for this repository's pull requests (`repo:Hollin-A/freshcast:pull_request`). That role may only assume the CDK bootstrap stack's lookup role, which has read-only access; `cdk diff --method template` reads the deployed templates through it. Pull requests from forks get no token and skip the job. The role ARN is the `AWS_CDK_DIFF_ROLE_ARN` repository variable. CONTRIBUTING covers bootstrapping and running `cdk diff` locally.
+
+### 12.4 API image
+
+`apps/api/Dockerfile` builds the image Fargate runs, for ARM64 (ADR-021). It has three stages:
+
+1. **prune:** `turbo prune @freshcast/api --docker` writes a partial monorepo with only the API, `@freshcast/db`, `@freshcast/shared` and a lockfile trimmed to match, so changes to the App's dependencies don't invalidate the install cache.
+2. **build:** installs from the pruned manifests, builds the API and its workspace dependencies (including `prisma generate`), then `pnpm deploy --prod` copies the API with its production dependencies, at the lockfile's versions, and the workspace packages' built `dist/`.
+3. **runtime:** `node:24-alpine` with `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
+
+The image holds no secrets or config: `DATABASE_URL`, `AUTH_SECRET` and the rest come from the environment when it starts (ADR-018). It doesn't run migrations. `@prisma/client` declares the Prisma CLI and TypeScript as peer dependencies, so they ship in the image although nothing runs them.

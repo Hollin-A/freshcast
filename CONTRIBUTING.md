@@ -108,6 +108,22 @@ Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typec
 
 The `infra` package holds the API's AWS infrastructure as CDK code. See [Infrastructure](#infrastructure-aws-cdk) below.
 
+### API image
+
+The API's production image is built from the repo root ([Architecture §12.4](docs/ARCHITECTURE.md#124-api-image)). To build it and run it against the e2e Postgres:
+
+```bash
+docker build -f apps/api/Dockerfile -t freshcast-api .
+pnpm --filter @freshcast/api e2e:up
+docker run --rm -p 4000:4000 \
+  -e DATABASE_URL=postgresql://e2e:e2e@host.docker.internal:54330/freshcast_api_e2e \
+  -e AUTH_SECRET=<at least 32 characters> \
+  freshcast-api
+curl localhost:4000/health/ready
+```
+
+CI's `api-image` job does the same on every pull request that touches the API.
+
 ## Testing
 
 [docs/TESTING.md](docs/TESTING.md) covers every kind of test: unit and component tests, stories, Playwright journeys and screenshot baselines, the API's e2e tests, and the infrastructure tests.
