@@ -34,6 +34,20 @@ Two streams of work run in parallel. Every issue belongs to at most one track, a
 - The `track:ui` label names the stream of work, not the branch type. UI-track issues use `ui/` branches for presentation-only changes and `chore/`, `test/` or `docs/` branches for setup the `ui/` scope guard does not allow.
 - Work that needs both tracks lives on one track, and the other track references it and records it as a blocker (see Blocking below).
 
+## Project boards
+
+Each track has a GitHub Project board under the `Hollin-A` user. The boards have no auto-add rule, so add every new issue to its board after creating it. A milestone alone does not put an issue on a board.
+
+| Board | Number | Holds |
+|---|---|---|
+| Freshcast — NestJS migration | 1 | Issues labelled `migration` |
+| Freshcast — UI | 2 | Issues labelled `track:ui` |
+| Freshcast — Mobile | 3 | The Mobile app wayfinder map (#149) and its children |
+
+- **Add an issue**: `gh project item-add <number> --owner Hollin-A --url https://github.com/Hollin-A/freshcast/issues/<n>`. It prints the new item's id when run with `--format json --jq .id`.
+- **Set Status**: boards use a single-select `Status` field (`Todo`, `In Progress`, `Done`). New issues start at `Todo`. Look up the ids with `gh project view <number> --owner Hollin-A --format json --jq .id` and `gh project field-list <number> --owner Hollin-A --format json`, then run `gh project item-edit --id <item-id> --project-id <project-id> --field-id <status-field-id> --single-select-option-id <option-id>`.
+- **Token scope**: `gh project` needs the `project` scope. If a call fails with `missing required scopes [read:project]`, ask the user to run `gh auth refresh -h github.com -s project` in their own terminal, because it needs an interactive browser login.
+
 ## Pull requests as a triage surface
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
