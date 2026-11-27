@@ -107,7 +107,7 @@ describe("FreshcastShared", () => {
     });
   });
 
-  it("expires untagged images after a day and keeps the last images for rollback", () => {
+  it("expires untagged images after a day and keeps the last deployed and other images", () => {
     const repository = Object.values(template.findResources("AWS::ECR::Repository"))[0];
     const policy = JSON.parse(repository.Properties.LifecyclePolicy.LifecyclePolicyText);
     expect(policy.rules).toEqual([
@@ -117,6 +117,15 @@ describe("FreshcastShared", () => {
           countType: "sinceImagePushed",
           countNumber: 1,
           countUnit: "days",
+        }),
+        action: { type: "expire" },
+      }),
+      expect.objectContaining({
+        selection: expect.objectContaining({
+          tagStatus: "tagged",
+          tagPrefixList: [config.apiImage.deployedTagPrefix],
+          countType: "imageCountMoreThan",
+          countNumber: config.apiImage.imagesToKeep,
         }),
         action: { type: "expire" },
       }),

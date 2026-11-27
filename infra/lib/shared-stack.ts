@@ -20,7 +20,9 @@ export class SharedStack extends Stack {
     this.apiRepository = new ecr.Repository(this, "ApiRepository", {
       repositoryName: config.apiImage.repositoryName,
       // An image's tag is its git SHA (#34), so a tag must always name the
-      // same image. A push that reuses a tag fails.
+      // same image. A push that reuses a tag fails with
+      // ImageTagAlreadyExistsException, so a deploy job must skip the push
+      // when the tag already exists (a re-run of the same commit).
       imageTagMutability: ecr.TagMutability.IMMUTABLE,
       // Basic scanning for known CVEs, which is free. Enhanced scanning
       // (Inspector) costs extra.
@@ -34,8 +36,18 @@ export class SharedStack extends Stack {
           tagStatus: ecr.TagStatus.UNTAGGED,
           maxImageAge: Duration.days(1),
         },
+        // An image matched by a rule can't be expired by a later one, so the
+        // images production has run stay however many newer images are
+        // pushed (say, while deploys fail). The deploy job adds the marker
+        // tag to the image it deploys (#34).
         {
-          description: `Keep the last ${config.apiImage.imagesToKeep} images for rollback`,
+          description: `Keep the last ${config.apiImage.imagesToKeep} images production has run`,
+          tagStatus: ecr.TagStatus.TAGGED,
+          tagPrefixList: [config.apiImage.deployedTagPrefix],
+          maxImageCount: config.apiImage.imagesToKeep,
+        },
+        {
+          description: `Keep the last ${config.apiImage.imagesToKeep} other images`,
           tagStatus: ecr.TagStatus.ANY,
           maxImageCount: config.apiImage.imagesToKeep,
         },

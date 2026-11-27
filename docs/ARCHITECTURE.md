@@ -763,13 +763,13 @@ CI holds no AWS keys. GitHub OIDC gives each job a short-lived token, and the `F
 
 1. **prune:** `turbo prune @freshcast/api --docker` writes a partial monorepo with only the API, `@freshcast/db`, `@freshcast/shared` and a lockfile trimmed to match, so changes to the App's dependencies don't invalidate the install cache.
 2. **build:** installs from the pruned manifests, builds the API and its workspace dependencies (including `prisma generate`), then `pnpm deploy --prod` copies the API with its production dependencies, at the lockfile's versions, and the workspace packages' built `dist/`.
-3. **runtime:** `node:24-alpine`, with its Alpine packages upgraded at build time (security fixes reach Alpine before the base image is rebuilt), and `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
+3. **runtime:** `node:24-alpine`, with its Alpine packages upgraded at build time (security fixes reach Alpine before the base image is rebuilt; CI rebuilds this stage without cache so the upgrade always runs), and `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
 
 The image holds no secrets or config: `DATABASE_URL`, `AUTH_SECRET` and the rest come from the environment when it starts (ADR-018). It doesn't run migrations. `@prisma/client` declares the Prisma CLI and TypeScript as peer dependencies, so they ship in the image although nothing runs them.
 
 Images go to the `freshcast-api` ECR repository in `FreshcastShared`:
 
-- **Immutable tags:** an image's tag is its git SHA (#34), so a tag always names the same image, and a push that reuses one fails.
+- **Immutable tags:** an image's tag is its git SHA (#34), so a tag always names the same image, and a push that reuses one fails with `ImageTagAlreadyExistsException`. A deploy job that is re-run for the same commit must skip the push when the tag already exists.
 - **Scan on push:** ECR's free basic scanning checks each image for known CVEs.
-- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day, and only the last 10 images are kept, enough to roll back.
+- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day. The deploy job tags the image it deploys `production-<sha>`, and the last 10 images with that tag are kept however many newer images are pushed, so the running image and its rollbacks can't expire. Of the other images, the last 10 are kept.
 - **Retained:** deleting the stack leaves the repository and its images.
