@@ -171,10 +171,20 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **CI:** a pull request that touches `infra/`, `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas, runs `cdk synth` and shows the same diff in its `infra-diff` job (log and job summary). Read it before you merge. Pull requests from forks skip the job, because GitHub gives them no OIDC token.
 - **New lookups:** if a change adds a lookup (`fromLookup`), run `pnpm --filter @freshcast/infra synth --profile freshcast` once and commit the updated `infra/cdk.context.json`. CI synthesizes before it signs in to AWS, so a missing entry fails the job.
 - **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
-- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below and `FreshcastShared` by hand:
+- **Deploys:** the deploy on `main` comes with #34. Until then, deploy the one-time setup below, `FreshcastShared` and `FreshcastApi` by hand, and only with the owner's go-ahead. Before deploying a new image, tag it `production-<sha>`: the ECR lifecycle rule protects only images with that tag, so an image without it expires after 10 more pushes, and ECS then can't start a replacement task.
   ```bash
+  sha=<git-sha>
+  get() { aws ecr batch-get-image --repository-name freshcast-api --image-ids imageTag=$sha --query "images[0].$1" --output text --profile freshcast --region ap-southeast-2; }
+  aws ecr put-image --repository-name freshcast-api --image-tag production-$sha --image-manifest "$(get imageManifest)" --image-manifest-media-type "$(get imageManifestMediaType)" --profile freshcast --region ap-southeast-2
   pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
+  pnpm --filter @freshcast/infra cdk deploy FreshcastApi --parameters ImageTag=$sha --profile freshcast
   ```
+  `ImageTag` must name an image that is already in the `freshcast-api` repository. Later deploys of `FreshcastApi` without `--parameters` keep the image that runs.
+- **Changed secret values:** ECS reads secrets only when a task starts, and `cdk deploy` with an unchanged template starts none. After changing a secret's value, start new tasks (the names are the `FreshcastApi` stack's `ClusterName` and `ServiceName` outputs):
+  ```bash
+  aws ecs update-service --cluster <ClusterName> --service <ServiceName> --force-new-deployment --profile freshcast --region ap-southeast-2
+  ```
+  Recreating a secret changes its suffix instead: update `config.apiEnvironments` and deploy.
 
 ### One-time setup (already done once per account)
 
@@ -193,6 +203,16 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
    pnpm --filter @freshcast/infra cdk deploy FreshcastAccount --profile freshcast
    ```
 5. Set the stack's `CdkDiffRoleArn` output as the `AWS_CDK_DIFF_ROLE_ARN` repository variable in GitHub (Settings → Secrets and variables → Actions → Variables).
+6. Create the API's secrets in Secrets Manager, as plain strings with no trailing newline. CDK never creates them, and references each by its complete ARN ([Architecture §12.5](docs/ARCHITECTURE.md#125-api-service)):
+   - `freshcast/database-url`: the production Neon pooled connection string, ending in `?sslmode=require` (read by ECS at task start)
+   - `freshcast/auth-secret`: the same value as the App's `AUTH_SECRET` (read by ECS at task start)
+   - `freshcast/anthropic-api-key`: the Claude API key (read by the API itself)
+   ```bash
+   f=$(mktemp); read -rs "v?Value: "; echo; printf '%s' "$v" > "$f"; unset v   # zsh; paste the value at the prompt
+   aws secretsmanager create-secret --name <name> --secret-string "file://$f" --tags Key=project,Value=freshcast --profile freshcast --region ap-southeast-2
+   rm -P "$f"
+   ```
+   Then put each secret's name with its suffix (the end of its ARN, for example `freshcast/auth-secret-pZBxRx`) in `config.apiEnvironments` in `infra/lib/config.ts`: the first two under `secrets.startup`, the API key under `secrets.runtime`. A bare name doesn't work: Secrets Manager would read its last hyphen and 6 characters as a suffix.
 
 ## Versioning and releases
 

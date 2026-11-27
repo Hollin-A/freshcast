@@ -14,11 +14,14 @@ export function buildApp(app: App) {
 
   const account = new AccountStack(app, "FreshcastAccount", { env });
   const shared = new SharedStack(app, "FreshcastShared", { env });
-  const api = new ApiStack(app, "FreshcastApi", { env });
+  const api = new ApiStack(app, "FreshcastApi", {
+    env,
+    environment: config.apiEnvironments.production,
+  });
 
   Tags.of(account).add("stage", "account");
   Tags.of(shared).add("stage", "shared");
-  Tags.of(api).add("stage", "production");
+  Tags.of(api).add("stage", config.apiEnvironments.production.stage);
   for (const [key, value] of Object.entries(config.tags)) {
     Tags.of(app).add(key, value);
   }
