@@ -203,6 +203,7 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
    aws secretsmanager create-secret --name <name> --secret-string "file://$f" --tags Key=project,Value=freshcast --profile freshcast --region ap-southeast-2
    rm -P "$f"
    ```
+   Then put each secret's name with its suffix (the end of its ARN, for example `freshcast/auth-secret-pZBxRx`) in `config.apiEnvironments` in `infra/lib/config.ts`.
 
 ## Versioning and releases
 

@@ -251,6 +251,23 @@ describe("FreshcastApi", () => {
     for (const name of secretNames) expect(envNames).not.toContain(name);
   });
 
+  // Secrets Manager reads an ARN ending in a hyphen and 6 characters as a
+  // complete ARN, so a name like `freshcast/auth-secret` must never be used
+  // as a partial ARN (it failed the first deploy).
+  it("references every secret by its complete ARN and grants exactly that ARN", () => {
+    const secretIds = [...Object.values(production.secrets.startup), ...production.secrets.runtime];
+    for (const secretId of secretIds) expect(secretId).toMatch(/-[A-Za-z0-9]{6}$/);
+
+    const taskDefinition = Object.values(template.findResources("AWS::ECS::TaskDefinition"))[0];
+    const [container] = taskDefinition.Properties.ContainerDefinitions;
+    const policies = JSON.stringify(template.findResources("AWS::IAM::Policy"));
+    for (const secret of container.Secrets as { ValueFrom: unknown }[]) {
+      expect(JSON.stringify(secret.ValueFrom)).toMatch(/:secret:[^"]+-[A-Za-z0-9]{6}"/);
+      expect(policies).toContain(JSON.stringify(secret.ValueFrom));
+    }
+    expect(policies).not.toContain("??????");
+  });
+
   it("gives the task role only the runtime secrets (least privilege)", () => {
     const policies = Object.entries(template.findResources("AWS::IAM::Policy")).filter(([id]) =>
       id.startsWith("TaskDefinitionTaskRole"),
@@ -263,7 +280,7 @@ describe("FreshcastApi", () => {
       "secretsmanager:GetSecretValue",
     ]);
     expect(JSON.stringify(statements[0].Resource)).toContain(
-      `:secret:${production.secrets.runtime[0]}-??????`,
+      `:secret:${production.secrets.runtime[0]}"`,
     );
   });
 });

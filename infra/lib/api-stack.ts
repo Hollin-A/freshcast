@@ -1,4 +1,5 @@
 import {
+  ArnFormat,
   CfnOutput,
   CfnParameter,
   Duration,
@@ -53,6 +54,16 @@ export class ApiStack extends Stack {
    */
   override get availabilityZones(): string[] {
     return [...config.availabilityZones];
+  }
+
+  /** The complete ARN of a secret, from its name and suffix in config. */
+  private secretArn(secretId: string): string {
+    return this.formatArn({
+      service: "secretsmanager",
+      resource: "secret",
+      resourceName: secretId,
+      arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+    });
   }
 
   constructor(scope: Construct, id: string, props: ApiStackProps) {
@@ -163,10 +174,10 @@ export class ApiStack extends Stack {
 
     // ECS reads these when a task starts, through the execution role.
     const startupSecrets = Object.fromEntries(
-      Object.entries(environment.secrets.startup).map(([envName, secretName]) => [
+      Object.entries(environment.secrets.startup).map(([envName, secretId]) => [
         envName,
         ecs.Secret.fromSecretsManager(
-          secretsmanager.Secret.fromSecretNameV2(this, `Secret-${envName}`, secretName),
+          secretsmanager.Secret.fromSecretCompleteArn(this, `Secret-${envName}`, this.secretArn(secretId)),
         ),
       ]),
     );
@@ -204,10 +215,12 @@ export class ApiStack extends Stack {
 
     // The API reads these itself, through the task role (least privilege:
     // S3, Textract and SES come with #40, #42 and #46).
-    for (const secretName of environment.secrets.runtime) {
-      secretsmanager.Secret.fromSecretNameV2(this, `Secret-${secretName}`, secretName).grantRead(
-        taskDefinition.taskRole,
-      );
+    for (const secretId of environment.secrets.runtime) {
+      secretsmanager.Secret.fromSecretCompleteArn(
+        this,
+        `Secret-${secretId}`,
+        this.secretArn(secretId),
+      ).grantRead(taskDefinition.taskRole);
     }
 
     const serviceSecurityGroup = new ec2.SecurityGroup(this, "ServiceSecurityGroup", {

@@ -68,13 +68,20 @@ export const config = {
        * Secrets Manager secrets, created by hand outside CDK (ADR-021).
        * ECS reads `startup` ones when a task starts; the API reads
        * `runtime` ones itself when it needs them (SecretsService, ADR-018).
+       *
+       * Each is the secret's name plus the 6-character suffix Secrets
+       * Manager adds, so stacks reference its complete ARN. A name alone
+       * isn't enough: Secrets Manager reads an ARN ending in a hyphen and 6
+       * characters as a complete one, so `freshcast/auth-secret` would mean
+       * a secret called `freshcast/auth`. Recreating a secret changes its
+       * suffix; changing its value doesn't.
        */
       secrets: {
         startup: {
-          DATABASE_URL: "freshcast/database-url",
-          AUTH_SECRET: "freshcast/auth-secret",
+          DATABASE_URL: "freshcast/database-url-nW6Kv8",
+          AUTH_SECRET: "freshcast/auth-secret-pZBxRx",
         },
-        runtime: ["freshcast/anthropic-api-key"],
+        runtime: ["freshcast/anthropic-api-key-iSc9jB"],
       },
     },
   },
