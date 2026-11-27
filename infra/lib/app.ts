@@ -3,6 +3,7 @@ import { AwsSolutionsChecks } from "cdk-nag";
 import { AccountStack } from "./account-stack";
 import { ApiStack } from "./api-stack";
 import { ACCOUNT_CONTEXT_KEY, config } from "./config";
+import { SharedStack } from "./shared-stack";
 
 /**
  * Builds the app's stacks. The CLI entry point (bin/freshcast.ts) and the
@@ -12,9 +13,11 @@ export function buildApp(app: App) {
   const env = resolveEnvironment(app);
 
   const account = new AccountStack(app, "FreshcastAccount", { env });
+  const shared = new SharedStack(app, "FreshcastShared", { env });
   const api = new ApiStack(app, "FreshcastApi", { env });
 
   Tags.of(account).add("stage", "account");
+  Tags.of(shared).add("stage", "shared");
   Tags.of(api).add("stage", "production");
   for (const [key, value] of Object.entries(config.tags)) {
     Tags.of(app).add(key, value);
@@ -26,7 +29,7 @@ export function buildApp(app: App) {
   // reason.
   Validations.of(app).addPlugins(new AwsSolutionsChecks(app, { verbose: true }));
 
-  return { account, api };
+  return { account, shared, api };
 }
 
 /**

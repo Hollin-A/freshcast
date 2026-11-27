@@ -79,7 +79,7 @@ freshcast/
 │       └── src/schemas/         # auth, business, products, sales, receipts, chat, api
 ├── infra/                       # @freshcast/infra: AWS CDK app for the API's infrastructure (ADR-021, §12)
 │   ├── bin/freshcast.ts         # CLI entry point
-│   ├── lib/                     # stacks (account-stack, api-stack), app.ts, config.ts
+│   ├── lib/                     # stacks (account-stack, shared-stack, api-stack), app.ts, config.ts
 │   ├── test/                    # template assertions (no AWS calls)
 │   ├── cdk.json                 # app command, feature flags, account ID
 │   └── cdk.context.json         # cached lookups (hosted zone), committed
@@ -740,12 +740,13 @@ All stacks deploy to one account in the AWS Region `ap-southeast-2`. The account
 | Stack | Contents | Deployed by |
 |---|---|---|
 | `FreshcastAccount` | GitHub's OIDC provider; `freshcast-github-cdk-diff`, the read-only role CI assumes on pull requests; the account's monthly cost budget (USD 60, email alerts at 80% spent and at 100% forecast). Termination protection is on. | Hand, once, with admin credentials (CI can't create the role it signs in with); later changes through pull requests. The deploy role for `main` is added with #34. |
-| `FreshcastApi` | Looks up the `freshcast.site` hosted zone. ECR, the ECS service, the ALB, the certificate and `api.freshcast.site` are added with #32 and #33. | CI on `main` once #34 lands |
+| `FreshcastShared` | Resources every API environment shares: the `freshcast-api` ECR repository (§12.4). CI builds each commit's image once and every environment runs that same image. Termination protection is on, and the repository is retained if the stack is deleted. | Hand, with admin credentials, until #34 |
+| `FreshcastApi` | One API environment. Looks up the `freshcast.site` hosted zone. The ECS service, the ALB, the certificate and `api.freshcast.site` are added with #33. | CI on `main` once #34 lands |
 
 - **DNS:** `freshcast.site` is registered at Namecheap and delegated to a Route 53 hosted zone that Amplify also uses. CDK looks the zone up (`HostedZone.fromLookup`) and owns only the records it creates.
 - **Cached lookups:** lookup results are stored in `infra/cdk.context.json`, which is committed. CI synthesizes before it signs in to AWS, so a lookup missing from that file fails the job instead of calling AWS.
 - **Budget alert address:** the repository is public, so the email address lives in the SSM parameter `/freshcast/budget-alert-email`, which CloudFormation reads at deploy time.
-- **Tags:** every taggable resource in the app's stacks carries `project=freshcast` and `stage` (`account` or `production`) for cost tracking. The `CDKToolkit` stack comes from `cdk bootstrap`, outside the app, and isn't tagged.
+- **Tags:** every taggable resource in the app's stacks carries `project=freshcast` and `stage` (`account`, `shared` or `production`) for cost tracking. The `CDKToolkit` stack comes from `cdk bootstrap`, outside the app, and isn't tagged.
 - **Staging:** deferred to the start of Stage 4 (ADR-021 §4). It will be a second `FreshcastApi` stack from the same code.
 
 ### 12.2 Validation
@@ -765,3 +766,10 @@ CI holds no AWS keys. GitHub OIDC gives each job a short-lived token, and the `F
 3. **runtime:** `node:24-alpine` with `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
 
 The image holds no secrets or config: `DATABASE_URL`, `AUTH_SECRET` and the rest come from the environment when it starts (ADR-018). It doesn't run migrations. `@prisma/client` declares the Prisma CLI and TypeScript as peer dependencies, so they ship in the image although nothing runs them.
+
+Images go to the `freshcast-api` ECR repository in `FreshcastShared`:
+
+- **Immutable tags:** an image's tag is its git SHA (#34), so a tag always names the same image, and a push that reuses one fails.
+- **Scan on push:** ECR's free basic scanning checks each image for known CVEs.
+- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day, and only the last 10 images are kept, enough to roll back.
+- **Retained:** deleting the stack leaves the repository and its images.

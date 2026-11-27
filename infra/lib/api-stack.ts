@@ -4,9 +4,10 @@ import type { Construct } from "constructs";
 import { config } from "./config";
 
 /**
- * Everything the API needs to run: the image registry, ECS service, load
- * balancer, certificate and the `api.` DNS record (#32, #33). It starts
- * empty apart from the hosted zone lookup.
+ * Everything one API environment needs to run: the ECS service, load
+ * balancer, certificate and the `api.` DNS record (#33). It starts empty
+ * apart from the hosted zone lookup. The image repository is shared by every
+ * environment and lives in FreshcastShared.
  */
 export class ApiStack extends Stack {
   /**

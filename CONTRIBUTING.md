@@ -171,7 +171,10 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **CI:** a pull request that touches `infra/`, `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas, runs `cdk synth` and shows the same diff in its `infra-diff` job (log and job summary). Read it before you merge. Pull requests from forks skip the job, because GitHub gives them no OIDC token.
 - **New lookups:** if a change adds a lookup (`fromLookup`), run `pnpm --filter @freshcast/infra synth --profile freshcast` once and commit the updated `infra/cdk.context.json`. CI synthesizes before it signs in to AWS, so a missing entry fails the job.
 - **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
-- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below.
+- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below and `FreshcastShared` by hand:
+  ```bash
+  pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
+  ```
 
 ### One-time setup (already done once per account)
 
