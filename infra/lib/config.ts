@@ -15,6 +15,18 @@ export const config = {
   },
   /** Qualifier of the CDK bootstrap stack (the CDK default). */
   bootstrapQualifier: "hnb659fds",
+  /** The API's container image (#32). */
+  apiImage: {
+    /** ECR repository in the FreshcastShared stack. */
+    repositoryName: "freshcast-api",
+    /** Images kept for rollback; older ones expire. */
+    imagesToKeep: 10,
+    /**
+     * Prefix of the marker tag (`production-<sha>`) the deploy job adds to
+     * the image it deploys, which protects it from expiring.
+     */
+    deployedTagPrefix: "production-",
+  },
   /** Tags on every taggable resource in the app's stacks, for cost tracking. */
   tags: { project: "freshcast" },
   budget: {

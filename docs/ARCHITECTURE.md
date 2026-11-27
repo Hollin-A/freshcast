@@ -69,7 +69,8 @@ freshcast/
 │   │   └── public/
 │   └── api/                     # @freshcast/api: NestJS API (Stage 3 of ADR-020, not deployed yet)
 │       ├── src/                 # main.ts, app.module.ts, auth/, calendar/, common/, config/, database/, health/, llm/, logging/, openapi/, rate-limit/, secrets/
-│       └── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
+│       ├── test/                # e2e tests against a throwaway Postgres (docs/TESTING.md)
+│       └── Dockerfile           # production image, built from the repo root (§12.4)
 ├── packages/
 │   ├── db/                      # @freshcast/db: Prisma schema, migrations, seed, createPrismaClient()
 │   │   ├── prisma/              # schema.prisma, migrations/, seed.ts
@@ -78,7 +79,7 @@ freshcast/
 │       └── src/schemas/         # auth, business, products, sales, receipts, chat, api
 ├── infra/                       # @freshcast/infra: AWS CDK app for the API's infrastructure (ADR-021, §12)
 │   ├── bin/freshcast.ts         # CLI entry point
-│   ├── lib/                     # stacks (account-stack, api-stack), app.ts, config.ts
+│   ├── lib/                     # stacks (account-stack, shared-stack, api-stack), app.ts, config.ts
 │   ├── test/                    # template assertions (no AWS calls)
 │   ├── cdk.json                 # app command, feature flags, account ID
 │   └── cdk.context.json         # cached lookups (hosted zone), committed
@@ -688,9 +689,11 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and push 
 
 The `api-e2e` job starts a throwaway Postgres (`apps/api/test/compose.yml`), applies the migrations and runs the API's e2e tests (`turbo run test:e2e --filter=@freshcast/api`). They boot the full `AppModule` with Supertest and check that a session can't read or change another business's rows. The `e2e` and `storybook` jobs run the web app's Playwright journeys and story tests.
 
+The `api-image` job builds the API's production image (§12.4) on an ARM64 runner, starts it against an unmigrated throwaway Postgres and checks `/health/live` and `/health/ready`. Nothing is pushed.
+
 The `infra-diff` job runs on pull requests from this repository only (GitHub gives forks no OIDC token, so their pull requests skip it). It runs `cdk synth` without AWS credentials, then signs in through GitHub OIDC as a read-only role and prints `cdk diff` for every stack to the log and the job summary (§12.3).
 
-On a pull request, a `changes` job (`dorny/paths-filter`) first sorts the changed files into areas, and each job runs only when its area changed: `check` for any change but docs, `storybook` and `e2e` for `apps/web`, `api-e2e` for `apps/api`, `infra-diff` for `infra`. Changes to `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas run every job. Docs here are Markdown files anywhere (except the PR template, which the `check` tests read), plus `docs/`, `LICENSE`, `.claude/` and `.vscode/`, so a docs-only pull request runs only `scope-guard` and `pr-body`. A skipped job counts as passing for a required check, which is why the filter sits on the jobs and not on the workflow's trigger. If `changes` fails, every job runs. Pushes to `main` run every job except `infra-diff`, which is for pull requests only.
+On a pull request, a `changes` job (`dorny/paths-filter`) first sorts the changed files into areas, and each job runs only when its area changed: `check` for any change but docs, `storybook` and `e2e` for `apps/web`, `api-e2e` and `api-image` for `apps/api`, `infra-diff` for `infra`. Changes to `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas run every job. Docs here are Markdown files anywhere (except the PR template, which the `check` tests read), plus `docs/`, `LICENSE`, `.claude/` and `.vscode/`, so a docs-only pull request runs only `scope-guard` and `pr-body`. A skipped job counts as passing for a required check, which is why the filter sits on the jobs and not on the workflow's trigger. If `changes` fails, every job runs. Pushes to `main` run every job except `infra-diff`, which is for pull requests only.
 
 A second job, `scope-guard`, runs `main`'s copy of `scripts/check-ui-scope.mjs` against `main`'s `.github/ui-paths`: on `ui/*` branches it fails the pull request if any changed path falls outside the list, if an allowed file gains a `"use server"` directive, or if a changed line touches auth, Prisma, S3, the session or a redirect; it passes immediately on every other branch. `scope-guard.yml` runs the same check as `scope-guard-main` through `pull_request_target`, so a pull request that edits `ci.yml` can't skip it. The same script backs a fail-closed Claude Code `PreToolUse` hook (`.claude/settings.json`) that blocks out-of-scope edits on `ui/*` branches as they happen. See [CONTRIBUTING](../CONTRIBUTING.md#ui-only-branches).
 
@@ -737,12 +740,13 @@ All stacks deploy to one account in the AWS Region `ap-southeast-2`. The account
 | Stack | Contents | Deployed by |
 |---|---|---|
 | `FreshcastAccount` | GitHub's OIDC provider; `freshcast-github-cdk-diff`, the read-only role CI assumes on pull requests; the account's monthly cost budget (USD 60, email alerts at 80% spent and at 100% forecast). Termination protection is on. | Hand, once, with admin credentials (CI can't create the role it signs in with); later changes through pull requests. The deploy role for `main` is added with #34. |
-| `FreshcastApi` | Looks up the `freshcast.site` hosted zone. ECR, the ECS service, the ALB, the certificate and `api.freshcast.site` are added with #32 and #33. | CI on `main` once #34 lands |
+| `FreshcastShared` | Resources every API environment shares: the `freshcast-api` ECR repository (§12.4). CI builds each commit's image once and every environment runs that same image. Termination protection is on, and the repository is retained if the stack is deleted. | Hand, with admin credentials, until #34 |
+| `FreshcastApi` | One API environment. Looks up the `freshcast.site` hosted zone. The ECS service, the ALB, the certificate and `api.freshcast.site` are added with #33. | CI on `main` once #34 lands |
 
 - **DNS:** `freshcast.site` is registered at Namecheap and delegated to a Route 53 hosted zone that Amplify also uses. CDK looks the zone up (`HostedZone.fromLookup`) and owns only the records it creates.
 - **Cached lookups:** lookup results are stored in `infra/cdk.context.json`, which is committed. CI synthesizes before it signs in to AWS, so a lookup missing from that file fails the job instead of calling AWS.
 - **Budget alert address:** the repository is public, so the email address lives in the SSM parameter `/freshcast/budget-alert-email`, which CloudFormation reads at deploy time.
-- **Tags:** every taggable resource in the app's stacks carries `project=freshcast` and `stage` (`account` or `production`) for cost tracking. The `CDKToolkit` stack comes from `cdk bootstrap`, outside the app, and isn't tagged.
+- **Tags:** every taggable resource in the app's stacks carries `project=freshcast` and `stage` (`account`, `shared` or `production`) for cost tracking. The `CDKToolkit` stack comes from `cdk bootstrap`, outside the app, and isn't tagged.
 - **Staging:** deferred to the start of Stage 4 (ADR-021 §4). It will be a second `FreshcastApi` stack from the same code.
 
 ### 12.2 Validation
@@ -752,3 +756,20 @@ Every synth (CLI and tests) runs CDK's built-in CloudFormation validation and cd
 ### 12.3 CI access
 
 CI holds no AWS keys. GitHub OIDC gives each job a short-lived token, and the `FreshcastAccount` stack's diff role trusts only tokens for this repository's pull requests (`repo:Hollin-A/freshcast:pull_request`). That role may only assume the CDK bootstrap stack's lookup role, which has read-only access; `cdk diff --method template` reads the deployed templates through it. Pull requests from forks get no token and skip the job. The role ARN is the `AWS_CDK_DIFF_ROLE_ARN` repository variable. CONTRIBUTING covers bootstrapping and running `cdk diff` locally.
+
+### 12.4 API image
+
+`apps/api/Dockerfile` builds the image Fargate runs, for ARM64 (ADR-021). It has three stages:
+
+1. **prune:** `turbo prune @freshcast/api --docker` writes a partial monorepo with only the API, `@freshcast/db`, `@freshcast/shared` and a lockfile trimmed to match, so changes to the App's dependencies don't invalidate the install cache.
+2. **build:** installs from the pruned manifests, builds the API and its workspace dependencies (including `prisma generate`), then `pnpm deploy --prod` copies the API with its production dependencies, at the lockfile's versions, and the workspace packages' built `dist/`.
+3. **runtime:** `node:24-alpine`, with its Alpine packages upgraded at build time (security fixes reach Alpine before the base image is rebuilt; CI rebuilds this stage without cache so the upgrade always runs), and `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
+
+The image holds no secrets or config: `DATABASE_URL`, `AUTH_SECRET` and the rest come from the environment when it starts (ADR-018). It doesn't run migrations. `@prisma/client` declares the Prisma CLI and TypeScript as peer dependencies, so they ship in the image although nothing runs them.
+
+Images go to the `freshcast-api` ECR repository in `FreshcastShared`:
+
+- **Immutable tags:** an image's tag is its git SHA (#34), so a tag always names the same image, and a push that reuses one fails with `ImageTagAlreadyExistsException`. A deploy job that is re-run for the same commit must skip the push when the tag already exists.
+- **Scan on push:** ECR's free basic scanning checks each image for known CVEs.
+- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day. The deploy job tags the image it deploys `production-<sha>`, and the last 10 images with that tag are kept however many newer images are pushed, so the running image and its rollbacks can't expire. Of the other images, the last 10 are kept.
+- **Retained:** deleting the stack leaves the repository and its images.

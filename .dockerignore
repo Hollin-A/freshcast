@@ -11,3 +11,12 @@ docs
 !README.md
 **/.env
 **/.env.*
+# Build output and local artifacts: the image builds its own.
+**/dist
+**/coverage
+**/*.tsbuildinfo
+packages/db/src/generated
+infra/cdk.out
+apps/web/test-results
+apps/web/playwright-report
+apps/web/storybook-static

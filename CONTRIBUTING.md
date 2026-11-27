@@ -108,6 +108,22 @@ Run tasks from the repo root: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typec
 
 The `infra` package holds the API's AWS infrastructure as CDK code. See [Infrastructure](#infrastructure-aws-cdk) below.
 
+### API image
+
+The API's production image is built from the repo root ([Architecture §12.4](docs/ARCHITECTURE.md#124-api-image)). To build it and run it against the e2e Postgres:
+
+```bash
+docker build -f apps/api/Dockerfile -t freshcast-api .
+pnpm --filter @freshcast/api e2e:up
+docker run --rm -p 4000:4000 \
+  -e DATABASE_URL=postgresql://e2e:e2e@host.docker.internal:54330/freshcast_api_e2e \
+  -e AUTH_SECRET=<at least 32 characters> \
+  freshcast-api
+curl localhost:4000/health/ready
+```
+
+CI's `api-image` job does the same on every pull request that touches the API.
+
 ## Testing
 
 [docs/TESTING.md](docs/TESTING.md) covers every kind of test: unit and component tests, stories, Playwright journeys and screenshot baselines, the API's e2e tests, and the infrastructure tests.
@@ -155,7 +171,10 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **CI:** a pull request that touches `infra/`, `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas, runs `cdk synth` and shows the same diff in its `infra-diff` job (log and job summary). Read it before you merge. Pull requests from forks skip the job, because GitHub gives them no OIDC token.
 - **New lookups:** if a change adds a lookup (`fromLookup`), run `pnpm --filter @freshcast/infra synth --profile freshcast` once and commit the updated `infra/cdk.context.json`. CI synthesizes before it signs in to AWS, so a missing entry fails the job.
 - **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
-- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below.
+- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below and `FreshcastShared` by hand:
+  ```bash
+  pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
+  ```
 
 ### One-time setup (already done once per account)
 
