@@ -741,13 +741,13 @@ All stacks deploy to one account in the AWS Region `ap-southeast-2`. The account
 |---|---|---|
 | `FreshcastAccount` | GitHub's OIDC provider; `freshcast-github-cdk-diff`, the read-only role CI assumes on pull requests; the account's monthly cost budget (USD 60, email alerts at 80% spent and at 100% forecast). Termination protection is on. | Hand, once, with admin credentials (CI can't create the role it signs in with); later changes through pull requests. The deploy role for `main` is added with #34. |
 | `FreshcastShared` | Resources every API environment shares: the `freshcast-api` ECR repository (§12.4). CI builds each commit's image once and every environment runs that same image. Termination protection is on, and the repository is retained if the stack is deleted. | Hand, with admin credentials, until #34 |
-| `FreshcastApi` | One API environment. Looks up the `freshcast.site` hosted zone. The ECS service, the ALB, the certificate and `api.freshcast.site` are added with #33. | CI on `main` once #34 lands |
+| `FreshcastApi` | One API environment (§12.5): a VPC, the ALB with its certificate, the ECS Fargate service and the `api.freshcast.site` record. Looks up the `freshcast.site` hosted zone. | Hand, with admin credentials, until #34; then CI on `main` |
 
 - **DNS:** `freshcast.site` is registered at Namecheap and delegated to a Route 53 hosted zone that Amplify also uses. CDK looks the zone up (`HostedZone.fromLookup`) and owns only the records it creates.
 - **Cached lookups:** lookup results are stored in `infra/cdk.context.json`, which is committed. CI synthesizes before it signs in to AWS, so a lookup missing from that file fails the job instead of calling AWS.
 - **Budget alert address:** the repository is public, so the email address lives in the SSM parameter `/freshcast/budget-alert-email`, which CloudFormation reads at deploy time.
 - **Tags:** every taggable resource in the app's stacks carries `project=freshcast` and `stage` (`account`, `shared` or `production`) for cost tracking. The `CDKToolkit` stack comes from `cdk bootstrap`, outside the app, and isn't tagged.
-- **Staging:** deferred to the start of Stage 4 (ADR-021 §4). It will be a second `FreshcastApi` stack from the same code.
+- **Staging:** deferred to the start of Stage 4 (ADR-021 §4). `ApiStack` takes one entry of `config.apiEnvironments` (stage, subdomain, secret names), so staging will be a second entry and a second `FreshcastApi` stack from the same code.
 
 ### 12.2 Validation
 
@@ -773,3 +773,28 @@ Images go to the `freshcast-api` ECR repository in `FreshcastShared`:
 - **Scan on push:** ECR's free basic scanning checks each image for known CVEs.
 - **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day. The deploy job tags the image it deploys `production-<sha>`, and the last 10 images with that tag are kept however many newer images are pushed, so the running image and its rollbacks can't expire. Of the other images, the last 10 are kept.
 - **Retained:** deleting the stack leaves the repository and its images.
+
+### 12.5 API service
+
+`FreshcastApi` runs the API on ECS Fargate behind an Application Load Balancer (ADR-021 §1, #33):
+
+```text
+https://api.freshcast.site ─▶ ALB :443 (ACM certificate; :80 redirects to :443)
+                                │  target group: HTTP :4000, health check GET /health/live
+                                ▼
+                          Fargate task (ARM64, 0.25 vCPU, 512 MiB, public IP)
+                                │  outbound through the internet gateway
+                                ▼
+                          Neon · ECR · Secrets Manager · Claude
+```
+
+- **Network:** a VPC with two public subnets (`ap-southeast-2a`, `-2b`; an ALB needs two) and no NAT gateway (ADR-020 D5). The task has a public IP so it can reach ECR, Secrets Manager and Neon, but its security group admits only the ALB, on port 4000. VPC flow logs go to CloudWatch Logs for a month.
+- **Health:** the target group checks `/health/live`, never `/health/ready`, so a database outage doesn't make ECS replace healthy tasks (ADR-023 §7). The grace period is 120s, longer than the API's startup database retries (about 55s at worst).
+- **Deploys:** rolling, one task. ECS starts the new task, waits for it to pass the health check, then stops the old one (minimum 100%, maximum 200%). The deployment circuit breaker rolls back a deploy whose tasks can't start; a bad `DATABASE_URL`, for example, makes the startup database check exit the process.
+- **Image:** the stack parameter `ImageTag` (a git SHA) picks the `freshcast-api` image, and `APP_VERSION` is set to the same value so `/health/live` reports it. CDK owns the tag: a deploy passes `--parameters ImageTag=<sha>` (#34), and a deploy without it keeps the previous value, so `cdk diff` on a pull request never shows an image change. The parameter has no default.
+- **Secrets:** created by hand in Secrets Manager and only referenced by CDK (ADR-021).
+  - Execution role (ECS, when a task starts): `freshcast/database-url` and `freshcast/auth-secret`, injected as `DATABASE_URL` and `AUTH_SECRET`. `AUTH_SECRET` must equal the App's (ADR-023 §10).
+  - Task role (the API, while it runs): `freshcast/anthropic-api-key`, read by `SecretsService` (ADR-018). Nothing else: S3, Textract and SES permissions come with #40, #42 and #46.
+  - ECS reads secrets only when a task starts, so a changed value needs a new deploy.
+- **Logs:** the container writes to the `/freshcast/production/api` log group (30 days, retained if the stack is deleted).
+- **Acknowledged cdk-nag findings:** open ingress on the ALB (a public API, 443 and a redirect on 80), no ALB access logs and no Container Insights (the API logs every request with its ID; both add cost; revisit with Stage 7 hardening), plain environment variables (only port, Region and version), and `ecr:GetAuthorizationToken` on `*` (it has no resource-level permissions).

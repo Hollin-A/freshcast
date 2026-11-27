@@ -171,10 +171,12 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **CI:** a pull request that touches `infra/`, `packages/*`, dependencies, Turborepo or CI config, or any file outside the known areas, runs `cdk synth` and shows the same diff in its `infra-diff` job (log and job summary). Read it before you merge. Pull requests from forks skip the job, because GitHub gives them no OIDC token.
 - **New lookups:** if a change adds a lookup (`fromLookup`), run `pnpm --filter @freshcast/infra synth --profile freshcast` once and commit the updated `infra/cdk.context.json`. CI synthesizes before it signs in to AWS, so a missing entry fails the job.
 - **Validation:** cdk-nag and CDK's CloudFormation validation fail synth on any violation. Fix the finding, or acknowledge it on the construct it applies to with `Validations.of(construct).acknowledge({ id, reason })`.
-- **Deploys:** the deploy on `main` comes with #34. Until then, deploy only the one-time setup below and `FreshcastShared` by hand:
+- **Deploys:** the deploy on `main` comes with #34. Until then, deploy the one-time setup below, `FreshcastShared` and `FreshcastApi` by hand, and only with the owner's go-ahead:
   ```bash
   pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
+  pnpm --filter @freshcast/infra cdk deploy FreshcastApi --parameters ImageTag=<git-sha> --profile freshcast
   ```
+  `ImageTag` must name an image that is already in the `freshcast-api` repository. Later deploys of `FreshcastApi` without `--parameters` keep the image that runs.
 
 ### One-time setup (already done once per account)
 
@@ -193,6 +195,14 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
    pnpm --filter @freshcast/infra cdk deploy FreshcastAccount --profile freshcast
    ```
 5. Set the stack's `CdkDiffRoleArn` output as the `AWS_CDK_DIFF_ROLE_ARN` repository variable in GitHub (Settings → Secrets and variables → Actions → Variables).
+6. Create the API's startup secrets in Secrets Manager, as plain strings with no trailing newline. CDK references them by name and never creates them ([Architecture §12.5](docs/ARCHITECTURE.md#125-api-service)):
+   - `freshcast/database-url`: the production Neon pooled connection string, ending in `?sslmode=require`
+   - `freshcast/auth-secret`: the same value as the App's `AUTH_SECRET`
+   ```bash
+   f=$(mktemp); read -rs "v?Value: "; echo; printf '%s' "$v" > "$f"; unset v   # zsh; paste the value at the prompt
+   aws secretsmanager create-secret --name <name> --secret-string "file://$f" --tags Key=project,Value=freshcast --profile freshcast --region ap-southeast-2
+   rm -P "$f"
+   ```
 
 ## Versioning and releases
 
