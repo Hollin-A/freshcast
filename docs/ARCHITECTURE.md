@@ -763,7 +763,7 @@ CI holds no AWS keys. GitHub OIDC gives each job a short-lived token, and the `F
 
 1. **prune:** `turbo prune @freshcast/api --docker` writes a partial monorepo with only the API, `@freshcast/db`, `@freshcast/shared` and a lockfile trimmed to match, so changes to the App's dependencies don't invalidate the install cache.
 2. **build:** installs from the pruned manifests, builds the API and its workspace dependencies (including `prisma generate`), then `pnpm deploy --prod` copies the API with its production dependencies, at the lockfile's versions, and the workspace packages' built `dist/`.
-3. **runtime:** `node:24-alpine` with `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
+3. **runtime:** `node:24-alpine`, with its Alpine packages upgraded at build time (security fixes reach Alpine before the base image is rebuilt), and `tini` as PID 1, so ECS's SIGTERM reaches Node and the shutdown hooks run. It runs `node dist/main.js` as the non-root `node` user on port 4000.
 
 The image holds no secrets or config: `DATABASE_URL`, `AUTH_SECRET` and the rest come from the environment when it starts (ADR-018). It doesn't run migrations. `@prisma/client` declares the Prisma CLI and TypeScript as peer dependencies, so they ship in the image although nothing runs them.
 

@@ -40,9 +40,11 @@ RUN pnpm --filter=@freshcast/api deploy --prod --ignore-scripts \
 
 # Stage 3: the runtime image. Only Node, tini and the deployed API.
 FROM node:24-alpine AS runtime
+# Alpine's security fixes reach its package repository before the Node
+# base image is rebuilt, so upgrade the base packages at build time.
 # tini runs as PID 1: it forwards SIGTERM from ECS to Node so the shutdown
 # hooks in main.ts run, and reaps zombie processes.
-RUN apk add --no-cache tini
+RUN apk upgrade --no-cache && apk add --no-cache tini
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build --chown=node:node /prod/api ./
