@@ -242,6 +242,17 @@ describe("FreshcastApi", () => {
     });
   });
 
+  // A retained group with a fixed name would already exist when the stack is
+  // recreated (after a failed first deploy, for example), and fail the create.
+  it("retains the API log group under a generated name", () => {
+    const groups = Object.values(template.findResources("AWS::Logs::LogGroup")).filter(
+      (group) => group.DeletionPolicy === "Retain",
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0].Properties.LogGroupName).toBeUndefined();
+    expect(groups[0].Properties.RetentionInDays).toBe(config.apiService.logRetentionDays);
+  });
+
   it("injects startup secrets from Secrets Manager, never as plain values", () => {
     const taskDefinition = Object.values(template.findResources("AWS::ECS::TaskDefinition"))[0];
     const [container] = taskDefinition.Properties.ContainerDefinitions;
@@ -255,7 +266,7 @@ describe("FreshcastApi", () => {
   // complete ARN, so a name like `freshcast/auth-secret` must never be used
   // as a partial ARN (it failed the first deploy).
   it("references every secret by its complete ARN and grants exactly that ARN", () => {
-    const secretIds = [...Object.values(production.secrets.startup), ...production.secrets.runtime];
+    const secretIds = [...Object.values(production.secrets.startup), ...Object.values(production.secrets.runtime)];
     for (const secretId of secretIds) expect(secretId).toMatch(/-[A-Za-z0-9]{6}$/);
 
     const taskDefinition = Object.values(template.findResources("AWS::ECS::TaskDefinition"))[0];
@@ -280,7 +291,7 @@ describe("FreshcastApi", () => {
       "secretsmanager:GetSecretValue",
     ]);
     expect(JSON.stringify(statements[0].Resource)).toContain(
-      `:secret:${production.secrets.runtime[0]}"`,
+      `:secret:${production.secrets.runtime.ANTHROPIC_API_KEY}"`,
     );
   });
 });

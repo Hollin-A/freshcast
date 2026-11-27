@@ -46,7 +46,6 @@ export class ApiStack extends Stack {
    * Amplify manages the rest (ADR-021 §3).
    */
   public readonly hostedZone: route53.IHostedZone;
-  public readonly service: ecs.IFargateService;
 
   /**
    * The AZs from config. Overriding this keeps the VPC from looking up the
@@ -79,7 +78,9 @@ export class ApiStack extends Stack {
     // CDK owns the image tag (#33): it is a stack parameter rather than a
     // context value, so `cdk diff` on a pull request shows no image change,
     // and only the deploy job moves it. No default: the first deploy must
-    // name an image that exists in ECR.
+    // name an image that exists in ECR. The ID is a literal (the
+    // no-variable-construct-id lint rule); the tests fail if it stops
+    // matching IMAGE_TAG_PARAMETER.
     const imageTag = new CfnParameter(this, "ImageTag", {
       type: "String",
       description: "The freshcast-api image tag (git SHA) to run",
@@ -151,8 +152,9 @@ export class ApiStack extends Stack {
         "One task: ECS's free service metrics (CPU, memory) and the API's own logs are enough. Container Insights adds cost; revisit with Stage 7 hardening.",
     });
 
+    // CloudFormation names the group. A fixed name plus RETAIN would make a
+    // recreated stack fail: the retained group would already exist.
     const logGroup = new logs.LogGroup(this, "ApiLogs", {
-      logGroupName: `/freshcast/${environment.stage}/api`,
       retention: settings.logRetentionDays,
       removalPolicy: RemovalPolicy.RETAIN,
     });
@@ -169,7 +171,7 @@ export class ApiStack extends Stack {
     Validations.of(taskDefinition).acknowledge({
       id: "AwsSolutions::AwsSolutions-ECS2",
       reason:
-        "The plain environment variables are non-secret config (port, Region, version). Secrets come from Secrets Manager.",
+        "The plain environment variables are non-secret config (port, version). Secrets come from Secrets Manager.",
     });
 
     // ECS reads these when a task starts, through the execution role.
@@ -194,8 +196,8 @@ export class ApiStack extends Stack {
       image: ecs.ContainerImage.fromEcrRepository(repository, imageTag),
       portMappings: [{ containerPort: settings.containerPort }],
       environment: {
+        // Fargate sets AWS_REGION itself.
         PORT: String(settings.containerPort),
-        AWS_REGION: this.region,
         // /health/live reports the deployed commit (#28).
         APP_VERSION: imageTag,
       },
@@ -215,10 +217,10 @@ export class ApiStack extends Stack {
 
     // The API reads these itself, through the task role (least privilege:
     // S3, Textract and SES come with #40, #42 and #46).
-    for (const secretId of environment.secrets.runtime) {
+    for (const [envName, secretId] of Object.entries(environment.secrets.runtime)) {
       secretsmanager.Secret.fromSecretCompleteArn(
         this,
-        `Secret-${secretId}`,
+        `Secret-${envName}`,
         this.secretArn(secretId),
       ).grantRead(taskDefinition.taskRole);
     }
@@ -264,8 +266,6 @@ export class ApiStack extends Stack {
       },
     });
 
-    this.service = service;
-
     new route53.ARecord(this, "ApiRecord", {
       zone: this.hostedZone,
       recordName: domainName,
@@ -273,5 +273,10 @@ export class ApiStack extends Stack {
     });
 
     new CfnOutput(this, "ApiUrl", { value: `https://${domainName}` });
+    // For `aws ecs update-service --force-new-deployment` after a secret
+    // changes, and for finding the logs.
+    new CfnOutput(this, "ClusterName", { value: cluster.clusterName });
+    new CfnOutput(this, "ServiceName", { value: service.serviceName });
+    new CfnOutput(this, "LogGroupName", { value: logGroup.logGroupName });
   }
 }

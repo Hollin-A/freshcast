@@ -771,7 +771,7 @@ Images go to the `freshcast-api` ECR repository in `FreshcastShared`:
 
 - **Immutable tags:** an image's tag is its git SHA (#34), so a tag always names the same image, and a push that reuses one fails with `ImageTagAlreadyExistsException`. A deploy job that is re-run for the same commit must skip the push when the tag already exists.
 - **Scan on push:** ECR's free basic scanning checks each image for known CVEs.
-- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day. The deploy job tags the image it deploys `production-<sha>`, and the last 10 images with that tag are kept however many newer images are pushed, so the running image and its rollbacks can't expire. Of the other images, the last 10 are kept.
+- **Lifecycle:** untagged images (failed or replaced pushes) expire after 1 day. Every deploy tags the image it runs `production-<sha>` (the deploy job with #34; by hand until then, see [CONTRIBUTING](../CONTRIBUTING.md#infrastructure-aws-cdk)), and the last 10 images with that tag are kept however many newer images are pushed, so the running image and its rollbacks can't expire. Of the other images, the last 10 are kept.
 - **Retained:** deleting the stack leaves the repository and its images.
 
 ### 12.5 API service
@@ -795,7 +795,7 @@ https://api.freshcast.site ─▶ ALB :443 (ACM certificate; :80 redirects to :4
 - **Secrets:** created by hand in Secrets Manager and only referenced by CDK (ADR-021).
   - Execution role (ECS, when a task starts): `freshcast/database-url` and `freshcast/auth-secret`, injected as `DATABASE_URL` and `AUTH_SECRET`. `AUTH_SECRET` must equal the App's (ADR-023 §10).
   - Task role (the API, while it runs): `freshcast/anthropic-api-key`, read by `SecretsService` (ADR-018). Nothing else: S3, Textract and SES permissions come with #40, #42 and #46.
-  - ECS reads secrets only when a task starts, so a changed value needs a new deploy.
+  - ECS reads secrets only when a task starts, so a changed value needs new tasks: `aws ecs update-service --force-new-deployment` ([CONTRIBUTING](../CONTRIBUTING.md#infrastructure-aws-cdk)). `cdk deploy` with an unchanged template starts none.
   - Stacks reference each secret by its complete ARN: `config.apiEnvironments` holds the name with the 6-character suffix Secrets Manager adds (`freshcast/auth-secret-pZBxRx`). A name alone isn't safe as an ARN: Secrets Manager reads one ending in a hyphen and 6 characters as complete, so `freshcast/auth-secret` would mean a secret called `freshcast/auth`. Changing a value keeps the suffix; recreating a secret changes it, and `config.ts` must follow.
-- **Logs:** the container writes to the `/freshcast/production/api` log group (30 days, retained if the stack is deleted).
-- **Acknowledged cdk-nag findings:** open ingress on the ALB (a public API, 443 and a redirect on 80), no ALB access logs and no Container Insights (the API logs every request with its ID; both add cost; revisit with Stage 7 hardening), plain environment variables (only port, Region and version), and `ecr:GetAuthorizationToken` on `*` (it has no resource-level permissions).
+- **Logs:** the container writes to a log group named by CloudFormation (the stack's `LogGroupName` output; 30 days, retained if the stack is deleted). A fixed name would make a recreated stack fail, because the retained group would already exist.
+- **Acknowledged cdk-nag findings:** open ingress on the ALB (a public API, 443 and a redirect on 80), no ALB access logs and no Container Insights (the API logs every request with its ID; both add cost; revisit with Stage 7 hardening), plain environment variables (only port and version; Fargate sets `AWS_REGION` itself), and `ecr:GetAuthorizationToken` on `*` (it has no resource-level permissions).

@@ -22,8 +22,10 @@ export const config = {
     /** Images kept for rollback; older ones expire. */
     imagesToKeep: 10,
     /**
-     * Prefix of the marker tag (`production-<sha>`) the deploy job adds to
-     * the image it deploys, which protects it from expiring.
+     * Prefix of the marker tag (`production-<sha>`) that protects a deployed
+     * image from expiring. Every deploy must add it before the stack runs the
+     * image: the deploy job (#34), or by hand until then (CONTRIBUTING,
+     * Deploys).
      */
     deployedTagPrefix: "production-",
   },
@@ -60,7 +62,7 @@ export const config = {
    */
   apiEnvironments: {
     production: {
-      /** The `stage` tag and the prefix of the CloudWatch log group. */
+      /** The `stage` tag on the stack's resources. */
       stage: "production",
       /** `<subdomain>.<domainName>` */
       subdomain: "api",
@@ -81,7 +83,10 @@ export const config = {
           DATABASE_URL: "freshcast/database-url-nW6Kv8",
           AUTH_SECRET: "freshcast/auth-secret-pZBxRx",
         },
-        runtime: ["freshcast/anthropic-api-key-iSc9jB"],
+        // Keyed by the env var that overrides it locally (SecretsService).
+        runtime: {
+          ANTHROPIC_API_KEY: "freshcast/anthropic-api-key-iSc9jB",
+        },
       },
     },
   },
