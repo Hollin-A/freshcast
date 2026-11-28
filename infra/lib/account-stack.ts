@@ -47,9 +47,7 @@ export class AccountStack extends Stack {
     cdkDiffRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ["sts:AssumeRole"],
-        resources: [
-          `arn:${this.partition}:iam::${this.account}:role/cdk-${config.bootstrapQualifier}-lookup-role-${this.account}-${this.region}`,
-        ],
+        resources: [this.bootstrapRoleArn("lookup")],
       }),
     );
 
@@ -90,6 +88,11 @@ export class AccountStack extends Stack {
     });
   }
 
+  /** The ARN of one of the CDK bootstrap stack's roles, such as `lookup` or `deploy`. */
+  private bootstrapRoleArn(name: string): string {
+    return `arn:${this.partition}:iam::${this.account}:role/cdk-${config.bootstrapQualifier}-${name}-role-${this.account}-${this.region}`;
+  }
+
   /**
    * CI's deploy job on `main` (#34): pushes the API image, tags it
    * `production-<sha>`, and runs `cdk deploy FreshcastApi`. Only tokens for
@@ -118,12 +121,10 @@ export class AccountStack extends Stack {
     // `cdk deploy` uploads the template and assets through the file
     // publishing role and deploys through the deploy role. The image is
     // pushed directly, below, so the image publishing role isn't needed.
-    const bootstrapRole = (name: string) =>
-      `arn:${this.partition}:iam::${this.account}:role/cdk-${config.bootstrapQualifier}-${name}-role-${this.account}-${this.region}`;
     role.addToPolicy(
       new iam.PolicyStatement({
         actions: ["sts:AssumeRole"],
-        resources: [bootstrapRole("deploy"), bootstrapRole("file-publishing")],
+        resources: [this.bootstrapRoleArn("deploy"), this.bootstrapRoleArn("file-publishing")],
       }),
     );
 

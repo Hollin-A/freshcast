@@ -58,15 +58,25 @@ describe("FreshcastAccount", () => {
     });
   });
 
-  // The statements of every inline policy attached to the role named `roleName`.
-  function roleStatements(roleName: string) {
-    const [roleId] = Object.keys(
+  // The ARN suffix of one of the CDK bootstrap stack's roles.
+  const bootstrapRole = (name: string) =>
+    `:role/cdk-${config.bootstrapQualifier}-${name}-role-${ACCOUNT}-${config.region}`;
+
+  // The logical ID of the role named `roleName`.
+  function roleId(roleName: string) {
+    const [id] = Object.keys(
       template.findResources("AWS::IAM::Role", { Properties: { RoleName: roleName } }),
     );
-    expect(roleId).toBeDefined();
+    expect(id).toBeDefined();
+    return id;
+  }
+
+  // The statements of every inline policy attached to the role named `roleName`.
+  function roleStatements(roleName: string) {
+    const id = roleId(roleName);
     return Object.values(template.findResources("AWS::IAM::Policy"))
       .filter((policy) =>
-        policy.Properties.Roles.some((role: { Ref?: string }) => role.Ref === roleId),
+        policy.Properties.Roles.some((role: { Ref?: string }) => role.Ref === id),
       )
       .flatMap((policy) => policy.Properties.PolicyDocument.Statement);
   }
@@ -75,9 +85,7 @@ describe("FreshcastAccount", () => {
     const statements = roleStatements(CDK_DIFF_ROLE_NAME);
     expect(statements).toHaveLength(1);
     expect(statements[0].Action).toBe("sts:AssumeRole");
-    expect(JSON.stringify(statements[0].Resource)).toContain(
-      `:role/cdk-${config.bootstrapQualifier}-lookup-role-${ACCOUNT}-${config.region}`,
-    );
+    expect(JSON.stringify(statements[0].Resource)).toContain(bootstrapRole("lookup"));
   });
 
   it("lets only the production GitHub environment assume the deploy role", () => {
@@ -101,16 +109,14 @@ describe("FreshcastAccount", () => {
 
   it("gives the deploy role the bootstrap deploy roles and the API repository only", () => {
     const statements = roleStatements(API_DEPLOY_ROLE_NAME);
-    const bootstrap = (name: string) =>
-      `:role/cdk-${config.bootstrapQualifier}-${name}-role-${ACCOUNT}-${config.region}`;
 
     const assume = statements.filter((s) => s.Action === "sts:AssumeRole");
     expect(assume).toHaveLength(1);
     const assumable = JSON.stringify(assume[0].Resource);
-    expect(assumable).toContain(bootstrap("deploy"));
-    expect(assumable).toContain(bootstrap("file-publishing"));
-    expect(assumable).not.toContain(bootstrap("lookup"));
-    expect(assumable).not.toContain(bootstrap("cfn-exec"));
+    expect(assumable).toContain(bootstrapRole("deploy"));
+    expect(assumable).toContain(bootstrapRole("file-publishing"));
+    expect(assumable).not.toContain(bootstrapRole("lookup"));
+    expect(assumable).not.toContain(bootstrapRole("cfn-exec"));
 
     const ecrStatements = statements.filter((s) => s !== assume[0]);
     for (const statement of ecrStatements) {
@@ -130,9 +136,13 @@ describe("FreshcastAccount", () => {
     );
   });
 
-  it("outputs both CI role ARNs", () => {
-    template.hasOutput("CdkDiffRoleArn", {});
-    template.hasOutput("ApiDeployRoleArn", {});
+  it("outputs each CI role's ARN", () => {
+    template.hasOutput("CdkDiffRoleArn", {
+      Value: { "Fn::GetAtt": [roleId(CDK_DIFF_ROLE_NAME), "Arn"] },
+    });
+    template.hasOutput("ApiDeployRoleArn", {
+      Value: { "Fn::GetAtt": [roleId(API_DEPLOY_ROLE_NAME), "Arn"] },
+    });
   });
 
   it("alerts by email before the monthly budget is spent", () => {
