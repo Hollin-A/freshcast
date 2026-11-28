@@ -416,7 +416,8 @@ jobs:
       name: production
       url: https://api.freshcast.site/health/live
     # One deploy at a time: two CloudFormation updates of one stack fail.
-    # A newer deploy waits rather than stopping one halfway.
+    # A newer deploy waits rather than stopping one halfway. The group holds
+    # one waiting run, so an older waiting run is cancelled by a newer one.
     concurrency:
       group: deploy-production
       cancel-in-progress: false
@@ -484,20 +485,44 @@ jobs:
             --image-manifest "$(get imageManifest)" \
             --image-manifest-media-type "$(get imageManifestMediaType)" >/dev/null
 
+      # Runs for different pushes can reach this job out of order, so a slow
+      # run for an older push could overwrite a newer deploy, and the health
+      # check below wouldn't notice. Deploy only while this commit is still
+      # the tip of main. A newer push's deploy waits in the concurrency group,
+      # so it always runs after this one.
+      - name: Check this commit is the tip of main
+        id: tip
+        run: |
+          tip=$(git ls-remote --exit-code origin refs/heads/main | cut -f1)
+          if [ -z "$tip" ]; then
+            echo "::error::Couldn't read the tip of main"
+            exit 1
+          fi
+          if [ "$tip" = "$SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping the deploy: main is at $tip, not $SHA"
+          fi
+
       - uses: pnpm/action-setup@v4
+        if: steps.tip.outputs.current == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.tip.outputs.current == 'true'
         with:
           node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+        if: steps.tip.outputs.current == 'true'
 
       # CloudFormation waits for the ECS service to reach a steady state, and
       # the deployment circuit breaker rolls back tasks that can't start, so
       # a failed rollout fails this step. --exclusively keeps FreshcastShared
       # and FreshcastAccount out: they are deployed by hand.
       - name: cdk deploy FreshcastApi
+        if: steps.tip.outputs.current == 'true'
         run: >-
           pnpm --filter @freshcast/infra cdk deploy FreshcastApi
           --exclusively --require-approval never
@@ -507,6 +532,7 @@ jobs:
       # 200 (ADR-023 §7). Retries cover the ALB finishing the switch to the
       # new task.
       - name: Check the new version is serving
+        if: steps.tip.outputs.current == 'true'
         run: |
           for attempt in $(seq 1 20); do
             version=$(curl -sf "$API_URL/health/live" | jq -r .version || true)
