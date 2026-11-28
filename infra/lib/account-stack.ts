@@ -1,9 +1,9 @@
-import { CfnOutput, Stack, type StackProps } from "aws-cdk-lib";
+import { CfnOutput, Stack, Validations, type StackProps } from "aws-cdk-lib";
 import * as budgets from "aws-cdk-lib/aws-budgets";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import type { Construct } from "constructs";
-import { CDK_DIFF_ROLE_NAME, config } from "./config";
+import { API_DEPLOY_ROLE_NAME, CDK_DIFF_ROLE_NAME, config } from "./config";
 
 /**
  * Resources the AWS account needs once, whatever runs in it: GitHub's OIDC
@@ -29,8 +29,7 @@ export class AccountStack extends Stack {
       ],
     });
 
-    // Read-only: CI shows `cdk diff` on pull requests. The deploy role on
-    // main is added with #34.
+    // Read-only: CI shows `cdk diff` on pull requests.
     const cdkDiffRole = new iam.Role(this, "CdkDiffRole", {
       roleName: CDK_DIFF_ROLE_NAME,
       description: "GitHub Actions: cdk diff on pull requests (read-only)",
@@ -53,6 +52,8 @@ export class AccountStack extends Stack {
         ],
       }),
     );
+
+    const deployRole = this.apiDeployRole(github.oidcProviderArn);
 
     const alertEmail = ssm.StringParameter.valueForStringParameter(
       this,
@@ -82,5 +83,82 @@ export class AccountStack extends Stack {
       value: cdkDiffRole.roleArn,
       description: "Set as the AWS_CDK_DIFF_ROLE_ARN repository variable in GitHub",
     });
+
+    new CfnOutput(this, "ApiDeployRoleArn", {
+      value: deployRole.roleArn,
+      description: "Set as the AWS_DEPLOY_ROLE_ARN repository variable in GitHub",
+    });
+  }
+
+  /**
+   * CI's deploy job on `main` (#34): pushes the API image, tags it
+   * `production-<sha>`, and runs `cdk deploy FreshcastApi`. Only tokens for
+   * the repository's `production` GitHub environment may assume it; that
+   * environment's branch rule allows `main` only.
+   *
+   * `cdk deploy` works through the CDK bootstrap's roles, so CloudFormation
+   * makes the changes with the bootstrap execution role, which has
+   * AdministratorAccess by default. The control is who can merge to `main`
+   * (ARCHITECTURE §12.3); narrowing that policy is #176. Nothing in IAM
+   * limits the role to FreshcastApi: the workflow names that stack, and
+   * FreshcastAccount and FreshcastShared stay deployed by hand.
+   */
+  private apiDeployRole(oidcProviderArn: string): iam.Role {
+    const role = new iam.Role(this, "ApiDeployRole", {
+      roleName: API_DEPLOY_ROLE_NAME,
+      description: "GitHub Actions: deploy the API from main",
+      assumedBy: new iam.WebIdentityPrincipal(oidcProviderArn, {
+        StringEquals: {
+          [`${config.github.oidcHost}:aud`]: "sts.amazonaws.com",
+          [`${config.github.oidcHost}:sub`]: `repo:${config.github.repository}:environment:${config.github.deployEnvironment}`,
+        },
+      }),
+    });
+
+    // `cdk deploy` uploads the template and assets through the file
+    // publishing role and deploys through the deploy role. The image is
+    // pushed directly, below, so the image publishing role isn't needed.
+    const bootstrapRole = (name: string) =>
+      `arn:${this.partition}:iam::${this.account}:role/cdk-${config.bootstrapQualifier}-${name}-role-${this.account}-${this.region}`;
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["sts:AssumeRole"],
+        resources: [bootstrapRole("deploy"), bootstrapRole("file-publishing")],
+      }),
+    );
+
+    // Push the image, check whether its tag already exists (tags are
+    // immutable, so a re-run must skip the push), and add the
+    // `production-<sha>` marker tag. The repository lives in FreshcastShared;
+    // its ARN is built from the name, so this stack doesn't depend on that one.
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:CompleteLayerUpload",
+          "ecr:DescribeImages",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart",
+        ],
+        resources: [
+          this.formatArn({
+            service: "ecr",
+            resource: "repository",
+            resourceName: config.apiImage.repositoryName,
+          }),
+        ],
+      }),
+    );
+    role.addToPolicy(
+      new iam.PolicyStatement({ actions: ["ecr:GetAuthorizationToken"], resources: ["*"] }),
+    );
+    Validations.of(role).acknowledge({
+      id: "AwsSolutions::AwsSolutions-IAM5[Resource::*]",
+      reason: "ecr:GetAuthorizationToken has no resource-level permissions; it must be granted on *.",
+    });
+
+    return role;
   }
 }

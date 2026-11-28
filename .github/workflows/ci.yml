@@ -305,7 +305,7 @@ jobs:
   # GitHub OIDC as a role that can only read (FreshcastAccount stack), so no
   # AWS keys are stored here. Synth runs before sign-in, so lookups can't
   # call AWS: their results must be committed in infra/cdk.context.json.
-  # Pull requests only; the deploy on main comes with #34.
+  # Pull requests only; `deploy-api` below deploys on main.
   #
   # GitHub gives no OIDC token to pull requests from forks, so those skip
   # the job (a skipped required check passes) instead of failing to sign in.
@@ -357,6 +357,168 @@ jobs:
             cat "$RUNNER_TEMP/cdk-diff.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # Decides whether a push to main deploys the API: a change to the API, the
+  # packages it builds from, its stack (infra/), dependencies, or this
+  # workflow. Docs-only and App-only pushes don't deploy. The `changes` job
+  # above runs on pull requests only, so the push to main has its own filter.
+  # It compares the push with the commit before it, so a merged pull request
+  # counts as a whole.
+  deploy-changes:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/**'
+              - 'infra/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
+              - '!**/*.md'
+
+  # Deploys the API to production on a push to main (#34, ADR-020 D5):
+  # pushes the image tagged with the commit SHA, tags it `production-<sha>`
+  # so the ECR lifecycle rule keeps it, runs `cdk deploy FreshcastApi`, then
+  # checks the new version is serving. Signs in through GitHub OIDC as the
+  # deploy role, which trusts only the `production` GitHub environment, so
+  # no AWS keys are stored here.
+  #
+  # Runs only after the API's tests and image smoke test pass. Their `needs`
+  # chain includes `changes`, which is skipped on pushes, so the condition
+  # checks each result instead of relying on the implicit success().
+  #
+  # Skipped until the AWS_DEPLOY_ROLE_ARN repository variable is set, which
+  # happens after FreshcastAccount is deployed by hand (CONTRIBUTING).
+  deploy-api:
+    needs: [deploy-changes, check, api-e2e, api-image]
+    if: >-
+      !cancelled() && vars.AWS_DEPLOY_ROLE_ARN != ''
+      && needs.deploy-changes.outputs.api == 'true'
+      && needs.check.result == 'success'
+      && needs.api-e2e.result == 'success'
+      && needs.api-image.result == 'success'
+    # The image runs on ARM64 Fargate (ADR-021), so build it natively.
+    runs-on: ubuntu-24.04-arm
+    environment:
+      name: production
+      url: https://api.freshcast.site/health/live
+    # One deploy at a time: two CloudFormation updates of one stack fail.
+    # A newer deploy waits rather than stopping one halfway.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AWS_REGION: ap-southeast-2
+      REPOSITORY: freshcast-api
+      SHA: ${{ github.sha }}
+      API_URL: https://api.freshcast.site
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      # Tags are immutable, so a re-run of the same commit skips the push.
+      - name: Check for an existing image
+        id: image
+        run: |
+          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="$SHA" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.image.outputs.exists == 'false'
+
+      # Reuses the layers `api-image` built and smoke-tested in this run (same
+      # cache scope). Unlike that job it doesn't force a fresh runtime stage,
+      # so the pushed image is the one that was tested. Provenance and SBOM
+      # attestations are off so ECR gets one plain image manifest.
+      - name: Build and push image
+        if: steps.image.outputs.exists == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          platforms: linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ env.SHA }}
+          cache-from: type=gha,scope=api-image
+
+      # The ECR lifecycle rule keeps the last 10 images with this tag, so the
+      # running image and its rollbacks can't expire (ARCHITECTURE §12.4).
+      - name: Tag the image production-<sha>
+        run: |
+          tag="production-$SHA"
+          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="$tag" >/dev/null 2>&1; then
+            echo "$tag already exists"
+            exit 0
+          fi
+          get() { aws ecr batch-get-image --repository-name "$REPOSITORY" --image-ids imageTag="$SHA" --query "images[0].$1" --output text; }
+          aws ecr put-image --repository-name "$REPOSITORY" --image-tag "$tag" \
+            --image-manifest "$(get imageManifest)" \
+            --image-manifest-media-type "$(get imageManifestMediaType)" >/dev/null
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # CloudFormation waits for the ECS service to reach a steady state, and
+      # the deployment circuit breaker rolls back tasks that can't start, so
+      # a failed rollout fails this step. --exclusively keeps FreshcastShared
+      # and FreshcastAccount out: they are deployed by hand.
+      - name: cdk deploy FreshcastApi
+        run: >-
+          pnpm --filter @freshcast/infra cdk deploy FreshcastApi
+          --exclusively --require-approval never
+          --parameters ImageTag="$SHA"
+
+      # `/health/live` must report this commit and `/health/ready` must be
+      # 200 (ADR-023 §7). Retries cover the ALB finishing the switch to the
+      # new task.
+      - name: Check the new version is serving
+        run: |
+          for attempt in $(seq 1 20); do
+            version=$(curl -sf "$API_URL/health/live" | jq -r .version || true)
+            ready=$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/health/ready" || true)
+            echo "attempt $attempt: version=$version ready=$ready"
+            if [ "$version" = "$SHA" ] && [ "$ready" = "200" ]; then
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::$API_URL is not serving $SHA with /health/ready 200"
+          exit 1
 
   # ui/* branches may only change the frontend presentation files listed in
   # .github/ui-paths. Other branches pass straight through, so the job can
