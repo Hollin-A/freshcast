@@ -3,7 +3,12 @@ import { Annotations, Match, Template } from "aws-cdk-lib/assertions";
 import { describe, expect, it } from "vitest";
 import { IMAGE_TAG_PARAMETER } from "../lib/api-stack";
 import { buildApp } from "../lib/app";
-import { ACCOUNT_CONTEXT_KEY, CDK_DIFF_ROLE_NAME, config } from "../lib/config";
+import {
+  ACCOUNT_CONTEXT_KEY,
+  API_DEPLOY_ROLE_NAME,
+  CDK_DIFF_ROLE_NAME,
+  config,
+} from "../lib/config";
 
 const ACCOUNT = "111111111111";
 const production = config.apiEnvironments.production;
@@ -53,16 +58,81 @@ describe("FreshcastAccount", () => {
     });
   });
 
-  it("gives the diff role nothing but the bootstrap lookup role", () => {
-    const policies = template.findResources("AWS::IAM::Policy");
-    const statements = Object.values(policies).flatMap(
-      (policy) => policy.Properties.PolicyDocument.Statement,
+  // The statements of every inline policy attached to the role named `roleName`.
+  function roleStatements(roleName: string) {
+    const [roleId] = Object.keys(
+      template.findResources("AWS::IAM::Role", { Properties: { RoleName: roleName } }),
     );
+    expect(roleId).toBeDefined();
+    return Object.values(template.findResources("AWS::IAM::Policy"))
+      .filter((policy) =>
+        policy.Properties.Roles.some((role: { Ref?: string }) => role.Ref === roleId),
+      )
+      .flatMap((policy) => policy.Properties.PolicyDocument.Statement);
+  }
+
+  it("gives the diff role nothing but the bootstrap lookup role", () => {
+    const statements = roleStatements(CDK_DIFF_ROLE_NAME);
     expect(statements).toHaveLength(1);
     expect(statements[0].Action).toBe("sts:AssumeRole");
     expect(JSON.stringify(statements[0].Resource)).toContain(
       `:role/cdk-${config.bootstrapQualifier}-lookup-role-${ACCOUNT}-${config.region}`,
     );
+  });
+
+  it("lets only the production GitHub environment assume the deploy role", () => {
+    template.hasResourceProperties("AWS::IAM::Role", {
+      RoleName: API_DEPLOY_ROLE_NAME,
+      AssumeRolePolicyDocument: {
+        Statement: [
+          Match.objectLike({
+            Action: "sts:AssumeRoleWithWebIdentity",
+            Condition: {
+              StringEquals: {
+                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                "token.actions.githubusercontent.com:sub": `repo:${config.github.repository}:environment:production`,
+              },
+            },
+          }),
+        ],
+      },
+    });
+  });
+
+  it("gives the deploy role the bootstrap deploy roles and the API repository only", () => {
+    const statements = roleStatements(API_DEPLOY_ROLE_NAME);
+    const bootstrap = (name: string) =>
+      `:role/cdk-${config.bootstrapQualifier}-${name}-role-${ACCOUNT}-${config.region}`;
+
+    const assume = statements.filter((s) => s.Action === "sts:AssumeRole");
+    expect(assume).toHaveLength(1);
+    const assumable = JSON.stringify(assume[0].Resource);
+    expect(assumable).toContain(bootstrap("deploy"));
+    expect(assumable).toContain(bootstrap("file-publishing"));
+    expect(assumable).not.toContain(bootstrap("lookup"));
+    expect(assumable).not.toContain(bootstrap("cfn-exec"));
+
+    const ecrStatements = statements.filter((s) => s !== assume[0]);
+    for (const statement of ecrStatements) {
+      const actions = [statement.Action].flat() as string[];
+      expect(actions.every((action) => action.startsWith("ecr:"))).toBe(true);
+      if (statement.Resource === "*") {
+        expect(actions).toEqual(["ecr:GetAuthorizationToken"]);
+      } else {
+        expect(JSON.stringify(statement.Resource)).toContain(
+          `:repository/${config.apiImage.repositoryName}`,
+        );
+      }
+    }
+    const granted = ecrStatements.flatMap((s) => [s.Action].flat());
+    expect(granted).toEqual(
+      expect.arrayContaining(["ecr:PutImage", "ecr:DescribeImages", "ecr:BatchGetImage"]),
+    );
+  });
+
+  it("outputs both CI role ARNs", () => {
+    template.hasOutput("CdkDiffRoleArn", {});
+    template.hasOutput("ApiDeployRoleArn", {});
   });
 
   it("alerts by email before the monthly budget is spent", () => {

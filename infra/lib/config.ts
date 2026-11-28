@@ -12,6 +12,12 @@ export const config = {
     repository: "Hollin-A/freshcast",
     /** The issuer of GitHub Actions' OIDC tokens. */
     oidcHost: "token.actions.githubusercontent.com",
+    /**
+     * The GitHub environment the API deploy job runs in. Only its tokens may
+     * assume the deploy role; the environment's branch rule allows `main`
+     * only (#34).
+     */
+    deployEnvironment: "production",
   },
   /** Qualifier of the CDK bootstrap stack (the CDK default). */
   bootstrapQualifier: "hnb659fds",
@@ -24,8 +30,8 @@ export const config = {
     /**
      * Prefix of the marker tag (`production-<sha>`) that protects a deployed
      * image from expiring. Every deploy must add it before the stack runs the
-     * image: the deploy job (#34), or by hand until then (CONTRIBUTING,
-     * Deploys).
+     * image: the deploy job in CI does, and a deploy by hand must too
+     * (CONTRIBUTING, Deploys).
      */
     deployedTagPrefix: "production-",
   },
@@ -115,3 +121,6 @@ export const ACCOUNT_CONTEXT_KEY = "freshcast:awsAccountId";
 
 /** The name of the role that CI assumes to run `cdk diff` on pull requests. */
 export const CDK_DIFF_ROLE_NAME = "freshcast-github-cdk-diff";
+
+/** The name of the role that CI assumes to deploy the API from `main` (#34). */
+export const API_DEPLOY_ROLE_NAME = "freshcast-github-api-deploy";

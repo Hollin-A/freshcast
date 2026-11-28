@@ -21,7 +21,7 @@ export class SharedStack extends Stack {
       repositoryName: config.apiImage.repositoryName,
       // An image's tag is its git SHA (#34), so a tag must always name the
       // same image. A push that reuses a tag fails with
-      // ImageTagAlreadyExistsException, so a deploy job must skip the push
+      // ImageTagAlreadyExistsException, so the deploy job skips the push
       // when the tag already exists (a re-run of the same commit).
       imageTagMutability: ecr.TagMutability.IMMUTABLE,
       // Basic scanning for known CVEs, which is free. Enhanced scanning
