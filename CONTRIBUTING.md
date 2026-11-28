@@ -177,8 +177,8 @@ pnpm --filter @freshcast/infra diff --profile freshcast          # compare with 
 - **Deploying the API by hand** (break-glass, when CI can't): tag the image `production-<sha>` first. The ECR lifecycle rule protects only images with that tag, so an image without it expires after 10 more pushes, and ECS then can't start a replacement task.
   ```bash
   sha=<git-sha>
-  get() { aws ecr batch-get-image --repository-name freshcast-api --image-ids imageTag=$sha --query "images[0].$1" --output text --profile freshcast --region ap-southeast-2; }
-  aws ecr put-image --repository-name freshcast-api --image-tag production-$sha --image-manifest "$(get imageManifest)" --image-manifest-media-type "$(get imageManifestMediaType)" --profile freshcast --region ap-southeast-2
+  manifest_field() { aws ecr batch-get-image --repository-name freshcast-api --image-ids imageTag=$sha --query "images[0].$1" --output text --profile freshcast --region ap-southeast-2; }
+  aws ecr put-image --repository-name freshcast-api --image-tag production-$sha --image-manifest "$(manifest_field imageManifest)" --image-manifest-media-type "$(manifest_field imageManifestMediaType)" --profile freshcast --region ap-southeast-2
   pnpm --filter @freshcast/infra cdk deploy FreshcastShared --profile freshcast
   pnpm --filter @freshcast/infra cdk deploy FreshcastApi --parameters ImageTag=$sha --profile freshcast
   ```

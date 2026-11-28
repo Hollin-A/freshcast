@@ -441,15 +441,16 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@v2
         id: ecr
 
-      # Tags are immutable, so a re-run of the same commit skips the push.
+      # Tags are immutable, so a re-run of the same commit skips the push and
+      # the production-<sha> tag.
       - name: Check for an existing image
         id: image
         run: |
-          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="$SHA" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          has_tag() { aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="$1" >/dev/null 2>&1; }
+          if has_tag "$SHA"; then exists=true; else exists=false; fi
+          if has_tag "production-$SHA"; then tagged=true; else tagged=false; fi
+          echo "exists=$exists" >> "$GITHUB_OUTPUT"
+          echo "tagged=$tagged" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
         if: steps.image.outputs.exists == 'false'
@@ -474,16 +475,12 @@ jobs:
       # The ECR lifecycle rule keeps the last 10 images with this tag, so the
       # running image and its rollbacks can't expire (ARCHITECTURE §12.4).
       - name: Tag the image production-<sha>
+        if: steps.image.outputs.tagged == 'false'
         run: |
-          tag="production-$SHA"
-          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids imageTag="$tag" >/dev/null 2>&1; then
-            echo "$tag already exists"
-            exit 0
-          fi
-          get() { aws ecr batch-get-image --repository-name "$REPOSITORY" --image-ids imageTag="$SHA" --query "images[0].$1" --output text; }
-          aws ecr put-image --repository-name "$REPOSITORY" --image-tag "$tag" \
-            --image-manifest "$(get imageManifest)" \
-            --image-manifest-media-type "$(get imageManifestMediaType)" >/dev/null
+          manifest_field() { aws ecr batch-get-image --repository-name "$REPOSITORY" --image-ids imageTag="$SHA" --query "images[0].$1" --output text; }
+          aws ecr put-image --repository-name "$REPOSITORY" --image-tag "production-$SHA" \
+            --image-manifest "$(manifest_field imageManifest)" \
+            --image-manifest-media-type "$(manifest_field imageManifestMediaType)" >/dev/null
 
       # Runs for different pushes can reach this job out of order, so a slow
       # run for an older push could overwrite a newer deploy, and the health
